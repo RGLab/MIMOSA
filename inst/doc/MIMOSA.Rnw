@@ -1,0 +1,107 @@
+\documentclass{article}
+\begin{document}
+\title{The MIMOSA Package}
+\author{Greg Finak <gfinak at fhcrc.org>}
+\maketitle
+\section{Background on ICS Assays}
+In a vaccine trial setting, intracellular cytokine staining assays measure whether individuals respond to a vaccine. They do so by measuring how immune cells respond (usually CD4 or CD8 T--cell sub--populations) to antigen stimulation. T--cells that respond to antigen express one or multiple cytokines (IFNg, IL2, TNFa, IL4). The strength of response is measured as the fraction of immune cells expressing the cytokine, usually relative to an unstimulated control sample.
+
+\section{The MIMOSA Package}
+The MIMOSA package provides a framework for analysing ICS assay data. Given a cytokine, and counts of cytokine positive and negative cells for stimulated and control samples from multiple individuals, the MIMOSA package will fit a two--component Beta--Binomial mixture model to the data. 
+
+\subsection{The Model}
+The two components represent two competing hypotheses for the data. Under the null hypothesis of no response, the proportion of  cytokine expressing cells in the stimulated sample is equal to the proportion of cytokine expressing cells in the unstimulated sample. The first component models this situation. Under the alternative hypothesis of response, the proportion of cytokine positive cells in the stimulated sample is greater than the proportion of cytokine positive cells in the control sample. The second component models this situation. Since each individual from a series of ICS assays can be either a responder or non--responder, the entire data set is modelled as a mixture of responding and non--responding individuals. 
+
+Cell counts in ICS assays are typically small, as are the proportions. Our Bayesian modelling approach borrows strength across individuals to improve the sensitivity of the model in identifying responders and non--responders.
+
+\section{Preparing the Data}
+The data must have already been extracted from processed and gated flow cytometry (FCS) files. \textit{MIMOSA} is bundled with some ICS data from an HIV vaccine safety trial (HVTN049). The package requires input data in the form of a data frame with specific columns, as shown below.
+
+<<loaddata>>=
+require(MIMOSA)
+head(HVTN049)
+@
+
+The data frame must at least consist of the following seven columns. The ID column is a factor variable with levels for each individual (subject) in the study. The antigen column is a factor variable with levels for each antigen stimulation. The fname column is a factor variable with levels for each cytokine measured in the assay. The parent column is a factor variable describing the parent population expressing the cytokines. The neg and pos columns are integer valued variables holding the positive and negative cell counts for each combination of cytokine/antigen/ID/parent. The fcsfile column is a character specifying the FCS file name. 
+
+\section{The ICS Object}
+ICS data has a considerable amount of structure that cannot be fully captured by a data frame representation. \textit{MIMOSA} simplifies this for you by providing some convenience data structures for data analysis. The \textit{ICS} S4 class wraps the data frame and restructures it using the excellent \textit{reshape} package.
+
+<<reshape>>=
+HVTN049.ics<-ICS(HVTN049)
+show(HVTN049.ics)
+@
+
+We see that this ICS assay has 27 samples (subjects), contains cytokine expression for cd4, cd8, and the cd4/cd8 double positive populations, it has three antigen stimulations (ENV-1-PTEG, GAG-1-PTEG, and negative controls), and has cell counts for a variety of cytokines and combinations of cytokines (i.e. IFNg.IL2 is IFNg OR IL2). The \textit{show} method also prints the first few columns of data from one subject.
+
+From an ICS object we can extract and analyze the data for any given contrast of control and stimulation for a specific cytokine and parent population. The data is extracted using the \textit{flowContrasts} method, returning a data frame, which serves as input to the BetaMix function that does the model fitting. 
+
+<<extract>>=
+data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","IFNg"))
+head(data)
+@
+
+flowContrasts extracts the positive and negative cell counts of all the specified stimulation and control samples from the specified population and cytokine combination. We can now proceed to fit the model using \textit{BetaMix}. We'll use the default alternate hypothesis that $p_s>p_u$. We can also fit a model where the alternative hypothesis tests $p_s\ne p_u$ by passing the parameter \textit{alternative.model="not equal"}. The default is \textit{alternative.model="greater"}. We can also specify a shrinkage parameter, via \textit{shrink}. The beta prior hyperparameters are estimated from the data and specifying a value of \textit{shrink}$>1$ can be used to shrink the estimated proportions of stimulated and unstimulated cells towards the component means. 
+
+<<fit,keep.source=FALSE>>=
+result<-BetaMix(d=data,scl=9)
+show(result)
+@
+The scl parameter adjusts the scale of the optimization routine. Larger values provide a finer-grained step size when fitting the mean of the prior distributions. Sometimes adjusting this parameter can be helpful if the model doesn't converge.
+Printing the fitted displays the contrast of interest, the number of samples in the model, the log--likelihood of the final model, and the estimates of the component weights. In this case, the ENV stimulated samples are almost all responders (97\%). 
+
+We can extrace q--values (the false discovery rates) for each observation in the model via the \textit{fdr} object slot. At the 1\% level we obtain:
+<<fdr>>=
+table(result@fdr<0.01)
+@
+
+We see \Sexpr{table(result@fdr<0.01)[2]} of 27 individuals are called responders at the 1\% level, and we would expect 1\%  of them to be false positives. Another way to visualize the data is via a volcano plot, which plots the false discovery rate on the y--axis vs the difference between the stimulated and unstimulated samples on the x--axis. 
+
+<<volcano,fig=TRUE>>=
+res<-volcanoPlot(result)
+@
+
+The triangles represent the maximum likelihood estimates of the difference in proportions between stimulated and unstimulated samples, the crosses represent the posterior estimates of the differences. Points colored in red show the observations identified as responders by the model. Points colored in green show observations identified as responders by fisher's exact test at a false discovery rate of 1\%. We see that the bayesian model identified. Fisher's exact test detected \Sexpr{res[,"fisher"]} responders, compared to \Sexpr{res[,"betabin"]} by the beta binomial model. 
+
+We can plot the posterior distributions of the stimulated and unstimulated proportions of cells for any observation:
+
+<<densityplots,fig=TRUE>>=
+densityplot(result,c(24,1))
+@
+
+These plots show that $p_s=p_u$ for sample 049-080, $p_s>p_u$ for sample 049-087. 
+
+We can examine contour plots of the likelihood surface for any individual.Let's look at sample 10.
+
+<<contours,fig=TRUE>>=
+contourPlot(result,which=24,nsamps=2000,n=30)
+@
+
+Here the mixture of beta distributions is clearly visible. The x and y axes represent the number of cytokine positive cells in the stimulated and unstimulated samples. \textit{nsamps} specifies how many samples to draw for the kernel density estimate, while \textit{n} specifies how many levels to draw for the contour plot. The samples are overlaid on the contour plot. Note that they are integer--valued. The bottom--right component represents the $p_s>p_u$ component, whereas te upper--left component represents the $p_s=p_u$ component. The red point represents the observed value of $n_s$ and $n_u$.
+
+\section{Polyfunctionality}
+We can use the model to assess polyfunctionality in a stepwise manner. For a pair of cytokines (say IL2 and IFNg), we first identify all samples that are responders with respect to each of the cytokines independently. Then if we have the ``IFNg or IL2'' counts or the ``IFNg and IL2'' counts we can test for polyfunctionality on samples that are positive for both IL2 and IFNg. 
+
+We can do this very simply in MIMOSA with the \textit{testPolyfunctionality} function. We pass the names of the stimulation and control, as well as the two cytokines for which polyfunctionality is to be determined. There are two subtle differences: first, the subset argument now only takes the name of the parent population. It is not necessary to specify the cytokine name in the subset. Second, there is an additional argument ``or'' which takes the name of the ``OR'' counts in the ICS data strucutre. In our case, since we're looing at IFNg and IL2, we want the OR counts for these two cytokines. They are tabulated under the ``IFNg.IL2'' level in the \textit{fname} column.
+
+<<polyfunctionality>>=
+poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="IL2",cytokineB="IFNg",subset=c("cd4"),or="IFNg.IL2")
+@
+
+<<unifunctionality,echo=FALSE,results=hide>>=
+ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=100)
+il2<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IL2")),scl=100)
+@
+
+The function computes the unifunctional positivity calls, then the polyfunctional positivity calls, returning a \textit{BetaMixResult} object.
+
+<<summary>>=
+summary(poly)
+summary(ifng)
+summary(il2)
+@
+
+Comparing the polyfunctional fit vs the monofunctional responder calls, we see, as expected, fewer subjects exhibiting polyfunctional cytokine expression than monofunctional cytokine expression.
+
+
+\end{document}
