@@ -1,6 +1,5 @@
-./.DS_Store
-./.gitignore
-./.project
+.DS_Store
+.project
 src/betaintegral.o
 src/betaintegralRcpp.o
 src/BetaMix.o
@@ -8,4 +7,4 @@ src/MIMOSA.so
 vignettes/MIMOSA.log
 vignettes/MIMOSA.pdf
 vignettes/MIMOSA.tex
-./inst/.DS_Store
+inst/.DS_Store
