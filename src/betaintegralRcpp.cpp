@@ -1,6 +1,6 @@
-#include <Rcpp.h>;
-#include <armadillo>;
-#include <Rmath.h>;
+#include <Rcpp.h>
+#include <armadillo>
+#include <Rmath.h>
 using namespace Rcpp;
 using namespace arma;
 
