@@ -1,7 +1,7 @@
 
 #black magic for the initialization
 initBetaMix <-
-		function(data=NULL,fixedNULL=FALSE,ics=NULL,alternative="greater",priorXi=1,scl=10,K=200){
+		function(data=NULL,fixedNULL=FALSE,ics=NULL,alternative="greater",priorXi=1,scl=10,K=200,mciter=200){
 	K<-200;
 	if(priorXi<1){
 		stop("The prior for the mixing proportions must be greater than or equal to 1.")
@@ -110,7 +110,15 @@ initBetaMix <-
 	fisher.p.w<-p.adjust(fisher.p,"fdr")<0.1
 	ord<-order(fisher.p,decreasing=F)
 	l<-length(which(fisher.p.w[ord]))
-	l<-min(l,10)
+	
+	##Odd situation when all (or many) observations are significant. 
+	#Taking only the top 10 for the null is fine, but initialization fails 
+	#when computing the complete LL for the data since the observations assigned to the null 
+	#are so inconsistent with the model that optim fails. 
+	#The workaround, for now, is to use ALL observations when ALL are significant.
+	if(l<length(fisher.p))
+		l<-min(l,10)
+	
 	if(l>1){
 		wh<-ord[1:l]
 		#We'll estimate the w's from the response rate
@@ -136,9 +144,9 @@ initBetaMix <-
 			#f0 is defined in helperFunctions.R
 			if(fixedNULL){
 				#upper bounds k/mu ensure sufficient sample size
-				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=1000,a0=alpha0,b0=beta0)f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),method="L-BFGS-B",lower=c(1e-6,10),control=list(parscale=c(scl,1)),upper=c(0.9999,K/muS)),silent=TRUE)			
+				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=mciter,a0=alpha0,b0=beta0)f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),method="L-BFGS-B",lower=c(1e-6,10),control=list(parscale=c(scl,1)),upper=c(0.9999,K/muS)),silent=TRUE)			
 			}else{
-				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS,alpha0/(alpha0+beta0),beta0+alpha0)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=1000)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),method="L-BFGS-B",lower=c(1e-6,10,1e-6,10),control=list(parscale=c(scl,1,scl,1)),upper=c(0.9999,K/mu0,0.9999,K/muS)),silent=TRUE)			
+				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS,alpha0/(alpha0+beta0),beta0+alpha0)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=mciter)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),method="L-BFGS-B",lower=c(1e-6,10,1e-6,10),control=list(parscale=c(scl,1,scl,1)),upper=c(0.9999,K/mu0,0.9999,K/muS)),silent=TRUE)			
 			}
 			if(inherits(pars,"try-error")|inherits(try(pars$convergence,silent=TRUE)!=0,"try-error")){
 					stop("failed to converge estimating initial alphaS,betaS in initBetaMix")
@@ -160,9 +168,9 @@ initBetaMix <-
 			}
 			
 			if(fixedNULL){
-				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=1000,a0=alpha0,b0=beta0)f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),method="L-BFGS-B",control=list(parscale=c(scl,1)),lower=c(1e-6,10),upper=c(0.9999,K/muS)),silent=TRUE)			
+				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=mciter,a0=alpha0,b0=beta0)f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),method="L-BFGS-B",control=list(parscale=c(scl,1)),lower=c(1e-6,10),upper=c(0.9999,K/muS)),silent=TRUE)			
 			}else{
-				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS,alpha0/(alpha0+beta0),beta0+alpha0)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=1000)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),control=list(parscale=c(scl,1,scl,1)),method="L-BFGS-B",lower=c(1e-6,10,1e-6,10),upper=c(0.9999,K/muS,0.9999,K/mu0)),silent=TRUE)			
+				pars<-try(optim(par=(c(alphaS/(alphaS+betaS), betaS+alphaS,alpha0/(alpha0+beta0),beta0+alpha0)),function(p=par,data=d,Z=z,W=w,ALT=alternative,MC=mciter)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),control=list(parscale=c(scl,1,scl,1)),method="L-BFGS-B",lower=c(1e-6,10,1e-6,10),upper=c(0.9999,K/muS,0.9999,K/mu0)),silent=TRUE)			
 			}
 			if(inherits(pars,"try-error")|inherits(try(pars$convergence!=0),"try-error")){
 				stop("failed to converge estimating initial alpha0,beta0 in initBetaMix")

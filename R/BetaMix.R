@@ -6,7 +6,7 @@ BetaMix <-
 	LL<--.Machine$double.xmax
 	#try many initializations and start from the largest log likelihood
 	if(is.null(inits)){		
-		inits<-initBetaMix(d,fixedNULL=fixedNULL,ics=ics,alternative=alternative.model,priorXi=priorXi,scl=scl,K=K)
+		inits<-initBetaMix(d,fixedNULL=fixedNULL,ics=ics,alternative=alternative.model,priorXi=priorXi,scl=scl,K=K,mciter=mciter)
 		llmax<-CompleteDataLLRcpp(d=d,alpha0=inits$alpha0,alphaS=inits$alphaS,beta0=inits$beta0,betaS=inits$betaS,z=inits$z,w=inits$w,alternative=alternative.model,mciter=mciter)		
 	}
 	lltraj<-LL
