@@ -25,5 +25,5 @@ densityplot.BetaMixResult<-function(x,data,full=F,N=5000,...){
 	p<-data.frame(p,subject=gl(length(data),N-burn,labels=rownames(x@data)[data]))
 	p<-melt(p,measured=c("pu","ps"),id="subject")
 	p<-rename(p,list(subject="subject",variable="estimate",value="p"))
-	densityplot(~p|subject,p,auto.key=TRUE,groups=estimate,pch='.',main=expression(paste("Posterior Distributions of    ", p[s] ,"  and  ", p[u] ,"  | subject")),n=1000,lwd=2,...)
+	densityplot(~p|subject,p,auto.key=TRUE,groups=estimate,pch='.',main=expression(paste("Posterior Distributions of    ", p[s] ,"  and  ", p[u] ,"  | subject")),n=1000,lwd=2,scales=list(relation="free"),...)
 }

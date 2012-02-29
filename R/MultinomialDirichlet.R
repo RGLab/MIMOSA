@@ -28,7 +28,7 @@ MDnull<-function(alpha.unstim,n.stim,n.unstim){
 
 #Compute the marginal log-likelihood for the alternative distribution (vector of length P)
 MDalternative<-function(alpha.unstim,alpha.stim,n.stim,n.unstim){
-	lkbeta(alpha.unstim+n.unstim)-lkbeta(alpha.unstim)-lkbeta(alpha.stim)+lkbeta(alpha.stim+n.stim)+lfcrl(n.stim)+lfctrl(n.unstim)
+	lkbeta(alpha.unstim+n.unstim)-lkbeta(alpha.unstim)-lkbeta(alpha.stim)+lkbeta(alpha.stim+n.stim)+lfctrl(n.stim)+lfctrl(n.unstim)
 }
 
 

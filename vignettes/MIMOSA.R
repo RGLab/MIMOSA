@@ -17,15 +17,15 @@ show(HVTN049.ics)
 ###################################################
 ### code chunk number 3: extract
 ###################################################
-data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","IL2"))
+data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="GAG-1-PTEG",subset=c("cd4","IFNg"))
 head(data)
 
 
 ###################################################
 ### code chunk number 4: fit
 ###################################################
-result<-BetaMix(data,scl=100)
-show(result)
+result<-BetaMix(d=data,scl=9)
+summary(result)
 
 
 ###################################################
@@ -49,20 +49,20 @@ densityplot(result,c(24,1))
 ###################################################
 ### code chunk number 8: contours
 ###################################################
-contourPlot(result,which=24,nsamps=2000,n=30)
+contourPlot(result,which=5,nsamps=2000,n=30)
 
 
 ###################################################
 ### code chunk number 9: polyfunctionality
 ###################################################
-poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="IL2",cytokineB="IFNg",subset=c("cd4"),or="IFNg.IL2")
+poly<-testPolyfunctionality(ics=HVTN049.ics,stim="GAG-1-PTEG",control="negctrl1",cytokineA="IL2",cytokineB="IFNg",subset=c("cd4"),or="IFNg.IL2",scl=1)
 
 
 ###################################################
 ### code chunk number 10: unifunctionality
 ###################################################
-ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=100)
-il2<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IL2")),scl=100)
+ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="GAG-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=9)
+il2<-BetaMix(flowContrasts(HVTN049.ics,stim="GAG-1-PTEG",control="negctrl1",subset=c("cd4","IL2")),scl=9)
 
 
 ###################################################

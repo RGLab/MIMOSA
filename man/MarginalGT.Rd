@@ -7,7 +7,7 @@ Marginal log likelihood for the alternative model (ps>pu)
 This function computes the marginal log likelihood for an alternative beta-binomial component of the mixture model (treated proportion is greater than untreated).
 }
 \usage{
-MarginalGT(Ns, ns, Nu, nu, alpha0, beta0, alphaS, betaS)
+MarginalGT(Ns, ns, Nu, nu, alpha0, beta0, alphaS, betaS,mciter=1000)
 }
 \arguments{
   \item{Ns}{
@@ -33,6 +33,9 @@ The alphaS parameter of the beta distribution for the treated condition. A \code
 }
   \item{betaS}{
 The betaS parameter of the beta distribution for the treated condition. A \code{numeric}
+}
+\item{mciter}{
+An \code{integer} specifying the number of monte-carlo iterations for integration of this marginal likelihood.
 }
 }
 \details{

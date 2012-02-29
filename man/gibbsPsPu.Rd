@@ -7,9 +7,8 @@ Return the posterior estimate of the proportion of positive events for the treat
 Uses Gibbs sampling from the posterior predictive distribution of the beta binomial mixture model to estimate the proportion of positive events for the treated and untreated samples given a single observation and the fitted model parameters.
 }
 \usage{
-gibbsPsPu(curdat = NULL, inits = NULL, which = NULL, N = 10000,burn=5000)
+gibbsPsPu(curdat = NULL, inits = NULL, which = NULL, N = 10000,burn=5000,alt,z=NULL, ecdf.approx=FALSE, volcano=FALSE,...)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{curdat}{
 A \code{numeric} matrix or data.frame of response X treatment counts with column names \code{"Ns","ns","Nu","nu"}.
@@ -27,6 +26,21 @@ A \code{list} of the fitted model parameters returned from \code{BetaMix}
 	\item{burn}{
 	The number of burn--in samples.	
 	}
+\item{alt}{
+A \code{character} either \code{"greater"} or \code{"not equal"} specifying the model to draw from.
+}
+\item{z}{
+A \code{matrix} of z's, the posterior probabilities of membership of each observation to each component. Can be \code{NULL}. 
+}
+\item{ecdf.approx}{
+A \code{logical} either \code{TRUE|FALSE}. An alternate way to sample from the posterior.
+}
+\item{volcano}{
+A \code{logical}, either \code{TRUE|FALSE}, specifies whether shrunken estimates of p.hat should be returned. Used for volcano plots.
+}
+\item{...}{
+Additional arguments. Not currently used.
+}
 }
 \details{
 Samples from the posterior predictive distribution of the model are taken via gibbs sampling to estimate ps (the proportion of positive events in the treated case) and pu (the proportion of positive events in the untreated case).

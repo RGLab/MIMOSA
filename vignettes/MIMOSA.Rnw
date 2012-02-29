@@ -1,3 +1,4 @@
+%\VignetteIndexEntry{MIMOSA: Mixture Models For Single Cell Assays}
 \documentclass{article}
 \begin{document}
 \title{The MIMOSA Package}
@@ -37,25 +38,25 @@ We see that this ICS assay has 27 samples (subjects), contains cytokine expressi
 From an ICS object we can extract and analyze the data for any given contrast of control and stimulation for a specific cytokine and parent population. The data is extracted using the \textit{flowContrasts} method, returning a data frame, which serves as input to the BetaMix function that does the model fitting. 
 
 <<extract>>=
-data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","IFNg"))
+data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","TNFa"))
 head(data)
 @
 
 flowContrasts extracts the positive and negative cell counts of all the specified stimulation and control samples from the specified population and cytokine combination. We can now proceed to fit the model using \textit{BetaMix}. We'll use the default alternate hypothesis that $p_s>p_u$. We can also fit a model where the alternative hypothesis tests $p_s\ne p_u$ by passing the parameter \textit{alternative.model="not equal"}. The default is \textit{alternative.model="greater"}. We can also specify a shrinkage parameter, via \textit{shrink}. The beta prior hyperparameters are estimated from the data and specifying a value of \textit{shrink}$>1$ can be used to shrink the estimated proportions of stimulated and unstimulated cells towards the component means. 
 
 <<fit,keep.source=FALSE>>=
-result<-BetaMix(d=data,scl=9)
-show(result)
+result<-BetaMix(d=data,scl=5)
+summary(result)
 @
 The scl parameter adjusts the scale of the optimization routine. Larger values provide a finer-grained step size when fitting the mean of the prior distributions. Sometimes adjusting this parameter can be helpful if the model doesn't converge.
-Printing the fitted displays the contrast of interest, the number of samples in the model, the log--likelihood of the final model, and the estimates of the component weights. In this case, the ENV stimulated samples are almost all responders (97\%). 
+Printing the fitted displays the contrast of interest, the number of samples in the model, the log--likelihood of the final model, and the estimates of the component weights. In this case, the 5\% of the Gag stimulated samples are responders. 
 
-We can extrace q--values (the false discovery rates) for each observation in the model via the \textit{fdr} object slot. At the 1\% level we obtain:
+We can extract the q--values (the false discovery rates) for each observation in the model via the \textit{fdr} object slot. At the 1\% level we obtain the same result as the summary method:
 <<fdr>>=
 table(result@fdr<0.01)
 @
 
-We see \Sexpr{table(result@fdr<0.01)[2]} of 27 individuals are called responders at the 1\% level, and we would expect 1\%  of them to be false positives. Another way to visualize the data is via a volcano plot, which plots the false discovery rate on the y--axis vs the difference between the stimulated and unstimulated samples on the x--axis. 
+Again, \Sexpr{table(result@fdr<0.01)[2]} of 27 individuals are called responders at a false discovery rate of 1\%, thus we would expect 1\%  of them to be false positives. Another way to visualize the data is via a volcano plot, which plots the false discovery rate on the y--axis vs the difference between the stimulated and unstimulated samples on the x--axis. 
 
 <<volcano,fig=TRUE>>=
 res<-volcanoPlot(result)
@@ -66,7 +67,7 @@ The triangles represent the maximum likelihood estimates of the difference in pr
 We can plot the posterior distributions of the stimulated and unstimulated proportions of cells for any observation:
 
 <<densityplots,fig=TRUE>>=
-densityplot(result,c(24,1))
+densityplot(result,c(3,5))
 @
 
 These plots show that $p_s=p_u$ for sample 049-080, $p_s>p_u$ for sample 049-087. 
@@ -74,7 +75,7 @@ These plots show that $p_s=p_u$ for sample 049-080, $p_s>p_u$ for sample 049-087
 We can examine contour plots of the likelihood surface for any individual.Let's look at sample 10.
 
 <<contours,fig=TRUE>>=
-contourPlot(result,which=24,nsamps=2000,n=30)
+contourPlot(result,which=5,nsamps=2000,n=30)
 @
 
 Here the mixture of beta distributions is clearly visible. The x and y axes represent the number of cytokine positive cells in the stimulated and unstimulated samples. \textit{nsamps} specifies how many samples to draw for the kernel density estimate, while \textit{n} specifies how many levels to draw for the contour plot. The samples are overlaid on the contour plot. Note that they are integer--valued. The bottom--right component represents the $p_s>p_u$ component, whereas te upper--left component represents the $p_s=p_u$ component. The red point represents the observed value of $n_s$ and $n_u$.
@@ -85,23 +86,23 @@ We can use the model to assess polyfunctionality in a stepwise manner. For a pai
 We can do this very simply in MIMOSA with the \textit{testPolyfunctionality} function. We pass the names of the stimulation and control, as well as the two cytokines for which polyfunctionality is to be determined. There are two subtle differences: first, the subset argument now only takes the name of the parent population. It is not necessary to specify the cytokine name in the subset. Second, there is an additional argument ``or'' which takes the name of the ``OR'' counts in the ICS data strucutre. In our case, since we're looing at IFNg and IL2, we want the OR counts for these two cytokines. They are tabulated under the ``IFNg.IL2'' level in the \textit{fname} column.
 
 <<polyfunctionality>>=
-poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="IL2",cytokineB="IFNg",subset=c("cd4"),or="IFNg.IL2")
+poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="TNFa",cytokineB="IFNg",subset=c("cd4"),or="IFNg.TNFa",scl=5)
 @
 
 <<unifunctionality,echo=FALSE,results=hide>>=
-ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=9)
-il2<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IL2")),scl=9)
+ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=5)
+tnfa<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","TNFa")),scl=5)
 @
 
 The function computes the unifunctional positivity calls, then the polyfunctional positivity calls, returning a \textit{BetaMixResult} object.
 
 <<summary>>=
-summary(poly)
-summary(ifng)
-summary(il2)
+summary(ifng,threshold=1e-5)
+summary(tnfa,threshold=1e-5)
+summary(poly,threshold=1e-5)
 @
 
-Comparing the polyfunctional fit vs the monofunctional responder calls, we see, as expected, fewer subjects exhibiting polyfunctional cytokine expression than monofunctional cytokine expression.
+Interestingly, because of the low background for polyfunctional cells, the sensitivity is increased and all samples are detected as responding to stimulation for TNFa and IFNg in the Env stimulated CD4+ cells. 
 
 
 \end{document}

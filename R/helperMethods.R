@@ -28,8 +28,8 @@ f0m<-function(p,z,d,w,alternative=alternative,mciter=mciter,alpha0,beta0){-Compl
 f1<-function(x,alpha.u,beta.u,alpha.s,beta.s){dbeta(x,alpha.u,beta.u)*pbeta(x,alpha.s,beta.s,lower.tail=FALSE)}
 f2<-function(x,alpha.u,beta.u,alpha.s,beta.s){dbeta(x,alpha.s,beta.s)*pbeta(x,alpha.u,beta.u,lower.tail=TRUE)}
 
-f1.log<-function(x,alpha.u,beta.u,alpha.s,beta.s){exp(dbeta(x,alpha.u,beta.u,log=T)+pbeta(x,alpha.s,beta.s,log=T,lower.tail=FALSE))}
-f2.log<-function(x,alpha.u,beta.u,alpha.s,beta.s){exp(dbeta(x,alpha.s,beta.s,log=T)+pbeta(x,alpha.u,beta.u,log=T,lower.tail=TRUE))}
+f1.log<-function(x,alpha.u,beta.u,alpha.s,beta.s){exp(dbeta(x,alpha.u,beta.u,log=T)+pbeta(x,alpha.s,beta.s,log.p=T,lower.tail=FALSE))}
+f2.log<-function(x,alpha.u,beta.u,alpha.s,beta.s){exp(dbeta(x,alpha.s,beta.s,log=T)+pbeta(x,alpha.u,beta.u,log.p=T,lower.tail=TRUE))}
 
 #integrate(f1,0,1,alpha.u=10,beta.u=100,alpha.s=1,beta.s=100)
 #integrate(f2,0,1,alpha.u=10,beta.u=100,alpha.s=1,beta.s=100)
@@ -226,7 +226,11 @@ setMethod("show","BetaMixResult",function(object){
 
 setMethod("summary","BetaMixResult",function(object,...){
 			show(object)
-			cat("Positivity: ",table(factor(object@fdr<0.1,levels=c("FALSE","TRUE")))[2]," of ",length(object@fdr)," at ",0.1*100,"% FDR\n");
+			threshold<-list(...)$threshold
+			if(is.null(threshold)){
+				threshold<-0.01
+			}
+			cat("Positivity: ",table(factor(object@fdr<threshold,levels=c("FALSE","TRUE")))[2]," of ",length(object@fdr)," at ",threshold*100,"% FDR\n");
 		})
 #plot method for BetaMixResult, will plot the log likelihood trajectory of the model fitting process
 plot.BetaMixResult<-function(x,y,...){

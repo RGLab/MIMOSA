@@ -12,7 +12,13 @@ setMethod("estimateProportions",signature=c("BetaMixResult"),function(bmr,method
 		})
 
 gibbsPsPu <-
-		function(curdat=NULL,inits=NULL,which=NULL,N=10000,burn=5000,alt,z=NULL,ecdf.approx=FALSE,volcano=FALSE){
+		function(curdat=NULL,inits=NULL,which=NULL,N=10000,burn=5000,alt,z=NULL,ecdf.approx=FALSE,volcano=FALSE,...){
+	threshold<-list(...)$threshold
+	if(!is.null(threshold)){
+		if(!is.numeric(threshold)){
+			stop("whoops.. threshold must be numeric between zero and one.")
+		}
+	}
 	Ns<-curdat[which,"Ns"];ns<-curdat[which,"ns"];Nu<-curdat[which,"Nu"];nu<-curdat[which,"nu"]
 	alpha0<-inits$alpha0;beta0<-inits$beta0;alphaS<-inits$alphaS;betaS<-inits$betaS;
 	ps<-double(N)
@@ -61,10 +67,19 @@ gibbsPsPu <-
 			z<-m1/(m1+m2)
 			z<-cbind(z,1-z)
 		}
-		if(max.col(z)==1){
-			return(cbind(pu=PU,ps=PS)[(burn+1):N,])
+		if(is.null(threshold)){
+			if(max.col(z)==1){
+				return(cbind(pu=PU,ps=PS)[(burn+1):N,])
+			}else{
+				return(cbind(pu=pu,ps=ps)[(burn+1):N,])
+			}
 		}else{
-			return(cbind(pu=pu,ps=ps)[(burn+1):N,])
+			z.fdr<-fdr(inits$z)
+			if((z.fdr<threshold)[which]){
+				return(cbind(pu=pu,ps=ps)[(burn+1):N,])
+			}else{
+				return(cbind(pu=PU,ps=PS)[(burn+1):N,])
+			}
 		}
 	}else{
 		#if z is given, mix the PS,PU nd ps, pu samples in the appropriate proportions

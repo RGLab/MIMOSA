@@ -19,9 +19,9 @@ CompleteDataLL<-function(d,alpha0,beta0,alphaS,betaS,z,w,alternative="greater",m
 	if(alternative=="greater"){
 		result<-MIMOSA:::MarginalGT(d[,"Ns"],d[,"ns"],d[,"Nu"],d[,"nu"],alpha0,beta0,alphaS,betaS)*z[,2]
 	}else{
-		result<-MIMOSA:::MarginalNE(d2[,"Ns"],d2[,"ns"],d2[,"Nu"],d2[,"nu"],alpha0,beta0,alphaS,betaS)*z[,2]
+		result<-MIMOSA:::MarginalNE(d[,"Ns"],d[,"ns"],d[,"Nu"],d[,"nu"],alpha0,beta0,alphaS,betaS)*z[,2]
 	}
-	result<-result+MIMOSA:::MarginalNULL(d2[,"Ns"],d2[,"ns"],d2[,"Nu"],d2[,"nu"],alpha0,beta0)*z[,1]
+	result<-result+MIMOSA:::MarginalNULL(d[,"Ns"],d[,"ns"],d[,"Nu"],d[,"nu"],alpha0,beta0)*z[,1]
 	
 	return(sum(result));
 }

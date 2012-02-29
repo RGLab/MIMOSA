@@ -7,7 +7,7 @@ Compute the complete data log likelihood for the beta binomial mixture model for
 Computes the complete data log likelihood for the beta binomial mixture model for ICS positivity calls.
 }
 \usage{
-CompleteDataLL(d = NULL, alpha0 = NULL, beta0 = NULL, alphaS = NULL, betaS = NULL, z = NULL, w = NULL, alternative=NULL)
+CompleteDataLL(d, alpha0, beta0, alphaS, betaS, z, w, alternative="greater",mciter=50)
 }
 \arguments{
   \item{d}{
@@ -34,7 +34,9 @@ A \code{data.frame} or \code{matrix} of observations. Rows are observations. Col
   \item{alternative}{
 	\code{character} vector specifying the alternative model. Either of \code{"greater", "not equal"}.
 }
-
+\item{mciter}{
+An \code{integer} specifying the number of monte-carlo iterations for integration when \code{alternative="greater"}.
+}
 }
 \details{
 	Computes the complete data log-likelihood of the beta binomial mixture model via calls to MarginalNULL and MarginalGT.

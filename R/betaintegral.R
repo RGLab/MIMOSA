@@ -19,7 +19,7 @@ function(alphaS,betaS,alpha0,beta0,Nu,nu,Ns,ns,p=1000){
 #New code does Monte-Carlo integration
 betaintegral_R<-function(alphaS,betaS,alpha0,beta0,Nu,nu,Ns,ns,l=1000){
 	res<-lbeta(ns+alphaS, betaS+Ns)+lbeta(nu+alpha0,beta0+Nu)+sapply(1:length(Ns),function(i){
-  	log(mean(pbeta(rbeta(l,alpha0+nu[i],beta0+Nu[i]),alphaS+ns[i],betaS+Ns[i],lower.tail=FALSE,log=F)));
+  	log(mean(pbeta(rbeta(l,alpha0+nu[i],beta0+Nu[i]),alphaS+ns[i],betaS+Ns[i],lower.tail=FALSE,log.p=F)));
 	})
 	return(res)
 }

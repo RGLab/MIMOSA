@@ -3,7 +3,7 @@
 # Created on: Dec 6, 2011
 #     Author: finak
 
-testPolyfunctionality<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,stim=NULL,control=NULL,subset=NULL,shrink=1){
+testPolyfunctionality<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,stim=NULL,control=NULL,subset=NULL,shrink=1,scl=1){
 	if(any(c(is.null(ics),is.null(cytokineA),is.null(stim),is.null(cytokineB),is.null(or),is.null(control),is.null(subset)))){
 		stop("All arguments must be non--null");
 	}
@@ -16,8 +16,8 @@ testPolyfunctionality<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,s
 	attr(AND,"stimulation")<-attr(A,"stimulation")
 	attr(AND,"control")<-attr(A,"control")
 	attr(AND,"cytokine")<-union(attr(A,"cytokine"),attr(B,"cytokine"))
-	resA<-BetaMix(A,shrink=shrink,scl=9,K=5000)
-	resB<-BetaMix(B,shrink=shrink,scl=9,K=5000)
-	resAND<-BetaMix(AND,shrink=shrink,scl=9,K=5000)
+	#resA<-BetaMix(A,shrink=shrink,scl=9,K=5000)
+	#resB<-BetaMix(B,shrink=shrink,scl=9,K=5000)
+	resAND<-BetaMix(AND,shrink=shrink,scl=scl,K=5000)
 	return(resAND)
 }

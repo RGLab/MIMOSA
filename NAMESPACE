@@ -9,6 +9,8 @@ importClassesFrom(methods, array, character, data.frame, factor, integer,
 
 importMethodsFrom(methods, coerce, show)
 
+importMethodsFrom(MASS,kde2d)
+
 importFrom(graphics, abline, contour, legend, plot, points)
 
 importFrom(lattice, densityplot)

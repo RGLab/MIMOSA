@@ -7,11 +7,11 @@ Compute the fdr for each observation after fitting the beta binomial mixture mod
 Computes the false discovery rate for each observation fit to a beta binomial mixture model for ICS flow data.
 }
 \usage{
-fdr(inits)
+fdr(z)
 }
 \arguments{
-  \item{inits}{
-    \code{inits} is a list of fitted model parameters, an element of the list structure returned by \code{BetaMix}. 
+  \item{z}{
+    \code{z} a \code{matrix} (n x 2) of the z's (posterior probabilities) that an observation (row) is responding to stimulation (column 2) or not responding to stimulation (column 1). These are probabilities so each row should sum to 1. 
 }
 }
 \author{
