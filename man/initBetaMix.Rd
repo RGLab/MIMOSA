@@ -47,9 +47,9 @@ A list of initial model parameters
 \item{alphaS}{The initial alphaS value}
 \item{betaS}{The initial betaS value}
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org
 }

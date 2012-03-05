@@ -48,9 +48,9 @@ Samples from the posterior predictive distribution of the model are taken via gi
 \value{
 A \code{numeric} matrix with two columns named \code{"ps","pu"}, and \code{N-burn} rows. The samples from the posterior predictive distribution of ps and pu.
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org>
 }

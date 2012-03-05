@@ -44,9 +44,9 @@ An \code{integer} specifying the number of monte-carlo iterations for integratio
 \value{
 	A \code{numeric} vector. The complete--data log likelihood of the model, given \code{d}.
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org>
 }

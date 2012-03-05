@@ -7,9 +7,9 @@ testPolyfunctionality<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,s
 	if(any(c(is.null(ics),is.null(cytokineA),is.null(stim),is.null(cytokineB),is.null(or),is.null(control),is.null(subset)))){
 		stop("All arguments must be non--null");
 	}
-	A<-flowContrasts(ics,control=control,stim=stim,subset=c(subset,cytokineA))
-	B<-flowContrasts(ics,control=control,stim=stim,subset=c(subset,cytokineB))
-	OR<-flowContrasts(ics,control=control,stim=stim,subset=c(subset,or))
+	A<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineA))
+	B<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineB))
+	OR<-extractData(ics,control=control,stim=stim,subset=c(subset,or))
 	AND<-A+B-OR
 	AND[,"Ns"]<-A[,"Ns"]+A[,"ns"]-AND[,"ns"]
 	AND[,"Nu"]<-A[,"Nu"]+A[,"nu"]-AND[,"nu"]
