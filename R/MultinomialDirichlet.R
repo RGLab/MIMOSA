@@ -33,6 +33,97 @@ lkbeta<-function(alpha){
 	sum(lgamma(alpha))-lgamma(sum(alpha))
 }
 
+
+
+makeLogLikeDirichlet<-function(data)
+{
+	P<-nrow(data)
+	loglike<-function(x)
+	{
+		ll<-P*lgamma(sum(x))-P*sum(lgamma(x))+sum((x-1)*log(data))
+		return(ll)
+	}
+}
+makeGradDirichlet<-function(data){
+	P<-nrow(data)
+	data<-matrix(data,ncol=4)
+	grad<-function(x)
+	{
+		g<-P*digamma(sum(x))-P*(digamma(x))+P*colMeans(log(data))
+		return(g)
+	}
+}
+makeHessDirichlet<-function(data){
+	P<-nrow(data)
+	data<-matrix(data,ncol=4)
+	hess<-function(x)
+	{
+		O<-P*trigamma(sum(x))
+		H<-matrix(O,nrow=length(x),ncol=length(x))
+		H<-H-P*diag(trigamma(x))
+		return(H)
+	}
+}
+
+
+
+
+makeLogLikeNULLComponent<-function(data.stim,data.unstim){
+	N.s<-rowSums(data.stim)
+	N.u<-rowSums(data.unstim)
+	data<-data.stim+data.unstim
+	loglike<-function(x){
+		(lgamma(sum(x))-lgamma(rowSums(t(x+t(data))))+rowSums(t(t(lgamma(t(x+t(data))))-lgamma(x)))+lgamma(N.s+1)+lgamma(N.u+1) - rowSums(lgamma(data.stim+1)+lgamma(data.unstim+1)))
+	}
+	return(loglike)
+}
+makeLogLikeRespComponent<-function(data.stim,data.unstim){
+	N.s<-rowSums(data.stim)
+	N.u<-rowSums(data.unstim)
+	stim.ind<-1:4
+	unstim.ind<-5:8
+	data<-cbind(data.stim,data.unstim)
+	loglike<-function(x){
+		rowSums(t(t(lgamma(t(x[stim.ind]+t(data.stim)))+lgamma(t(x[unstim.ind]+t(data.unstim)))-lgamma(data.stim+1)-lgamma(data.unstim+1))-lgamma(x[stim.ind])-lgamma(x[unstim.ind])))+
+				lgamma(sum(x[stim.ind]))+lgamma(sum(x[unstim.ind]))-lgamma(rowSums(t(x[unstim.ind]+t(data.unstim))))-lgamma(rowSums(t(x[stim.ind]+t(data.stim))))+lgamma(N.s+1)+lgamma(N.u+1)
+	}
+	return(loglike)
+}
+
+a<-c(10,20,30,40)*100
+b<-c(40,5,60,20)*100
+pu<-rdirichlet(100,a)
+ps<-rdirichlet(100,a)
+nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1000,2000),pu[i,])))
+ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1000,2000),ps[i,])))
+ll1<-makeLogLikeNULLComponent(ns,nu)
+ll2<-makeLogLikeRespComponent(ns,nu)
+
+c(MIMOSA:::MDalternative(a,b,ns,nu),ll2(c(b,a)))
+c(MIMOSA:::MDnull(a,ns,nu),ll1(a))
+
+
+makeGradientNULLComponent<-function(data){
+	
+}
+
+makeHessianNULLComponent<-function(data){
+	
+}
+data<-rdirichlet(100,c(10,20,30,40))
+grad<-makeGradDirichlet(data)
+hess<-makeHessDirichlet(data)
+old<-c(1,1,1,1)
+iter<-0
+repeat{
+	new<-old-solve(hess(old),grad(old))
+	if(norm(new-as.matrix(old))<1e-10|iter>10000){
+		break
+	}
+	old<-new
+	iter<-iter+1
+}
+
 #Compute the marginal-log-likelihood for the null distribution (vector of length P)
 #' 
 #' @param alpha.unstim vector of hyperparameters for the unstimulated sample
@@ -83,15 +174,42 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 #' @author Greg Finak
 #' @export
 initMDMix<-function(data=NULL,modelmatrix=NULL){
-	alpha.u<-colSums(data$n.unstim)/sum(data$n.unstim)
-#	1.	Nelson, W. JSTOR: The American Statistician, Vol. 26, No. 3 (Jun., 1972), pp. 22-27. The American statistician (1972).
-	p<-(data$n.unstim/rowSums(data$n.unstim))
-	q<-(data$n.stim/rowSums(data$n.stim))
-	ddirichlet(q,data$n.stim)/(ddirichlet(q,data$n.stim)+ddirichlet(q,data$n.unstim))
-	rho<-p/q
-	rowSums(data$n.stim)
+	unstim<-data$n.unstim
+	stim<-data$n.stim
+	
+	#fisher's exact test of all the marginals
+	mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="greater")$p.value)))<0.01
+	
+	#observations with no significant marginals belong to the null component.
+	mm<-apply(mm,1,function(x)all(!x))
+	
+	#The rest are from the responder component
+	#construct the z-matrix
+	z<-matrix(0,length(mm),2)
+	z[mm,1]<-1
+	z[!mm,2]<-1
+	
+	#estimate hyperparamters.
+	pu.u<-unstim/rowSums(unstim)
+	pu.s<-stim[which(z[,1]==1),]/rowSums(stim[which(z[,1]==1),])
+	
+	pu<-(rbind(pu.u,pu.s))
+	#fixed point iteration to estimate alpha.u
+	trace<-Inf
+	iter<-0;
+	est<-c(1,1,1,1);while(trace>1e-3|iter<50000){iter<-iter+1;est<-digamma(sum(est))+log(colMeans(pu));y<-est;est<-runif(4);for(i in 1:100){est<-est-(digamma(est)-y)/trigamma(est)};trace<-sum(abs(est/sum(est)-colMeans(pu))/(est/sum(est)))}
+	alpha.u<-est;
+	browser()
+	#ps.s<-stim[z[,2]==1,]/rowSums(stim[z[,2]==1,])
+	
+	
+	
 }
 
+estAlpha<-function(est,dat=NULL) {
+	NLL = -sum(log(ddirichlet(dat,est)))
+	return(NLL)	
+}
 
 #' extracts bifunctional cytokine data from and ICS object given the two marginals (A, B) and A||B for stimualted and unstimulated. Used for the multinomial dirichlet model. ORDER OF CYTOKINES MATTERS!
 #' @param ics 
@@ -151,4 +269,4 @@ print.MDlist<-function(x){
 			cat("Stimulation ",attr(x,"stim"),"\n")
 			cat("Subset ", attr(x,"subset"),"\n")
 			cat(nrow(x[[1]])," observations","\n")
-		}
+}
