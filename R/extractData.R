@@ -1,4 +1,4 @@
-#flowContrasts.R
+#extractData.R
 
 # Created on: Nov 29, 2011
 #     Author: Greg Finak
@@ -18,15 +18,15 @@
 #fname is the cytokine name
 #If intial.contrasts==TRUE, then restructure the matrix above to something more suitable using reshape package.
 #The data will be turned into a nested list, nested by parent, fname, ID and contain a matrix of antigen, pos, neg for each ID
-#If initial.cast==TRUE, we do this restructuring in the flowContrasts function call.
+#If initial.cast==TRUE, we do this restructuring in the extractData function call.
 #control is the name of the negative control antigen
 #stim is the name of the positive stimulation antigen
 #default values are provided for control and stim that may not work with all data
 #subset are the levels of parent and fname to be extracted from the nesting. Order is important
 
-#TODO update flowContrasts to deal with double-positive cytokines.
-setGeneric("flowContrasts",function(ics,control,stim,subset){ standardGeneric("flowContrasts")});
-setMethod("flowContrasts",c("ICS","character","character","character"),
+#TODO update extractData to deal with double-positive cytokines.
+setGeneric("extractData",function(ics,control,stim,subset){ standardGeneric("extractData")});
+setMethod("extractData",c("ICS","character","character","character"),
 		function(ics,control="Neg Cont",stim="CMV",subset=c("cd4","IFNg")){
 			x<-ics@.Data
 			e<-eval(parse(text=eval(paste('x[["',paste(subset,collapse='"]][["'),'"]]',sep=""))))

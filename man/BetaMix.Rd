@@ -53,9 +53,9 @@ A \code{list} of fitted model parameters and additional information.
 \item{iter}{The number of iterations required to converge}
 \item{lltraj}{The trajectory of log--likelihood from interation 1 to iteration iter.}
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org>
 }

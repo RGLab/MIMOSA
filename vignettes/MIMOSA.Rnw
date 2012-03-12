@@ -35,14 +35,14 @@ show(HVTN049.ics)
 
 We see that this ICS assay has 27 samples (subjects), contains cytokine expression for cd4, cd8, and the cd4/cd8 double positive populations, it has three antigen stimulations (ENV-1-PTEG, GAG-1-PTEG, and negative controls), and has cell counts for a variety of cytokines and combinations of cytokines (i.e. IFNg.IL2 is IFNg OR IL2). The \textit{show} method also prints the first few columns of data from one subject.
 
-From an ICS object we can extract and analyze the data for any given contrast of control and stimulation for a specific cytokine and parent population. The data is extracted using the \textit{flowContrasts} method, returning a data frame, which serves as input to the BetaMix function that does the model fitting. 
+From an ICS object we can extract and analyze the data for any given contrast of control and stimulation for a specific cytokine and parent population. The data is extracted using the \textit{extractData} method, returning a data frame, which serves as input to the BetaMix function that does the model fitting. 
 
 <<extract>>=
-data<-flowContrasts(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","TNFa"))
+data<-extractData(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","TNFa"))
 head(data)
 @
 
-flowContrasts extracts the positive and negative cell counts of all the specified stimulation and control samples from the specified population and cytokine combination. We can now proceed to fit the model using \textit{BetaMix}. We'll use the default alternate hypothesis that $p_s>p_u$. We can also fit a model where the alternative hypothesis tests $p_s\ne p_u$ by passing the parameter \textit{alternative.model="not equal"}. The default is \textit{alternative.model="greater"}. We can also specify a shrinkage parameter, via \textit{shrink}. The beta prior hyperparameters are estimated from the data and specifying a value of \textit{shrink}$>1$ can be used to shrink the estimated proportions of stimulated and unstimulated cells towards the component means. 
+extractData extracts the positive and negative cell counts of all the specified stimulation and control samples from the specified population and cytokine combination. We can now proceed to fit the model using \textit{BetaMix}. We'll use the default alternate hypothesis that $p_s>p_u$. We can also fit a model where the alternative hypothesis tests $p_s\ne p_u$ by passing the parameter \textit{alternative.model="not equal"}. The default is \textit{alternative.model="greater"}. We can also specify a shrinkage parameter, via \textit{shrink}. The beta prior hyperparameters are estimated from the data and specifying a value of \textit{shrink}$>1$ can be used to shrink the estimated proportions of stimulated and unstimulated cells towards the component means. 
 
 <<fit,keep.source=FALSE>>=
 result<-BetaMix(d=data,scl=5)
@@ -90,8 +90,8 @@ poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1"
 @
 
 <<unifunctionality,echo=FALSE,results=hide>>=
-ifng<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=5)
-tnfa<-BetaMix(flowContrasts(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","TNFa")),scl=5)
+ifng<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=5)
+tnfa<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","TNFa")),scl=5)
 @
 
 The function computes the unifunctional positivity calls, then the polyfunctional positivity calls, returning a \textit{BetaMixResult} object.

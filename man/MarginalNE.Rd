@@ -41,9 +41,9 @@ This function computes the marginal log likelihood of an alternative model compo
 \value{
 A \code{numeric}. The marginal log--likelihood of the data, given the parameters.
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org>
 }
@@ -52,8 +52,8 @@ This function should not need to be called by the user.
 }
 
 
-\seealso{
+%\seealso{
 %% ~~objects to See Also as \code{\link{help}}, ~~~
-}
+%}
 
 \keyword{ models }

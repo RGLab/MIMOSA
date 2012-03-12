@@ -42,9 +42,9 @@ betaintegral(alphaS, betaS, alpha0, beta0, Nu, nu, Ns, ns,p=1000)
 \value{
 Returns the value of the integral. \code{numeric}
 }
-\references{
+%\references{
 %% ~put references to the literature/web site here ~
-}
+%}
 \author{
 Greg Finak <gfinak@fhcrc.org>
 }
