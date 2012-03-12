@@ -92,50 +92,71 @@ makeLogLikeRespComponent<-function(data.stim,data.unstim){
 
 
 
-makeGradientNULLComponent<-function(data.stim,data.unstim){
+makeGradientNULLComponent<-function(data.stim,data.unstim,z=NULL){
 	data<-data.stim+data.unstim
+	if(is.null(z)){
+		z<-matrix(1,nrow=nrow(data.unstim),ncol=2)
+	}
 	grad<-function(x){
-		rowSums(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+		gr<-(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+		gr%*%z[,1]
 	}
 }
-makeGradientHalfComponent<-function(data){
+makeGradientHalfComponent<-function(data,z=NULL){
+	if(is.null(z)){
+		z<-matrix(1,nrow=nrow(data),ncol=1)
+	}
 	grad<-function(x){
-		rowSums(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+		gr<-(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+		gr%*%z
 	}
 }
 
-makeGradientRespComponent<-function(data.stim,data.unstim){
+makeGradientRespComponent<-function(data.stim,data.unstim,z=NULL){
 	stim.ind<-1:4
 	unstim.ind<-5:8
-	gs<-makeGradientHalfComponent(data.stim);gu<-makeGradientHalfComponent(data.unstim);
+	if(is.null(z)){
+		z<-matrix(1,nrow=nrow(data.stim),ncol=2)
+	}
+	gs<-makeGradientHalfComponent(data.stim,z=z[,2]);gu<-makeGradientHalfComponent(data.unstim,z=z[,1]);
 	grad<-function(x){
 		c(gs(x[stim.ind]),gu(x[unstim.ind]))
 	}
 	return(grad)
 }
 
-makeHessianNULLComponent<-function(data.stim,data.unstim){
+makeHessianNULLComponent<-function(data.stim,data.unstim,z){
 	data<-data.stim+data.unstim
+	if(is.null(z)){
+		z<-matrix(1,nrow=nrow(data.unstim),ncol=2)
+	}
 	hess<-function(x){
-		H<-matrix(sum(trigamma(sum(x))-trigamma(colSums(t(data)+x))),ncol=length(x),nrow=length(x))
-		D<-rowSums(trigamma(x+t(data))-trigamma(x))
+		H<-matrix(sum(z[,1]*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
+		D<-(trigamma(x+t(data))-trigamma(x))%*%z[,1]
 		diag(H)<-diag(H)+D
 		return(H)
 	}
 	return(hess)
 }
-makeHessianHalfComponent<-function(data){
+
+makeHessianHalfComponent<-function(data,z=NULL){
+	if(is.null(z)){
+		z<-matrix(1,nrow=nrow(data),ncol=1)
+	}
 	hess<-function(x){
-		H<-matrix(sum(trigamma(sum(x))-trigamma(colSums(t(data)+x))),ncol=length(x),nrow=length(x))
-		D<-rowSums(trigamma(x+t(data))-trigamma(x))
+		H<-matrix(sum(z*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
+		D<-(trigamma(x+t(data))-trigamma(x))%*%z
 		diag(H)<-diag(H)+D
 		return(H)
 	}
 }
-makeHessianRespComponent<-function(data.stim,data.unstim){
+makeHessianRespComponent<-function(data.stim,data.unstim,z){
 	stim.ind<-1:4
 	unstim.ind<-5:8
-	hs<-makeHessianHalfComponent(data.stim);hu<-makeHessianHalfComponent(data.unstim);
+	if(is.null(z)){
+		z<-matrix(1,nrow=data.stim,ncol=2)
+	}
+	hs<-makeHessianHalfComponent(data.stim,z[,2]);hu<-makeHessianHalfComponent(data.unstim,z[,1]);
 	hess<-function(x){
 		H<-matrix(0,nrow=length(c(stim.ind,unstim.ind)),ncol=length(c(stim.ind,unstim.ind)))
 		H[stim.ind,stim.ind]<-hs(x[stim.ind]);
@@ -146,51 +167,45 @@ makeHessianRespComponent<-function(data.stim,data.unstim){
 }
 
 
-a<-c(100000,40,20,100)
-b<-c(150000,50,30,20)
-pu<-rdirichlet(100,a)
-ps<-rdirichlet(100,b)
-nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1e5,1.5e5),pu[i,])))
-ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1e5,1.5e5),ps[i,])))
-
-llnull<-makeLogLikeNULLComponent(ns,nu)
-llresp<-makeLogLikeRespComponent(ns,nu)
-gnull<-makeGradientNULLComponent(ns,nu)
-gresp<-makeGradientRespComponent(ns,nu)
-hessnull<-makeHessianNULLComponent(ns,nu)
-hessresp<-makeHessianRespComponent(ns,nu)
-
-guess<-c(colMeans(ns/rowSums(ns)),colMeans(nu/rowSums(nu)))
-o<-guess
-#guess<-guess[5:8]
-iter<-0
-repeat{
-	new<-guess-solve(hessresp(as.vector(o)),gresp(as.vector(guess)))
-	if(iter>2)
-		o<-o
-	new[which(new<=0)]<-runif(length(which(new<=0)))
-	if(sum(abs(new-as.matrix(guess)))<1e-8|iter>100000){
-		break
+#a,b are the non-responder and responder hyperparameters
+testComponentOptimization <- function(a, b)
+{
+	a<-c(100000,40,20,100)
+	b<-c(100000,900,100,100)
+	pu<-rdirichlet(100,a)
+	ps<-rdirichlet(50,a)
+	ps<-rbind(ps,rdirichlet(50,b))
+	nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1e5,1.5e5),pu[i,])))
+	ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1e5,1.5e5),ps[i,])))
+	
+	llnull<-makeLogLikeNULLComponent(ns,nu)
+	llresp<-makeLogLikeRespComponent(ns,nu)
+	gnull<-makeGradientNULLComponent(ns,nu)
+	gresp<-makeGradientRespComponent(ns,nu)
+	hessnull<-makeHessianNULLComponent(ns,nu)
+	hessresp<-makeHessianRespComponent(ns,nu)
+	
+	guess<-c(colMeans(ns/rowSums(ns)),colMeans(nu/rowSums(nu)))
+	iter<-1
+	ll<-rep(0,100000)
+	repeat{
+		#new<-guess-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))
+		t<-try(solve(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),solve(hessnull(as.vector(guess[5:8])))%*%gnull(as.vector(guess[5:8]))))
+		inherits(t,"try-error")
+		t<-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),ginv(hessnull(as.vector(guess[5:8]))%*%gnull(as.vector(guess[5:8]))))
+		new<-guess-t
+		ll[iter]<--sum(llresp(as.vector(new)))
+		new<-abs(new)
+		if(sum(abs(new-as.matrix(guess)))<sqrt(.Machine$double.eps)|iter>999){
+			break
+		}
+		guess<-new
+		iter<-iter+1
 	}
-	guess<-new
-	iter<-iter+1
 }
 
 
 
-data<-rdirichlet(100,c(10,20,30,40))
-grad<-makeGradDirichlet(data)
-hess<-makeHessDirichlet(data)
-old<-c(1,1,1,1)
-iter<-0
-repeat{
-	new<-old-solve(hess(old),grad(old))
-	if(norm(new-as.matrix(old))<1e-10|iter>10000){
-		break
-	}
-	old<-new
-	iter<-iter+1
-}
 
 
 #EM algorithm fitting the multinomial dirichlet mixture
@@ -233,18 +248,59 @@ initMDMix<-function(data=NULL,modelmatrix=NULL){
 	#estimate hyperparamters.
 	pu.u<-unstim/rowSums(unstim)
 	pu.s<-stim[which(z[,1]==1),]/rowSums(stim[which(z[,1]==1),])
-	
 	pu<-(rbind(pu.u,pu.s))
-	#fixed point iteration to estimate alpha.u
-	trace<-Inf
-	iter<-0;
-	est<-c(1,1,1,1);while(trace>1e-3|iter<50000){iter<-iter+1;est<-digamma(sum(est))+log(colMeans(pu));y<-est;est<-runif(4);for(i in 1:100){est<-est-(digamma(est)-y)/trigamma(est)};trace<-sum(abs(est/sum(est)-colMeans(pu))/(est/sum(est)))}
-	alpha.u<-est;
-	browser()
-	#ps.s<-stim[z[,2]==1,]/rowSums(stim[z[,2]==1,])
+	ps.s<-stim[z[,2]==1,]/rowSums(stim[z[,2]==1,])
+	alpha.u<-colMeans(pu)
+	alpha.s<-colMeans(ps.s)
 	
 	
-	
+	guess<-c(alpha.s,alpha.u)
+	w<-colSums(z)/sum(z)
+
+	#EM
+	LL<-NULL
+	repeat{
+		if(is.null(LL)){
+			last<--.Machine$double.xmax
+		}
+		#update parameters
+		llnull<-makeLogLikeNULLComponent(stim,unstim)
+		llresp<-makeLogLikeRespComponent(stim,unstim)
+		gnull<-makeGradientNULLComponent(stim,unstim,z)
+		gresp<-makeGradientRespComponent(stim,unstim,z)
+		hessnull<-makeHessianNULLComponent(stim,unstim,z)
+		hessresp<-makeHessianRespComponent(stim,unstim,z)
+		
+		iter<-1
+		ll<-rep(0,10000)
+		repeat{
+			#t<-try(solve(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),solve(hessnull(as.vector(guess[5:8])))%*%gnull(as.vector(guess[5:8]))),silent=TRUE)
+			#if(inherits(t,"try-error"))
+				t<-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),ginv(hessnull(as.vector(guess[5:8]))%*%gnull(as.vector(guess[5:8]))))
+			new<-guess-t
+			ll[iter]<--sum(llnull(new[5:8])*z[,1]+llresp(as.vector(new))*z[,2])
+			new<-abs(new)
+			if(sum(abs(new-as.matrix(guess)))<.Machine$double.eps^(1/3)|iter>9999){
+				break
+			}
+			guess<-new
+			iter<-iter+1
+		}
+		#compute z's and w's
+		
+		z1<-(exp(llnull(new[5:8]))*w[1])/(exp(llnull(new[5:8]))*w[1]+exp(llresp(new))*w[2])
+		z2<-1-z1
+		z<-cbind(z1,z2)
+		w<-colSums(z)/sum(z)
+		cll<--sum(llnull(new[5:8])*z[,1]+llresp(new)*z[,2])
+		LL<-c(LL,cll)
+		browser()
+		if(abs(last-cll)<1e-3){
+			break;
+		}
+		last<-cll
+	}
+	return(list(llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,hnull=hessnull,z=z,LL=LL,par=new))
 }
 
 estAlpha<-function(est,dat=NULL) {
