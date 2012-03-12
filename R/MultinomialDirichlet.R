@@ -90,26 +90,94 @@ makeLogLikeRespComponent<-function(data.stim,data.unstim){
 	return(loglike)
 }
 
-a<-c(10,20,30,40)*100
-b<-c(40,5,60,20)*100
+
+
+makeGradientNULLComponent<-function(data.stim,data.unstim){
+	data<-data.stim+data.unstim
+	grad<-function(x){
+		rowSums(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+	}
+}
+makeGradientHalfComponent<-function(data){
+	grad<-function(x){
+		rowSums(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
+	}
+}
+
+makeGradientRespComponent<-function(data.stim,data.unstim){
+	stim.ind<-1:4
+	unstim.ind<-5:8
+	gs<-makeGradientHalfComponent(data.stim);gu<-makeGradientHalfComponent(data.unstim);
+	grad<-function(x){
+		c(gs(x[stim.ind]),gu(x[unstim.ind]))
+	}
+	return(grad)
+}
+
+makeHessianNULLComponent<-function(data.stim,data.unstim){
+	data<-data.stim+data.unstim
+	hess<-function(x){
+		H<-matrix(sum(trigamma(sum(x))-trigamma(colSums(t(data)+x))),ncol=length(x),nrow=length(x))
+		D<-rowSums(trigamma(x+t(data))-trigamma(x))
+		diag(H)<-diag(H)+D
+		return(H)
+	}
+	return(hess)
+}
+makeHessianHalfComponent<-function(data){
+	hess<-function(x){
+		H<-matrix(sum(trigamma(sum(x))-trigamma(colSums(t(data)+x))),ncol=length(x),nrow=length(x))
+		D<-rowSums(trigamma(x+t(data))-trigamma(x))
+		diag(H)<-diag(H)+D
+		return(H)
+	}
+}
+makeHessianRespComponent<-function(data.stim,data.unstim){
+	stim.ind<-1:4
+	unstim.ind<-5:8
+	hs<-makeHessianHalfComponent(data.stim);hu<-makeHessianHalfComponent(data.unstim);
+	hess<-function(x){
+		H<-matrix(0,nrow=length(c(stim.ind,unstim.ind)),ncol=length(c(stim.ind,unstim.ind)))
+		H[stim.ind,stim.ind]<-hs(x[stim.ind]);
+		H[unstim.ind,unstim.ind]<-hu(x[unstim.ind]);
+		return(H)
+	}
+	return(hess)
+}
+
+
+a<-c(100000,40,20,100)
+b<-c(150000,50,30,20)
 pu<-rdirichlet(100,a)
-ps<-rdirichlet(100,a)
-nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1000,2000),pu[i,])))
-ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1000,2000),ps[i,])))
-ll1<-makeLogLikeNULLComponent(ns,nu)
-ll2<-makeLogLikeRespComponent(ns,nu)
+ps<-rdirichlet(100,b)
+nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1e5,1.5e5),pu[i,])))
+ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1e5,1.5e5),ps[i,])))
 
-c(MIMOSA:::MDalternative(a,b,ns,nu),ll2(c(b,a)))
-c(MIMOSA:::MDnull(a,ns,nu),ll1(a))
+llnull<-makeLogLikeNULLComponent(ns,nu)
+llresp<-makeLogLikeRespComponent(ns,nu)
+gnull<-makeGradientNULLComponent(ns,nu)
+gresp<-makeGradientRespComponent(ns,nu)
+hessnull<-makeHessianNULLComponent(ns,nu)
+hessresp<-makeHessianRespComponent(ns,nu)
 
-
-makeGradientNULLComponent<-function(data){
-	
+guess<-c(colMeans(ns/rowSums(ns)),colMeans(nu/rowSums(nu)))
+o<-guess
+#guess<-guess[5:8]
+iter<-0
+repeat{
+	new<-guess-solve(hessresp(as.vector(o)),gresp(as.vector(guess)))
+	if(iter>2)
+		o<-o
+	new[which(new<=0)]<-runif(length(which(new<=0)))
+	if(sum(abs(new-as.matrix(guess)))<1e-8|iter>100000){
+		break
+	}
+	guess<-new
+	iter<-iter+1
 }
 
-makeHessianNULLComponent<-function(data){
-	
-}
+
+
 data<-rdirichlet(100,c(10,20,30,40))
 grad<-makeGradDirichlet(data)
 hess<-makeHessDirichlet(data)
@@ -122,33 +190,6 @@ repeat{
 	}
 	old<-new
 	iter<-iter+1
-}
-
-#Compute the marginal-log-likelihood for the null distribution (vector of length P)
-#' 
-#' @param alpha.unstim vector of hyperparameters for the unstimulated sample
-#' @param n.stim vector of counts from the stimulated sample
-#' @param n.unstim vector of counts from the unstimulated sample
-#' @returnType 
-#' @return 
-#' @author Greg Finak
-#' @export
-MDnull<-function(alpha.unstim,n.stim,n.unstim){
-	lkbeta(alpha.unstim+n.stim+n.unstim)-lkbeta(alpha.unstim)+lfctrl(n.stim)+lfctrl(n.unstim)
-}
-
-#Compute the marginal log-likelihood for the alternative distribution (vector of length P)
-#' 
-#' @param alpha.unstim vector of hyperparameters for the unstimulated sample
-#' @param alpha.stim vector of hyperparameters for the stimulated sample
-#' @param n.stim vector of counts from the stimulated sample
-#' @param n.unstim vector of counts from the unstimulated sample
-#' @returnType 
-#' @return 
-#' @author Greg Finak
-#' @export
-MDalternative<-function(alpha.unstim,alpha.stim,n.stim,n.unstim){
-	lkbeta(alpha.unstim+n.unstim)-lkbeta(alpha.unstim)-lkbeta(alpha.stim)+lkbeta(alpha.stim+n.stim)+lfctrl(n.stim)+lfctrl(n.unstim)
 }
 
 
