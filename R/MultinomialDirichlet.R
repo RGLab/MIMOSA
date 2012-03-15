@@ -11,84 +11,55 @@
 #alpha.unstim
 #alpha.stim
 
-#compute the log of the factorial term
-#' 
-#' @param x observed data (counts)
-#' @returnType 
-#' @return 
-#' @author Greg Finak
-#' @export
-lfctrl<-function(x){
-	lfactorial(sum(x))-sum(lfactorial(x))
-}
-
-#compute the log of the k-dimensional beta function
-#' compute the log of the k-dimensional beta function
-#' @param alpha k-vector of beta function parameters
-#' @returnType numeric
-#' @return 
-#' @author Greg Finak
-#' @export
+##compute the log of the k-dimensional beta function
+##' compute the log of the k-dimensional beta function
+##' @param alpha k-vector of beta function parameters
+##' @returnType numeric
+##' @return 
+##' @author Greg Finak
+##' @export
 lkbeta<-function(alpha){
 	sum(lgamma(alpha))-lgamma(sum(alpha))
 }
 
 
-
-makeLogLikeDirichlet<-function(data)
-{
-	P<-nrow(data)
-	loglike<-function(x)
-	{
-		ll<-P*lgamma(sum(x))-P*sum(lgamma(x))+sum((x-1)*log(data))
-		return(ll)
-	}
-}
-makeGradDirichlet<-function(data){
-	P<-nrow(data)
-	data<-matrix(data,ncol=4)
-	grad<-function(x)
-	{
-		g<-P*digamma(sum(x))-P*(digamma(x))+P*colMeans(log(data))
-		return(g)
-	}
-}
-makeHessDirichlet<-function(data){
-	P<-nrow(data)
-	data<-matrix(data,ncol=4)
-	hess<-function(x)
-	{
-		O<-P*trigamma(sum(x))
-		H<-matrix(O,nrow=length(x),ncol=length(x))
-		H<-H-P*diag(trigamma(x))
-		return(H)
-	}
-}
-
-
-
-
 makeLogLikeNULLComponent<-function(data.stim,data.unstim){
-	N.s<-rowSums(data.stim)
-	N.u<-rowSums(data.unstim)
 	data<-data.stim+data.unstim
-	loglike<-function(x){
-		(lgamma(sum(x))-lgamma(rowSums(t(x+t(data))))+rowSums(t(t(lgamma(t(x+t(data))))-lgamma(x)))+lgamma(N.s+1)+lgamma(N.u+1) - rowSums(lgamma(data.stim+1)+lgamma(data.unstim+1)))
+	ll<-function(x){
+		a<-x[(length(x)/2+1):length(x)]
+		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)
+		#-rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
-	return(loglike)
 }
 makeLogLikeRespComponent<-function(data.stim,data.unstim){
-	N.s<-rowSums(data.stim)
-	N.u<-rowSums(data.unstim)
-	stim.ind<-1:4
-	unstim.ind<-5:8
-	data<-cbind(data.stim,data.unstim)
-	loglike<-function(x){
-		rowSums(t(t(lgamma(t(x[stim.ind]+t(data.stim)))+lgamma(t(x[unstim.ind]+t(data.unstim)))-lgamma(data.stim+1)-lgamma(data.unstim+1))-lgamma(x[stim.ind])-lgamma(x[unstim.ind])))+
-				lgamma(sum(x[stim.ind]))+lgamma(sum(x[unstim.ind]))-lgamma(rowSums(t(x[unstim.ind]+t(data.unstim))))-lgamma(rowSums(t(x[stim.ind]+t(data.stim))))+lgamma(N.s+1)+lgamma(N.u+1)
+	ll<-function(x){
+		a<-x[(length(x)/2+1):length(x)]
+		b<-x[1:(length(x)/2)]
+		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)
+		#-rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
-	return(loglike)
 }
+
+#makeLogLikeNULLComponent<-function(data.stim,data.unstim){
+#	N.s<-rowSums(data.stim)
+#	N.u<-rowSums(data.unstim)
+#	data<-data.stim+data.unstim
+#	loglike<-function(x){
+#		x<-x[(ncol(data.stim)+1):(ncol(data.stim)*2)]
+#		lgamma(sum(x))-lgamma(colSums(t(data)+x))+colSums(lgamma(t(data)+x)-lgamma(x))+lgamma(N.s+1)+lgamma(N.u+1)-colSums(t(lgamma(data.stim+1)+lgamma(data.unstim+1)))
+#	}
+#	return(loglike)
+#}
+#makeLogLikeRespComponent<-function(data.stim,data.unstim){
+#	N.s<-rowSums(data.stim)
+#	N.u<-rowSums(data.unstim)
+#	stim.ind<-1:ncol(data.stim)
+#	unstim.ind<-(ncol(data.stim)+1):((ncol(data.stim)*2))
+#	loglike<-function(x){
+#		colSums(lgamma(x[unstim.ind]+t(data.unstim))+lgamma(x[stim.ind]+t(data.stim))-lgamma(x[stim.ind])-lgamma(x[unstim.ind])-lgamma(t(data.stim)+1)-lgamma(t(data.unstim)+1))+lgamma(sum(x[stim.ind]))+lgamma(sum(x[unstim.ind]))-lgamma(colSums(t(data.unstim)+x[unstim.ind]))-lgamma(colSums(t(data.stim)+x[stim.ind]))+lgamma(N.s+1)+lgamma(N.u+1)
+#	}
+#	return(loglike)
+#}
 
 
 
@@ -98,8 +69,10 @@ makeGradientNULLComponent<-function(data.stim,data.unstim,z=NULL){
 		z<-matrix(1,nrow=nrow(data.unstim),ncol=2)
 	}
 	grad<-function(x){
-		gr<-(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
-		gr%*%z[,1]
+		x<-x[(ncol(data.stim)+1):(ncol(data.stim)*2)]
+		gr<-(t(digamma(sum(x))-digamma(colSums((t(data)+x)))+digamma(t(x+t(data))))-digamma(x))
+		gr<-gr%*%z[,1]
+		return(c(rep(0,ncol(data.stim)),gr))
 	}
 }
 makeGradientHalfComponent<-function(data,z=NULL){
@@ -107,14 +80,14 @@ makeGradientHalfComponent<-function(data,z=NULL){
 		z<-matrix(1,nrow=nrow(data),ncol=1)
 	}
 	grad<-function(x){
-		gr<-(digamma(sum(x))-digamma(colSums((t(data)+x)))+t(digamma(t(x+t(data))))-digamma(x))
-		gr%*%z
+		gr<-(t(digamma(sum(x))-digamma(colSums((t(data)+x)))+(digamma(t(x+t(data)))))-digamma(x))
+		gr%*%as.vector(z)
 	}
 }
 
 makeGradientRespComponent<-function(data.stim,data.unstim,z=NULL){
-	stim.ind<-1:4
-	unstim.ind<-5:8
+	stim.ind<-1:ncol(data.stim)
+	unstim.ind<-(ncol(data.stim)+1):(ncol(data.stim)*2)
 	if(is.null(z)){
 		z<-matrix(1,nrow=nrow(data.stim),ncol=2)
 	}
@@ -125,16 +98,27 @@ makeGradientRespComponent<-function(data.stim,data.unstim,z=NULL){
 	return(grad)
 }
 
-makeHessianNULLComponent<-function(data.stim,data.unstim,z){
+makeHessianNULLComponent<-function(data.stim,data.unstim,z=NULL){
 	data<-data.stim+data.unstim
 	if(is.null(z)){
 		z<-matrix(1,nrow=nrow(data.unstim),ncol=2)
 	}
 	hess<-function(x){
-		H<-matrix(sum(z[,1]*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
-		D<-(trigamma(x+t(data))-trigamma(x))%*%z[,1]
-		diag(H)<-diag(H)+D
-		return(H)
+		x<-x[(ncol(data.stim)+1):(ncol(data.stim)*2)]
+#		H<-matrix(sum(z[,1]*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
+#		D<-(trigamma(x+t(data))-trigamma(x))%*%z[,1]
+#		diag(H)<-diag(H)+D
+#		HH<-matrix(0,ncol(data)*2,ncol(data)*2)
+#		HH[(ncol(data.stim)+1):(ncol(data.stim)*2),(ncol(data.stim)+1):(ncol(data.stim)*2)]<-H
+#		return(HH)
+		H<- (trigamma(sum(x)) - trigamma(colSums(t(data) +x)))
+		D<-(trigamma(x + t(data)) - trigamma(x))
+		HH<-matrix(0,ncol(data)*2,ncol(data)*2)
+		H<-sapply(1:length(H),function(i){D[,i]<-D[,i]+H[i];M<-matrix(0,ncol(data)*2,ncol(data)*2);inds<-(ncol(data.stim)+1):(ncol(data.stim)*2);M[inds,inds]<-H[i];diag(M)<-c(rep(0,ncol(data)),D[,i]);list(M*z[i,1])})
+		for(i in seq_along(H)){
+			HH<-HH+H[[i]]
+		}
+		return(HH)
 	}
 	return(hess)
 }
@@ -144,17 +128,25 @@ makeHessianHalfComponent<-function(data,z=NULL){
 		z<-matrix(1,nrow=nrow(data),ncol=1)
 	}
 	hess<-function(x){
-		H<-matrix(sum(z*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
-		D<-(trigamma(x+t(data))-trigamma(x))%*%z
-		diag(H)<-diag(H)+D
-		return(H)
+#		H<-matrix(sum(z*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
+#		D<-(trigamma(x+t(data))-trigamma(x))%*%as.vector(z)
+#		diag(H)<-diag(H)+D
+#		return(H)
+		H<- (trigamma(sum(x)) - trigamma(colSums(t(data) +x)))
+		D<-(trigamma(x + t(data)) - trigamma(x))
+		HH<-matrix(0,ncol(data),ncol(data))
+		H<-sapply(1:length(H),function(i){D[,i]<-D[,i]+H[i];M<-matrix(H[i],ncol(data),ncol(data));diag(M)<-D[,i];list(M*z[i])})
+		for(i in seq_along(H)){
+			HH<-HH+H[[i]]
+		}
+		return(HH)
 	}
 }
-makeHessianRespComponent<-function(data.stim,data.unstim,z){
-	stim.ind<-1:4
-	unstim.ind<-5:8
+makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
+	stim.ind<-1:ncol(data.stim)
+	unstim.ind<-(ncol(data.stim)+1):(ncol(data.stim)*2)
 	if(is.null(z)){
-		z<-matrix(1,nrow=data.stim,ncol=2)
+		z<-matrix(1,nrow=nrow(data.stim),ncol=2)
 	}
 	hs<-makeHessianHalfComponent(data.stim,z[,2]);hu<-makeHessianHalfComponent(data.unstim,z[,1]);
 	hess<-function(x){
@@ -166,49 +158,20 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z){
 	return(hess)
 }
 
-
-#a,b are the non-responder and responder hyperparameters
-testComponentOptimization <- function(a, b)
-{
-	a<-c(100000,40,20,100)
-	b<-c(100000,900,100,100)
-	pu<-rdirichlet(100,a)
-	ps<-rdirichlet(50,a)
-	ps<-rbind(ps,rdirichlet(50,b))
-	nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,runif(1,1e5,1.5e5),pu[i,])))
-	ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,runif(1,1e5,1.5e5),ps[i,])))
-	
-	llnull<-makeLogLikeNULLComponent(ns,nu)
-	llresp<-makeLogLikeRespComponent(ns,nu)
-	gnull<-makeGradientNULLComponent(ns,nu)
-	gresp<-makeGradientRespComponent(ns,nu)
-	hessnull<-makeHessianNULLComponent(ns,nu)
-	hessresp<-makeHessianRespComponent(ns,nu)
-	
-	guess<-c(colMeans(ns/rowSums(ns)),colMeans(nu/rowSums(nu)))
-	iter<-1
-	ll<-rep(0,100000)
-	repeat{
-		#new<-guess-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))
-		t<-try(solve(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),solve(hessnull(as.vector(guess[5:8])))%*%gnull(as.vector(guess[5:8]))))
-		inherits(t,"try-error")
-		t<-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),ginv(hessnull(as.vector(guess[5:8]))%*%gnull(as.vector(guess[5:8]))))
-		new<-guess-t
-		ll[iter]<--sum(llresp(as.vector(new)))
-		new<-abs(new)
-		if(sum(abs(new-as.matrix(guess)))<sqrt(.Machine$double.eps)|iter>999){
-			break
-		}
-		guess<-new
-		iter<-iter+1
-	}
+simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2){
+	pu<-rdirichlet(100,alpha.u)
+	ps<-rdirichlet(N-round(N*w),alpha.u)
+	ps<-rbind(ps,rdirichlet(round(N*w),alpha.s))
+	N<-runif(nrow(pu),1.5*10^n,1.5*10^n)
+	nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,N[i],pu[i,])))
+	ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,N[i],ps[i,])))
+	data<-list(n.stim=ns,n.unstim=nu)
+	return(data)
 }
 
 
 
-
-
-#EM algorithm fitting the multinomial dirichlet mixture
+# EM fitting
 #' 
 #' @param data The observed data
 #' @param modelmatrix a model matrix specifying which components should be computed
@@ -217,34 +180,25 @@ testComponentOptimization <- function(a, b)
 #' @author Greg Finak
 #' @export
 MDMix<-function(data=NULL,modelmatrix=NULL){
-	inits<-initMDMix(data=data,modelmatrix=modelmatrix)
-	
-}
-
-#initialization of z's and parameters for the multinomial dirichlet mixture
-#' 
-#' @param data The observed data
-#' @param modelmatrix a model matrix specifying which components should be computed
-#' @returnType 
-#' @return 
-#' @author Greg Finak
-#' @export
-initMDMix<-function(data=NULL,modelmatrix=NULL){
 	unstim<-data$n.unstim
 	stim<-data$n.stim
 	
 	#fisher's exact test of all the marginals
-	mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="greater")$p.value)))<0.01
-	
+	if(ncol(unstim)==4){
+		mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="two.sided")$p.value)))<(0.01)/3
+		mm<-apply(mm,1,function(x)all(!x))
+	}else{ #two-D case
+		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative="two.sided")$p.value<(0.01))
+		mm<-!mm
+	}
 	#observations with no significant marginals belong to the null component.
-	mm<-apply(mm,1,function(x)all(!x))
 	
 	#The rest are from the responder component
 	#construct the z-matrix
 	z<-matrix(0,length(mm),2)
 	z[mm,1]<-1
 	z[!mm,2]<-1
-	
+		
 	#estimate hyperparamters.
 	pu.u<-unstim/rowSums(unstim)
 	pu.s<-stim[which(z[,1]==1),]/rowSums(stim[which(z[,1]==1),])
@@ -256,12 +210,11 @@ initMDMix<-function(data=NULL,modelmatrix=NULL){
 	
 	guess<-c(alpha.s,alpha.u)
 	w<-colSums(z)/sum(z)
-
 	#EM
 	LL<-NULL
 	repeat{
 		if(is.null(LL)){
-			last<--.Machine$double.xmax
+			last<-.Machine$double.xmax
 		}
 		#update parameters
 		llnull<-makeLogLikeNULLComponent(stim,unstim)
@@ -271,41 +224,54 @@ initMDMix<-function(data=NULL,modelmatrix=NULL){
 		hessnull<-makeHessianNULLComponent(stim,unstim,z)
 		hessresp<-makeHessianRespComponent(stim,unstim,z)
 		
-		iter<-1
-		ll<-rep(0,10000)
+#		optFun<-function(x,z){
+#			ll<- -sum(llnull(x)*z[,1]+llresp(x)*z[,2])
+#			#grad<-gnull(x)+gresp(x)
+#			#hess<-hessnull(x)+hessresp(x)
+#			#list(value=ll,gradient=grad,hessian=hess)
+#		}
+		
+		iter<-2
+		ll<-rep(0,1000)
+		ll[1]<-.Machine$double.xmax
+		lastguess<-guess;
 		repeat{
-			#t<-try(solve(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),solve(hessnull(as.vector(guess[5:8])))%*%gnull(as.vector(guess[5:8]))),silent=TRUE)
-			#if(inherits(t,"try-error"))
-				t<-ginv(hessresp(as.vector(guess)))%*%gresp(as.vector(guess))+c(rep(0,4),ginv(hessnull(as.vector(guess[5:8]))%*%gnull(as.vector(guess[5:8]))))
+			t<-solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess))
 			new<-guess-t
-			ll[iter]<--sum(llnull(new[5:8])*z[,1]+llresp(as.vector(new))*z[,2])
-			new<-abs(new)
-			if(sum(abs(new-as.matrix(guess)))<.Machine$double.eps^(1/3)|iter>9999){
+#			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
+				guess<-new
 				break
 			}
 			guess<-new
 			iter<-iter+1
 		}
+#		t<-trust(optFun,parinit=guess,rinit=1,rmax=10^6,minimize=TRUE,z=z)
+#		guess<-new<-t$argument
+
 		#compute z's and w's
-		
-		z1<-(exp(llnull(new[5:8]))*w[1])/(exp(llnull(new[5:8]))*w[1]+exp(llresp(new))*w[2])
-		z2<-1-z1
-		z<-cbind(z1,z2)
+	
+		den<-apply(cbind(log(w[1])+llnull(new), log(w[2])+llresp(new)), 1, function(x)log(sum(exp(x-max(x))))+max(x))
+		z2<-exp((llresp(new)+log(w[2]))-(den))
+		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
-		cll<--sum(llnull(new[5:8])*z[,1]+llresp(new)*z[,2])
-		LL<-c(LL,cll)
-		browser()
-		if(abs(last-cll)<1e-3){
+		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+		if((abs((last-cll)/last)<1e-8)&cll<last){
+			break;
+		}else if(cll>last){
+			new<-lastguess
 			break;
 		}
+		LL<-c(LL,cll)
+		cat(cll,"\n")
 		last<-cll
 	}
-	return(list(llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,hnull=hessnull,z=z,LL=LL,par=new))
-}
+	gnull<-makeGradientNULLComponent(stim,unstim,z)
+	gresp<-makeGradientRespComponent(stim,unstim,z)
+	hessnull<-makeHessianNULLComponent(stim,unstim,z)
+	hessresp<-makeHessianRespComponent(stim,unstim,z)
 
-estAlpha<-function(est,dat=NULL) {
-	NLL = -sum(log(ddirichlet(dat,est)))
-	return(NLL)	
+	return(list(llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,LL=LL,par=new))
 }
 
 #' extracts bifunctional cytokine data from and ICS object given the two marginals (A, B) and A||B for stimualted and unstimulated. Used for the multinomial dirichlet model. ORDER OF CYTOKINES MATTERS!
@@ -352,13 +318,15 @@ extractDataMultinomDir<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,
 	class(r)<-c("list","MDlist")
 	return(r)
 }
+
+
 setOldClass("MDlist")
 
-setMethod(show,"MDlist",function(x){
-	cat("Cytokines ",attr(x,"cytokines"),"\n")
-	cat("Stimulation ",attr(x,"stim"),"\n")
-	cat("Subset ", attr(x,"subset"),"\n")
-	cat("Number of obs: ",nrow(x[[1]]),"\n")
+setMethod(show,"MDlist",function(object){
+	cat("Cytokines ",attr(object,"cytokines"),"\n")
+	cat("Stimulation ",attr(object,"stim"),"\n")
+	cat("Subset ", attr(object,"subset"),"\n")
+	cat("Number of obs: ",nrow(object[[1]]),"\n")
 })
 
 print.MDlist<-function(x){
