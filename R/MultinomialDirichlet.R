@@ -91,7 +91,7 @@ makeGradientRespComponent<-function(data.stim,data.unstim,z=NULL){
 	if(is.null(z)){
 		z<-matrix(1,nrow=nrow(data.stim),ncol=2)
 	}
-	gs<-makeGradientHalfComponent(data.stim,z=z[,2]);gu<-makeGradientHalfComponent(data.unstim,z=z[,1]);
+	gs<-makeGradientHalfComponent(data.stim,z=z[,2]);gu<-makeGradientHalfComponent(data.unstim,z=z[,2]);
 	grad<-function(x){
 		c(gs(x[stim.ind]),gu(x[unstim.ind]))
 	}
@@ -148,7 +148,7 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 	if(is.null(z)){
 		z<-matrix(1,nrow=nrow(data.stim),ncol=2)
 	}
-	hs<-makeHessianHalfComponent(data.stim,z[,2]);hu<-makeHessianHalfComponent(data.unstim,z[,1]);
+	hs<-makeHessianHalfComponent(data.stim,z[,2]);hu<-makeHessianHalfComponent(data.unstim,z[,2]);
 	hess<-function(x){
 		H<-matrix(0,nrow=length(c(stim.ind,unstim.ind)),ncol=length(c(stim.ind,unstim.ind)))
 		H[stim.ind,stim.ind]<-hs(x[stim.ind]);
@@ -159,12 +159,14 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 }
 
 simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2){
-	pu<-rdirichlet(100,alpha.u)
-	ps<-rdirichlet(N-round(N*w),alpha.u)
+	pu<-rdirichlet(1,alpha.u)
+	pu<-matrix(pu,nrow=N,ncol=length(pu),byrow=T)
+	ps<-matrix(pu[1,],nrow=N*(1-w),ncol=length(alpha.s),byrow=T)
 	ps<-rbind(ps,rdirichlet(round(N*w),alpha.s))
-	N<-runif(nrow(pu),1.5*10^n,1.5*10^n)
-	nu<-t(sapply(seq_along(1:nrow(pu)),function(i)rmultinom(1,N[i],pu[i,])))
-	ns<-t(sapply(seq_along(1:nrow(ps)),function(i)rmultinom(1,N[i],ps[i,])))
+	NU<-runif(N,1.5*10^n,1.5*10^n)
+	NS<-runif(N,1.5*10^n,1.5*10^n)
+	nu<-t(sapply(seq_along(1:N),function(i)rmultinom(1,NU[i],pu[i,])))
+	ns<-t(sapply(seq_along(1:N),function(i)rmultinom(1,NS[i],ps[i,])))
 	data<-list(n.stim=ns,n.unstim=nu)
 	return(data)
 }
@@ -206,6 +208,10 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 	ps.s<-stim[z[,2]==1,]/rowSums(stim[z[,2]==1,])
 	alpha.u<-colMeans(pu)
 	alpha.s<-colMeans(ps.s)
+	if(any(is.nan(alpha.s)))
+		alpha.s[is.nan(alpha.s)]<-1
+	if(any(is.nan(alpha.u)))
+		alpha.s[is.nan(alpha.u)]<-1
 	
 	
 	guess<-c(alpha.s,alpha.u)
@@ -236,7 +242,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 		ll[1]<-.Machine$double.xmax
 		lastguess<-guess;
 		repeat{
-			t<-solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess))
+			t<-try(solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess)),silent=TRUE)
+			if(inherits(t,"try-error"))
+				t<-ginv(hessresp(guess)+hessnull(guess))%*%(gnull(guess)+gresp(guess)) #uses SVD
 			new<-guess-t
 #			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
@@ -256,12 +264,12 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
 		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
-		if((abs((last-cll)/last)<1e-8)&cll<last){
+		if((abs((last-cll)/last)<1e-8)&cll<last)#{
 			break;
-		}else if(cll>last){
-			new<-lastguess
-			break;
-		}
+#		}else if(cll>last){
+#			new<-lastguess
+#			break;
+#		}
 		LL<-c(LL,cll)
 		cat(cll,"\n")
 		last<-cll
