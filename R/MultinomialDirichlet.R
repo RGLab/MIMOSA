@@ -264,12 +264,12 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
 		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
-		if((abs((last-cll)/last)<1e-8)&cll<last)#{
+		if((abs((last-cll)/last)<1e-8)&cll<last){
 			break;
-#		}else if(cll>last){
-#			new<-lastguess
-#			break;
-#		}
+		}else if(cll>last){
+			new<-lastguess
+			break;
+		}
 		LL<-c(LL,cll)
 		cat(cll,"\n")
 		last<-cll
