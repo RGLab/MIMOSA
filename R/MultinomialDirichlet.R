@@ -181,16 +181,21 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 #' @return 
 #' @author Greg Finak
 #' @export
-MDMix<-function(data=NULL,modelmatrix=NULL){
+MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	unstim<-data$n.unstim
 	stim<-data$n.stim
-	
+	match.args(alternative,c("greater","not equal"))
+	if(alternative=="greater"){
+		alternative<-greater
+	}else if(alternative=="not equal"){
+		alternative<-"two.sided"
+	}
 	#fisher's exact test of all the marginals
 	if(ncol(unstim)==4){
 		mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="two.sided")$p.value)))<(0.01)/3
 		mm<-apply(mm,1,function(x)all(!x))
 	}else{ #two-D case
-		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative="two.sided")$p.value<(0.01))
+		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative=alternative)$p.value<(0.01))
 		mm<-!mm
 	}
 	#observations with no significant marginals belong to the null component.
@@ -203,9 +208,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL){
 		
 	#estimate hyperparamters.
 	pu.u<-unstim/rowSums(unstim)
-	pu.s<-stim[which(z[,1]==1),]/rowSums(stim[which(z[,1]==1),])
+	pu.s<-stim[which(z[,1]==1),,drop=FALSE]/rowSums(stim[which(z[,1]==1),,drop=FALSE])
 	pu<-(rbind(pu.u,pu.s))
-	ps.s<-stim[z[,2]==1,]/rowSums(stim[z[,2]==1,])
+	ps.s<-stim[z[,2]==1,,drop=FALSE]/rowSums(stim[z[,2]==1,,drop=FALSE])
 	alpha.u<-colMeans(pu)
 	alpha.s<-colMeans(ps.s)
 	if(any(is.nan(alpha.s)))
