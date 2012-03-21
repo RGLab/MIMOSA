@@ -1,5 +1,6 @@
 BetaMix <-
-		function(d=NULL,maxiter=20,shrink=1,alternative.model="greater",mciter=50,fixedNULL=FALSE,ics=NULL,priorXi=1,inits=NULL,scl=10,K=200){
+		function(d=NULL,maxiter=20,shrink=1,alternative.model="greater",mciter=50,fixedNULL=FALSE,ics=NULL,priorXi=1,inits=NULL,scl=10,K=200,fixedHyperParameters=NULL){
+	#If we fix the hyperparemeters, we'll just do a likelihood ratio test with some shrinkage
 	#priorXi is a uniform Beta(Xi,Xi) prior on the mixing proportions. By default it is set to 2.
 	alternative.model<-match.arg(alternative.model,c("greater","not equal"))
 	#result<-replicate(1,{
@@ -9,6 +10,7 @@ BetaMix <-
 		inits<-initBetaMix(d,fixedNULL=fixedNULL,ics=ics,alternative=alternative.model,priorXi=priorXi,scl=scl,K=K,mciter=mciter)
 		llmax<-CompleteDataLLRcpp(d=d,alpha0=inits$alpha0,alphaS=inits$alphaS,beta0=inits$beta0,betaS=inits$betaS,z=inits$z,w=inits$w,alternative=alternative.model,mciter=mciter)		
 	}
+	
 	lltraj<-LL
 	iter<-1
 	#Given Z, estiamate alpha0,beta0,alphaS,betaS
@@ -20,24 +22,34 @@ BetaMix <-
 		nS.est<-(c(inits$alphaS,inits$betaS))
 		#Update alpha0,beta0 on alternate iterations, and only if they are not fixed.
 		#Alternatively try to update both parameters simultaneously using the mean / sample-size parameterization.. this seems to work.
-		if(fixedNULL){
-			pars<-try(optim(par=(c(nS.est[1]/(nS.est[1]+nS.est[2]), nS.est[2]+nS.est[1])),function(p=par,data=d,Z=inits$z,W=inits$w,ALT=alternative.model,MC=mciter,a0=n0.est[1],b0=n0.est[2])f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),control=list(parscale=c(scl,1)),method="L-BFGS-B",lower=c(1e-6,10),upper=c(0.9999,K/inits$muS)),silent=TRUE)			
-		}
-		else{
-			pars<-try(optim(par=(c(nS.est[1]/(nS.est[1]+nS.est[2]), nS.est[2]+nS.est[1],n0.est[1]/(n0.est[1]+n0.est[2]),n0.est[2]+n0.est[1])),function(p=par,data=d,Z=inits$z,W=inits$w,ALT=alternative.model,MC=mciter)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),method="L-BFGS-B",control=list(parscale=c(scl,1,scl,1)),lower=c(1e-6,10,1e-6,10),upper=c(0.9999,K/inits$muS,0.9999,K/inits$mu0)),silent=TRUE)			
-		}
-		if(inherits(pars,"try-error")|inherits(try(pars$convergence,silent=TRUE)!=0,"try-error")){
-			message("failed to converge estimating alpha0,beta0, alphaS, betaS in BetaMix: returning last best iteration, ",iter)
-			iter<-maxiter+1
-		}else{
-			inits$alphaS<-pars$par[1]*pars$par[2]
-			inits$betaS<-(1-pars$par[1])*pars$par[2]
-			if(!fixedNULL){
-				inits$alpha0<-pars$par[3]*pars$par[4]
-				inits$beta0<-(1-pars$par[3])*pars$par[4]
+		if(is.null(fixedHyperParameters)){#Estimate hyperparameters
+			if(fixedNULL){
+				pars<-try(optim(par=(c(nS.est[1]/(nS.est[1]+nS.est[2]), nS.est[2]+nS.est[1])),function(p=par,data=d,Z=inits$z,W=inits$w,ALT=alternative.model,MC=mciter,a0=n0.est[1],b0=n0.est[2])f0m(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC,alpha0=a0,beta0=b0),control=list(parscale=c(scl,1)),method="L-BFGS-B",lower=c(1e-6,10),upper=c(0.9999,K/inits$muS)),silent=TRUE)			
 			}
+			else{
+				pars<-try(optim(par=(c(nS.est[1]/(nS.est[1]+nS.est[2]), nS.est[2]+nS.est[1],n0.est[1]/(n0.est[1]+n0.est[2]),n0.est[2]+n0.est[1])),function(p=par,data=d,Z=inits$z,W=inits$w,ALT=alternative.model,MC=mciter)f0(p=p,d=data,z=Z,w=W,alternative=ALT,mciter=MC),method="L-BFGS-B",control=list(parscale=c(scl,1,scl,1)),lower=c(1e-6,10,1e-6,10),upper=c(0.9999,K/inits$muS,0.9999,K/inits$mu0)),silent=TRUE)			
+			}
+			if(inherits(pars,"try-error")|inherits(try(pars$convergence,silent=TRUE)!=0,"try-error")){
+				message("failed to converge estimating alpha0,beta0, alphaS, betaS in BetaMix: returning last best iteration, ",iter)
+				iter<-maxiter+1
+			}else{
+				inits$alphaS<-pars$par[1]*pars$par[2]
+				inits$betaS<-(1-pars$par[1])*pars$par[2]
+				if(!fixedNULL){
+					inits$alpha0<-pars$par[3]*pars$par[4]
+					inits$beta0<-(1-pars$par[3])*pars$par[4]
+				}
+			}
+		}else if(!is.null(fixedHyperParameters)){
+			if(length(fixedHyperParameters)!=2){
+				stop("Fixed hyperparameters vector must be of length 2 (alpha, beta)")
+			}
+			inits$alpha0<-fixedHyperParameters[1]
+			inits$beta0<-fixedHyperParameters[2]
+			inits$alphaS<-fixedHyperParameters[1]
+			inits$betaS<-fixedHyperParameters[2]
+			inits$w<-c(0.5,0.5)
 		}
-		
 		#Update the zs
 		if(alternative.model=="greater"){
 			m1<-log(inits$w[1])+.Call("MarginalNULL",ns=d[,"ns"],Ns=d[,"Ns"],nu=d[,"nu"],Nu=d[,"Nu"],alpha0=rep(inits$alpha0,nrow(d)),beta0=rep(inits$beta0,nrow(d)),alphaS=rep(inits$alphaS,nrow(d)),betaS=rep(inits$betaS,nrow(d)),inits$w,log=TRUE,package="MIMOSA")
@@ -57,7 +69,9 @@ BetaMix <-
 		ll<-CompleteDataLLRcpp(d=d,alpha0=inits$alpha0,alphaS=inits$alphaS,beta0=inits$beta0,betaS=inits$betaS,z=inits$z,w=inits$w,alternative=alternative.model,mciter=mciter)
 		lltraj<-c(lltraj,ll)
 		cat(iter);
-		
+		if(!is.null(fixedHyperParameters)){
+			break;
+		}
 		if(iter>=maxiter){
 			iter<-iter+1
 			break

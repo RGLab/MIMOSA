@@ -184,9 +184,9 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	unstim<-data$n.unstim
 	stim<-data$n.stim
-	match.args(alternative,c("greater","not equal"))
+	match.arg(alternative,c("greater","not equal"))
 	if(alternative=="greater"){
-		alternative<-greater
+		alternative<-"greater"
 	}else if(alternative=="not equal"){
 		alternative<-"two.sided"
 	}
@@ -216,10 +216,13 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	if(any(is.nan(alpha.s)))
 		alpha.s[is.nan(alpha.s)]<-1
 	if(any(is.nan(alpha.u)))
-		alpha.s[is.nan(alpha.u)]<-1
+		alpha.u[is.nan(alpha.u)]<-1
 	
+	alpha.s[alpha.s==0]<-1e-6
+	alpha.u[alpha.u==0]<-1e-6
 	
 	guess<-c(alpha.s,alpha.u)
+	
 	w<-colSums(z)/sum(z)
 	#EM
 	LL<-NULL
@@ -269,7 +272,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
 		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
-		if((abs((last-cll)/last)<1e-8)&cll<last){
+		if((abs((last-cll)/last)<1e-3)&cll<=last){
 			break;
 		}else if(cll>last){
 			new<-lastguess

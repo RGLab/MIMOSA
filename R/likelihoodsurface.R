@@ -43,5 +43,5 @@ setMethod("likelihoodSurfacePlot",
 			
 #plot the identity line
 			lines(t(t(matrix(seq(0,1,l=2))%*%N)),lwd=2,lty=2)   
-			silent(NULL)
+			invisible(NULL)
 		})
