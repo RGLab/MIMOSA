@@ -53,8 +53,8 @@ NumericVector betaintegralRcpp(NumericVector &alphaS,NumericVector &betaS, Numer
 		SAMPS = rbeta(MCITER(0),aa(0),bb(0));
 
 		//pbeta lower tail, log=F
-		S=pbeta(samps,AA(i),BB(i),false,false);
-		SS=pbeta(SAMPS,A(0),B(0),false,false);
+		S=pbeta(samps,AA(0),BB(0),false,false);
+		SS=pbeta(SAMPS,A(i),B(i),false,false);
 		double NUM=std::accumulate(SS.begin(),SS.end(),init,::op_sum)/SS.length();
 		double num=std::accumulate(S.begin(),S.end(),init,::op_sum)/S.length();
 
