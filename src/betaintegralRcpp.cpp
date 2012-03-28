@@ -49,16 +49,16 @@ NumericVector betaintegralRcpp(NumericVector &alphaS,NumericVector &betaS, Numer
 	AA(0)=alphaS(0);
 	BB(0)=betaS(0);
 	for(int i=0;i<(int)alpha0.length();i++){
-		samps = rbeta(MCITER(0),alpha0(i),beta0(i));
+		samps = rbeta(MCITER(0),a(i),b(i));
 		SAMPS = rbeta(MCITER(0),aa(0),bb(0));
 
 		//pbeta lower tail, log=F
-		S=pbeta(samps,AA(0),BB(0),false,false);
-		SS=pbeta(SAMPS,A(i),B(i),false,false);
+		S=pbeta(samps,A(i),B(i),false,false);
+		SS=pbeta(SAMPS,AA(0),BB(0),false,false);
 		double NUM=std::accumulate(SS.begin(),SS.end(),init,::op_sum)/SS.length();
 		double num=std::accumulate(S.begin(),S.end(),init,::op_sum)/S.length();
 
-		result(i)=result(i)-log(num)+log(NUM);
+		result(i)=result(i)+log(num)-log(NUM);
 	}
 	return result;
 }
