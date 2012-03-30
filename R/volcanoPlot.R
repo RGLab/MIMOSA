@@ -7,7 +7,7 @@ setGeneric("volcanoPlot",function(bmr,...){
 			standardGeneric("volcanoPlot");
 })
 
-setMethod("volcanoPlot",signature("BetaMixResult"),function(bmr,threshold=0.01,N=500,...){
+setMethod("volcanoPlot",signature("BetaMixResult"),function(bmr,plot.post=FALSE,threshold=0.01,N=500,...){
   ml<-estimateProportions(bmr,method="ML")
   post<-estimateProportions(bmr,method="posterior",volcano=TRUE,N=N,...)
   bmr.nlfdr<--log10(bmr@fdr)
@@ -37,9 +37,13 @@ setMethod("volcanoPlot",signature("BetaMixResult"),function(bmr,threshold=0.01,N
   
   fisher.colors<-(fisher.nlfdr > -log10(threshold))+1
   fisher.colors[fisher.colors==2]<-3
-  
+  if(!plot.post){
   print(plot(apply(ml,1,diff),fisher.nlfdr,xlim=c(xlow,xup),ylim=c(ylow,yup),pch=2,col=fisher.colors,main=strwrap(paste("Difference Between ",bmr@stimulation," and ",bmr@control," Proportions",paste(bmr@cytokine,collapse="/")),...),xlab="Ps-Pu",ylab="-log10(q-value)"))
   points(post[,"ps"]-post[,"pu"],bmr.nlfdr,pch=3,col=bmr.colors)
+  }else{
+	  print(plot(apply(ml,1,diff),bmr@z[,2],xlim=c(xlow,xup),pch=2,col=fisher.colors,main=strwrap(paste("Difference Between ",bmr@stimulation," and ",bmr@control," Proportions",paste(bmr@cytokine,collapse="/")),...),xlab="Ps-Pu",ylab="Pr(response)"))
+	  points(post[,"ps"]-post[,"pu"],bmr@z[,2],pch=3,col=bmr.colors)
+  }
   
   abline(v=0,lty=2)
   legend(x="bottomright",pch=c(2,3),c("ML Estimate","Posterior Estimate"))
