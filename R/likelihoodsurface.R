@@ -39,7 +39,7 @@ setMethod("likelihoodSurfacePlot",
 			contour(1:grid.x,1:grid.y,z,xlab="ns",ylab="nu",add=TRUE,nlevels=nlevels)
 #plot the data points
 			points(bmr@data[whch,1:2,FALSE],pch=3,col=c("black","red")[(bmr@fdr<fdr)+1][whch])    
-			points(bmr@data[whch,1:2,FALSE],pch=2,col=c("black","green")[apply(bmr@data,1,function(x)p.adjust(fisher.test(matrix(x,2,byrow=T),alternative=alternative)$p.value,"fdr")<fdr)+1])    
+			points(bmr@data[whch,1:2,FALSE],pch=2,col=c("black","green")[(apply(bmr@data,1,function(x)p.adjust(fisher.test(matrix(x,2,byrow=T),alternative=alternative)$p.value,"fdr")<fdr)+1)[whch]])    
 			
 #plot the identity line
 			lines(t(t(matrix(seq(0,1,l=2))%*%N)),lwd=2,lty=2)   

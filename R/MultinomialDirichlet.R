@@ -274,7 +274,8 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
 		if((abs((last-cll)/last)<1e-3)&cll<=last){
 			break;
-		}else if(cll>last){
+		}
+		else if(cll>last){
 			new<-lastguess
 			break;
 		}
@@ -287,7 +288,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	hessnull<-makeHessianNULLComponent(stim,unstim,z)
 	hessresp<-makeHessianRespComponent(stim,unstim,z)
 
-	return(list(llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,LL=LL,par=new))
+	return(new("MDMixResult",llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,ll=LL,par.stim=new[1:(length(new)/2)],par.unstim=new[(length(new)/2 + 1):length(new)],data=data))
 }
 
 #' extracts bifunctional cytokine data from and ICS object given the two marginals (A, B) and A||B for stimualted and unstimulated. Used for the multinomial dirichlet model. ORDER OF CYTOKINES MATTERS!

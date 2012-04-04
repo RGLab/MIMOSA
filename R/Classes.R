@@ -19,7 +19,9 @@ setClass("ICS",representation=list(pos="integer",neg="integer",fname="factor",fc
 #Holds the output of BetaMix
 setClass("BetaMixResult",representation=list(alternative.model="character",cytokine="character",control="character",stimulation="character",ll="numeric",traj="numeric",iter="numeric",z="matrix",w="numeric",alpha0="numeric",beta0="numeric",alphaS="numeric",betaS="numeric",fdr="numeric",data="data.frame"))
 
+setClass("MDMixResult",representation=list(llnull="function",llresp="function",gresp="function",w="numeric",z="matrix",hresp="function",gnull="function",ll="numeric",hnull="function",par.unstim="numeric",par.stim="numeric",data="list"))
 
+setClassUnion("MixResult",c("BetaMixResult","MDMixResult"))
 #Constructors
 ICS<-function(x=data.frame(pos=NA_integer_,neg=NA_integer_,fname=NA_character_,fcsfile=NA_character_,parent=NA_character_,antigen=NA_character_,ID=NA_character_),extra.identifiers=NULL){
 	rest<-setdiff(colnames(x),c("pos","neg","fname","fcsfile","parent","antigen","ID"))
