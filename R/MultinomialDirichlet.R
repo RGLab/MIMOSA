@@ -161,7 +161,11 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2){
 	pu<-rdirichlet(1,alpha.u)
 	pu<-matrix(pu,nrow=N,ncol=length(pu),byrow=T)
-	ps<-matrix(pu[1,],nrow=N*(1-w),ncol=length(alpha.s),byrow=T)
+	if(N*(1-w)>0){
+	ps<-matrix(pu[1,],nrow=round(N*(1-w)),ncol=length(alpha.s),byrow=T)
+	}else{
+		ps<-matrix(ncol=length(alpha.s),nrow=0)
+	}
 	ps<-rbind(ps,rdirichlet(round(N*w),alpha.s))
 	NU<-runif(N,1.5*10^n,1.5*10^n)
 	NS<-runif(N,1.5*10^n,1.5*10^n)
@@ -192,10 +196,13 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	}
 	#fisher's exact test of all the marginals
 	if(ncol(unstim)==4){
-		mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="two.sided")$p.value)))<(0.01)/3
+		mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="two.sided")$p.value)))
+		browser()
+		mm<-p.adjust(mm,"fdr")<0.05
 		mm<-apply(mm,1,function(x)all(!x))
 	}else{ #two-D case
-		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative=alternative)$p.value<(0.01))
+		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative=alternative)$p.value)
+		mm<-p.adjust(mm,"fdr")<0.05
 		mm<-!mm
 	}
 	#observations with no significant marginals belong to the null component.
@@ -228,7 +235,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	LL<-NULL
 	repeat{
 		if(is.null(LL)){
-			last<-.Machine$double.xmax
+			last<--.Machine$double.xmax
 		}
 		#update parameters
 		llnull<-makeLogLikeNULLComponent(stim,unstim)
@@ -246,8 +253,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 #		}
 		
 		iter<-2
-		ll<-rep(0,1000)
-		ll[1]<-.Machine$double.xmax
+		#ll<-rep(0,1000)
+		#make negative
+		#ll[1]<- -.Machine$double.xmax
 		lastguess<-guess;
 		repeat{
 			t<-try(solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess)),silent=TRUE)
@@ -271,14 +279,20 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 		z2<-exp((llresp(new)+log(w[2]))-(den))
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
-		cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
-		if((abs((last-cll)/last)<1e-3)&cll<=last){
-			break;
+		cll<--sum(sapply((llnull(new)+log(w[1]))*z[,1],function(x)ifelse(is.nan(x),0,x))+sapply((llresp(new)+log(w[2]))*z[,2],function(x)ifelse(is.nan(x),0,x)))
+		#cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+		#actually the - log likelihood...
+		#ll<- -sum(llnull(new)+log(w[1])+llresp(new)+log(w[2]))
+		#if((abs((last-cll)/last)<1e-3)&cll<=last){
+		#	break;
+		#}
+		if((abs((last-cll)) < 1e-2)&cll>=last){
+			break
 		}
-		else if(cll>last){
-			new<-lastguess
-			break;
-		}
+		#else if(cll>last){
+		#	new<-lastguess
+		#	break;
+		#}
 		LL<-c(LL,cll)
 		cat(cll,"\n")
 		last<-cll
@@ -327,6 +341,9 @@ extractDataMultinomDir<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,
 	
 	n.unstim<-cbind("u1"=au,"u2"=bu,"u3"=cu,"u4"=du)
 	n.stim<-cbind("s1"=as,"s2"=bs,"s3"=cs,"s4"=ds)
+	##rownames
+	rownames(n.unstim)<-rownames(A)
+	rownames(n.stim)<-rownames(A)
 	r<-(list(n.stim,n.unstim))
 	names(r)<-c("n.stim","n.unstim")
 	attr(r,"cytokines")<-c(cytokineA,cytokineB)

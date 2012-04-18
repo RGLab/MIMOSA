@@ -107,7 +107,7 @@ initBetaMix <-
 		alt<-"two.sided"
 	d<-as.data.frame(data[,c("ns","nu","Ns","Nu")])
 	fisher.p<-apply(d,1,function(x)fisher.test(matrix(x,2,byrow=T),alternative=alt)$p)
-	fisher.p.w<-p.adjust(fisher.p,"fdr")<0.1
+	fisher.p.w<-p.adjust(fisher.p,"fdr")<0.05
 	ord<-order(fisher.p,decreasing=F)
 	l<-length(which(fisher.p.w[ord]))
 	
