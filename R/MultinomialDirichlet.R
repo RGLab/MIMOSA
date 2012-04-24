@@ -265,6 +265,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 #			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
 				guess<-new
+				if(any(guess<0)){
+					warning("Parameter estimates became negative!")
+				}
 				break
 			}
 			guess<-new
@@ -301,7 +304,12 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	gresp<-makeGradientRespComponent(stim,unstim,z)
 	hessnull<-makeHessianNULLComponent(stim,unstim,z)
 	hessresp<-makeHessianRespComponent(stim,unstim,z)
-
+	if(any(new<0)){
+		warning("Failed to converge: negative parameter estimates")
+		m<-"Failed to converge: negative parameter estimates"
+		class("m")<-"try-error"
+		return(m)
+	}
 	return(new("MDMixResult",llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,ll=LL,par.stim=new[1:(length(new)/2)],par.unstim=new[(length(new)/2 + 1):length(new)],data=data))
 }
 
