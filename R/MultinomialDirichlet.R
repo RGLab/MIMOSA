@@ -27,16 +27,16 @@ makeLogLikeNULLComponent<-function(data.stim,data.unstim){
 	data<-data.stim+data.unstim
 	ll<-function(x){
 		a<-x[(length(x)/2+1):length(x)]
-		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)
-		#-rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)-
+				rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 makeLogLikeRespComponent<-function(data.stim,data.unstim){
 	ll<-function(x){
 		a<-x[(length(x)/2+1):length(x)]
 		b<-x[1:(length(x)/2)]
-		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)
-		#-rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)-
+				rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 

@@ -108,7 +108,47 @@ hessConstrainedNRLL<-function(data.stim,data.unstim,z=NULL){
 
 #log likelihood for constrained model responder component
 constrainedRLL<-function(data.stim,data.unstim,z=NULL){
-	
+	dats<-t(data.stim)
+	datu<-t(data.unstim)
+	if(is.null(z)){
+		z<-matrix(1,nrow=ncol(datu),ncol=2)
+	}
+	function(pars){
+		s1<-pars[1]
+		s2<-pars[2]
+		lambda1<-pars[3]
+		lambda2<-pars[4]
+		w<-pars[-c(1:4)]
+		l<-length(w)
+		ws<-w[(1:(l/2))] #stim parameters
+		wu<-w[(((l/2)+1):l)] #unstim parameters
+		dats<-dats+ws#stim hyperparameters
+		datu<-datu+wu   #unstim hyperparameters
+		
+		swu<-s1*ws
+		sws<-s2*wu
+		
+		gsws<-lgamma(sws)
+		gswu<-lgamma(swu)
+		
+		gdats<-lgamma(dats)
+		gdatu<-lgamma(datu)
+		
+		csdats<-colSums(dats)
+		csdatu<-colSums(datu)
+		
+		gcsdats<-lgamma(csdats)
+		gcsdatu<-lgamma(csdatu)
+		
+		ssws<-sum(sws)
+		sswu<-sum(swu)
+		
+		gssws<-lgamma(ssws)
+		gsswu<-lgamma(sswu)
+		
+		ll<- (colSums(gsws+gswu-gdats-gdatu)+gcsdats+gcsdatu-gssws-gsswu+lambda1*(sum(wu)-1)+lambda2*(sum(ws)-1))%*%z[,2]
+		return(ll)
+	}
 }
 
 #gradient for the log likelihood of the constrained responder component
@@ -168,3 +208,10 @@ if(inherits(optres,"try-error")){
 }
 else return(list(optim=optres,Newton.Estimates=guess.numerical))
 }
+
+
+#responder component test
+#llr<-constrainedRLL(dat[[1]],dat[[2]])
+#guess<-c(150,150,1,1,prop.table(colMeans(dat[[1]])),prop.table(colMeans(dat[[2]]))) 
+#llr(guess)
+#guess<-guess-0.1*solve(hessian(LL,guess))%*%grad(LL,guess)

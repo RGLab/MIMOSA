@@ -26,6 +26,6 @@ importFrom(utils, head)
 
 exportClasses(ICS,BetaMixResult)
 exportMethods(show,summary,extractData,volcanoPlot,likelihoodSurfacePlot)
-export(BetaMix,ICS,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,extractDataMultinomDir,print.MDlist,MDMix)
+export(BetaMix,ICS,lkbeta,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,extractDataMultinomDir,print.MDlist,MDMix)
 
 	
