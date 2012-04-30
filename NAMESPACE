@@ -8,7 +8,7 @@ importClassesFrom(methods, array, character, data.frame, factor, integer,
                   matrix, numeric)
 
 importMethodsFrom(methods, coerce, show)
-
+importFrom(compiler,cmpfun)
 importFrom(MASS,kde2d)
 
 importFrom(graphics, abline, contour, legend, plot, points)

@@ -185,7 +185,7 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 #' @return 
 #' @author Greg Finak
 #' @export
-MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
+MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE){
 	unstim<-data$n.unstim
 	stim<-data$n.stim
 	match.arg(alternative,c("greater","not equal"))
@@ -201,7 +201,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 		mm<-p.adjust(mm,"fdr")<0.05
 		mm<-apply(mm,1,function(x)all(!x))
 	}else{ #two-D case
-		mm<-sapply(1:nrow(unstim),function(i)fisher.test(rbind(unstim[i,],stim[i,]),alternative=alternative)$p.value)
+		mm<-sapply(1:nrow(unstim),function(i)fisher.test(matrix(unlist(c(unstim[i,c("Nu","nu")],stim[i,c("Ns","ns")])),ncol=2,byrow=TRUE),alternative=alternative)$p.value)
 		mm<-p.adjust(mm,"fdr")<0.05
 		mm<-!mm
 	}
@@ -216,6 +216,10 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	#estimate hyperparamters.
 	pu.u<-unstim/rowSums(unstim)
 	pu.s<-stim[which(z[,1]==1),,drop=FALSE]/rowSums(stim[which(z[,1]==1),,drop=FALSE])
+	
+	colnames(pu.u)<-letters[1:length(pu.u)]
+	colnames(pu.s)<-letters[1:length(pu.s)]
+	
 	pu<-(rbind(pu.u,pu.s))
 	ps.s<-stim[z[,2]==1,,drop=FALSE]/rowSums(stim[z[,2]==1,,drop=FALSE])
 	alpha.u<-colMeans(pu)
@@ -231,6 +235,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater"){
 	guess<-c(alpha.s,alpha.u)
 	
 	w<-colSums(z)/sum(z)
+	if(initonly){
+		return(list(q=w[1],z=z,ws=alpha.s,wu=alpha.u,Sstim=mean(rowSums(stim)),Sunstim=mean(rowSums(unstim))))
+	}
 	#EM
 	LL<-NULL
 	repeat{
