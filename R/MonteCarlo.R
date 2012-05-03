@@ -245,8 +245,11 @@ fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
 }
 
 
-.fitMCMC<-function(data,inits,iter, burn, thin,tune=100){
-	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),package="MIMOSA")
+.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat"){
+	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),package="MIMOSA")
+	if(inherits(result,"character")){
+		return(result)
+	}
 	result$cz<-cbind(result$cz,1-result$cz)
 	result
 }

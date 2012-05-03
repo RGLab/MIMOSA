@@ -3,7 +3,7 @@ using namespace Rcpp;
 /*
  * 10 parameters
  */
-RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 double lkbeta(const NumericMatrix::Row ,NumericVector*);
 double lkbeta(const NumericVector* ,NumericVector*);
 

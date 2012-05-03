@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <gsl/gsl_cblas.h>
 #include <Rmath.h>
+#include <iostream>
+#include <fstream>
 #include "MIMOSA.h"
 #undef NDEBUG
 
@@ -14,10 +16,12 @@
 /*
  * 10 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile){
 	BEGIN_RCPP
 	using namespace Rcpp;
 	using namespace arma;
+	using namespace std;
+
 	bool fixed = false;
 	Rcpp::RNGScope globalscope;
 	/*
@@ -33,8 +37,14 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	Rcpp::NumericVector const burn(_burn);
 	Rcpp::NumericVector const thin(_thin);
 	Rcpp::NumericVector const tune(_tune);
+	std::string outfile = Rcpp::as<std::string>(_outfile);
 
+	printf("Creating %s\n",outfile.data());
+	FILE* file = fopen(outfile.data(),"w");
 
+	if(file==NULL){
+		return(wrap("Can't open file!"));
+	}
 	/*
 	 * Parameters
 	 */
@@ -42,7 +52,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	const double BURNIN=burn[0];
 	const double THINNING=thin[0];
 	const double TUNING=tune[0];
-
+	double realitcounter=0;
 	/*
 	 * Assert that dimensions match
 	 */
@@ -95,6 +105,22 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	double prior=0,priornext=0;
 	double oldll=0,newll=0;
 
+
+	/*
+	 * Construct the header string
+	 *
+	 */
+	std::stringstream headers(stringstream::in|stringstream::out);
+	for(int i=0;i<z.nrow();i++){
+		headers<<"z."<<i<<"\t";
+	}
+	for(int i=0;i<alphas.length();i++){
+		headers<<"alphas."<<i<<"\t";
+	}
+	for(int i=0;i<alphau.length();i++){
+		headers<<"alphau."<<i<<"\t";
+	}
+	headers<<"q"<<std::endl;
 	//counters
 	int iteration=0,j=0;
 	/*
@@ -220,25 +246,24 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 							rateU[j]=acceptu[j]/DEFAULT_RATE;
 						}
 					}
-				}else{
-					printf("Fixed step size\n");
-					cout<<"sigmas: ";
 					for(int j=0;j<sigmas.length();j++){
-						cout<<sigmas[j]<<" "<<sigmau[j]<<" ";
 						sigmas[j] = sigmas[j]*0.5+0.5*dS(j);
 						sigmau[j] = sigmau[j]*0.5+0.5*dU(j);
 					}
-					cout<<std::endl;
-					cout<<"Acceptance rates: ";
-					for(int i = 0; i < accepts.length(); i++){
-						cout<< accepts[i]<<" " ;
+				}else{
+					printf("Fixed step size\n");
+					printf("sigmas: ");
+					for(int j=0;j<sigmas.length();j++){
+						printf("%f %f ",sigmas[j],sigmau[j]);
 					}
-					for(int i = 0; i < acceptu.length(); i++){
-						cout<< acceptu[i]<<" " ;
+					printf("\n Acceptance rates:");
+					for(int j = 0; j < accepts.length(); j++){
+						printf("%f %f",accepts[j],acceptu[j]);
 					}
-					cout<<endl;
+					printf("\n");
 					fixed=true;
 					iteration = 0;
+					fprintf(file,"%s",headers.str().data());
 				}
 				//reset the acceptance counts
 				accepts.fill(0);
@@ -248,29 +273,42 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 		/*
 		 * Running average of z1's after the burn-in
 		 */
-		if(iteration>=BURNIN){
+		if((iteration+1)%10000==0){
+			printf("--- Done %i iterations ---\n",(int)iteration+1);
+		}
+
+		if(iteration>=BURNIN&&iteration%(int)THINNING==0&&fixed){
+			realitcounter++;
 			for(int j=0;j<cz.length();j++){
-				double f = (double(iteration-BURNIN)+1.0)/(double(iteration-BURNIN)+2.0);
-				double foo = z(j,0)/(double(iteration-BURNIN)+1.0);
+				double f = realitcounter/(realitcounter+1.0);
+				double foo = z(j,0)/realitcounter;
 				cz[j]=(cz[j]+foo)*f;
 			}
+			//write chain to file
+			for(int obs=0;obs<z.nrow();obs++){
+				fprintf(file,"%f\t", z(obs,0));
+			}
+			for(int obs=0;obs<alphas.length();obs++){
+				fprintf(file,"%f\t", alphas(obs));
+			}
+			for(int obs=0;obs<alphau.length();obs++){
+				fprintf(file,"%f\t", alphau(obs));
+			}
+			fprintf(file,"\n");
 		}
 #ifdef NDEBUG
 		printf("alphas: %f %f alphau: %f %f\n",alphas[0],alphas[1],alphau[0],alphau[1]);
 #endif
 	}
-
-
-	/*
-	 * compute log likelihood for the null component (correctness validated against R code)
-	 */
-	//loglikenull(&sum_stim_unstim,&alphau,&llnullRes,&sum_data_alpha);
-
+	if(!fixed){
+		cout<<"Failed to set step size. Run a longer chain.\n";
+	}
 
 	/*
-	 * compute log likelihood for the responder component (correctness validated against R code)
+	 * Close the file and return some stuff to R.
 	 */
-	//loglikeresp(&stim,&alphas,&unstim,&alphau,&llrespRes,&sum_data_alpha,&sum_data_alphau);
+	fflush(file);
+	fclose(file);
 	return Rcpp::List::create(Rcpp::Named("q") = q,
 			Rcpp::Named("z") = z,
 			Rcpp::Named("alpha.u") = alphau,

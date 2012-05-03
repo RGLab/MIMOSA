@@ -29,8 +29,8 @@ getRxCode<-function(bmr,ics){
 	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
 }
 
-fisherVsBB<-function(bmrlist){
-	lapply(bmrlist,function(x)data.frame(Fisher=prop.table(table(factor(fisherTest(x),levels=c("TRUE","FALSE")),getRxCode(x,hvtn)))["TRUE",],BB=prop.table(table(factor(x@fdr<0.01,levels=c("TRUE","FALSE")),getRxCode(x,hvtn)))["TRUE",]))
+fisherVsBB<-function(bmrlist,ics,threshold){
+	lapply(bmrlist,function(x)data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold),levels=c("TRUE","FALSE")),getRxCode(x,ics)))["TRUE",],BB=prop.table(table(factor(x@fdr<threshold,levels=c("TRUE","FALSE")),getRxCode(x,ics)))["TRUE",]))
 }
 
 
