@@ -134,21 +134,21 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//prior logdexp(0.0001)
 			prior=::Rf_dexp(alphas[j],1000,true);
 			std::copy(alphas.begin(),alphas.end(),nextalphavec.begin());
-			nextalphavec[j]=alphaProposal(&alphas,sigmas[j]*rateS[j],j);
+			nextalphavec[j]=alphaProposal(alphas,sigmas[j]*rateS[j],j);
 			priornext=::Rf_dexp(nextalphavec[j],1000,true);
 
-			loglikenull(&sum_stim_unstim,&alphau,&llnullRes,&sum_data_alphau,&work);
-			loglikeresp(&stim,&alphas,&unstim,&alphau,&llrespRes,&sum_data_alpha,&sum_data_alphau,&work);
+			loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
+			loglikeresp(stim,alphas,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
 
 			//compute z1*lnull+z2*lresp+prior
-			completeLL(&z,&llnullRes,&llrespRes,&cll);
+			completeLL(z,llnullRes,llrespRes,cll);
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 
-			loglikenull(&sum_stim_unstim,&alphau,&llnullRes,&sum_data_alphau,&work);
-			loglikeresp(&stim,&nextalphavec,&unstim,&alphau,&llrespRes,&sum_data_alpha,&sum_data_alphau,&work);
+			loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
+			loglikeresp(stim,nextalphavec,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
 
 			//compute z1*lnull+z2*lresp+prior
-			completeLL(&z,&llnullRes,&llrespRes,&cll);
+			completeLL(z,llnullRes,llrespRes,cll);
 			newll=std::accumulate(cll.begin(),cll.end(),0.0)+priornext;
 
 			if(all(nextalphavec>0).is_true()&&(::log(Rf_runif(0.0,1.0)) <= (newll-oldll) )&&(!ISNAN(newll-oldll))){
@@ -172,22 +172,22 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//prior logexp(0.0001)
 			prior=Rf_dexp(alphau[j],1000,true);
 			std::copy(alphau.begin(),alphau.end(),nextalphavec.begin());//copy the current alpha vector to the new alpha vector prior to drawing a sample
-			nextalphavec[j]=alphaProposal(&alphau,sigmau[j]*rateU[j],j);
+			nextalphavec[j]=alphaProposal(alphau,sigmau[j]*rateU[j],j);
 			priornext=Rf_dexp(nextalphavec[j],1000,true);
 
 			/*
 			 * Compute log likelihood
 			 */
-			loglikenull(&sum_stim_unstim,&alphau,&llnullRes,&sum_data_alphau,&work);
-			loglikeresp(&stim,&alphas,&unstim,&alphau,&llrespRes,&sum_data_alpha,&sum_data_alphau,&work);
+			loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
+			loglikeresp(stim,alphas,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
 			//compute z1*lnull+z2*lresp+prior
-			completeLL(&z,&llnullRes,&llrespRes,&cll);
+			completeLL(z,llnullRes,llrespRes,cll);
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
-			loglikenull(&sum_stim_unstim,&nextalphavec,&llnullRes,&sum_data_alphau,&work);
-			loglikeresp(&stim,&alphas,&unstim,&nextalphavec,&llrespRes,&sum_data_alpha,&sum_data_alphau,&work);
+			loglikenull(sum_stim_unstim,nextalphavec,llnullRes,sum_data_alphau,work);
+			loglikeresp(stim,alphas,unstim,nextalphavec,llrespRes,sum_data_alpha,sum_data_alphau,work);
 
 			//compute z1*lnull+z2*lresp+prior
-			completeLL(&z,&llnullRes,&llrespRes,&cll);
+			completeLL(z,llnullRes,llrespRes,cll);
 			newll=std::accumulate(cll.begin(),cll.end(),0.0)+priornext;
 
 			if(all(nextalphavec>0).is_true()&&(log(Rf_runif(0.0,1.0)) <= (newll-oldll) )&&(!ISNAN(newll-oldll))){
@@ -204,12 +204,12 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			}
 
 			//simulate q
-			q[0]=simQ(&z);
+			q[0]=simQ(z);
 
 			//simulate z
-			loglikenull(&sum_stim_unstim,&alphau,&llnullRes,&sum_data_alphau,&work);
-			loglikeresp(&stim,&alphas,&unstim,&alphau,&llrespRes,&sum_data_alpha,&sum_data_alphau,&work);
-			simZ(q,&llnullRes,&llrespRes,&z,&p); //overwrites the current z
+			//loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
+			//loglikeresp(stim,alphas,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
+			//simZ(q,llnullRes,llrespRes,z,p); //overwrites the current z
 		}
 
 		/*
@@ -294,7 +294,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			for(int obs=0;obs<alphau.length();obs++){
 				fprintf(file,"%f\t", alphau(obs));
 			}
-			fprintf(file,"\n");
+			fprintf(file,"%f\n",q[0]);
 		}
 #ifdef NDEBUG
 		printf("alphas: %f %f alphau: %f %f\n",alphas[0],alphas[1],alphau[0],alphau[1]);
@@ -321,58 +321,58 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
  * Null component log likelihood
  * data is the data, alpha is the parameters, output is the result, sum_dat_alphau is data+alpha
  */
-void loglikenull(const NumericMatrix* data,const NumericVector*  alpha,NumericVector* output, NumericMatrix* sum_dat_alphau,NumericVector* work){
+void loglikenull(const NumericMatrix &data,const NumericVector  &alpha,NumericVector &output, NumericMatrix &sum_dat_alphau,NumericVector &work){
 	int i,j;
 	double da,a;
 	a=lkbeta(alpha,work);
-	for(i=0;i<data->nrow();i++){
-		for(j=0;j<data->ncol();j++){
-			(*sum_dat_alphau)(i,j)=(*data)(i,j)+(*alpha)[j];
+	for(i=0;i<data.nrow();i++){
+		for(j=0;j<data.ncol();j++){
+			sum_dat_alphau(i,j)=data(i,j)+alpha[j];
 		}
-		da=lkbeta(sum_dat_alphau->row(i),work);
-		(*output)[i]=da-a;
+		da=lkbeta(sum_dat_alphau.row(i),work);
+		output[i]=da-a;
 	}
 }
 /*
  * Responder component log-likelihood
  */
-void loglikeresp(const NumericMatrix*  stim, const NumericVector*  alphas,const  NumericVector*  unstim, const NumericVector*  alphau,NumericVector* output, NumericMatrix* sum_dat_alphas,NumericMatrix* sum_dat_alphau, NumericVector* work){
+void loglikeresp(const NumericMatrix  &stim, const NumericVector  &alphas,const  NumericVector  &unstim, const NumericVector  &alphau,NumericVector &output, NumericMatrix &sum_dat_alphas,NumericMatrix &sum_dat_alphau, NumericVector &work){
 	int i,j;
 	double da,db,a,b;
 
 	a=lkbeta(alphas,work);
 	b=lkbeta(alphau,work);
 
-	for(i=0;i<stim->nrow();i++){
-		for(j=0;j<stim->ncol();j++){
-			(*sum_dat_alphas)(i,j)=(*stim)(i,j)+(*alphas)[j];
-			(*sum_dat_alphau)(i,j)=(*unstim)(i,j)+(*alphau)[j];
+	for(i=0;i<stim.nrow();i++){
+		for(j=0;j<stim.ncol();j++){
+			sum_dat_alphas(i,j)=stim(i,j)+alphas[j];
+			sum_dat_alphau(i,j)=unstim(i,j)+alphau[j];
 		}
-		da=lkbeta(sum_dat_alphas->row(i),work);
-		db=lkbeta(sum_dat_alphau->row(i),work);
-		(*output)(i)=da+db-a-b;
+		da=lkbeta(sum_dat_alphas.row(i),work);
+		db=lkbeta(sum_dat_alphau.row(i),work);
+		output(i)=da+db-a-b;
 	}
 }
 
 /*
  * K-dimensional beta function
  */
-double lkbeta(const NumericVector*  alpha,NumericVector *work){
-	double sum_alpha = std::accumulate(alpha->begin(),alpha->end(),0.0);
+double lkbeta(const NumericVector  &alpha,NumericVector &work){
+	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
 	double log_gamma_sum_alpha=lgamma(sum_alpha);
-	std::transform(alpha->begin(),alpha->end(),work->begin(),op_lgamma);
-	double sum_log_gamma_alpha = std::accumulate(work->begin(),work->end(),0.0);
+	std::transform(alpha.begin(),alpha.end(),work.begin(),op_lgamma);
+	double sum_log_gamma_alpha = std::accumulate(work.begin(),work.end(),0.0);
 	return sum_log_gamma_alpha - log_gamma_sum_alpha;
 }
 
 /*
  * K-dimensional Beta function
  */
-double lkbeta(const NumericMatrix::Row  alpha,NumericVector *work){
+double lkbeta(const NumericMatrix::Row  &alpha,NumericVector &work){
 	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
 	double log_gamma_sum_alpha=lgamma(sum_alpha);
-	std::transform(alpha.begin(),alpha.end(),work->begin(),op_lgamma);
-	double sum_log_gamma_alpha = std::accumulate(work->begin(),work->end(),0.0);
+	std::transform(alpha.begin(),alpha.end(),work.begin(),op_lgamma);
+	double sum_log_gamma_alpha = std::accumulate(work.begin(),work.end(),0.0);
 	return sum_log_gamma_alpha-log_gamma_sum_alpha;
 }
 
@@ -386,22 +386,22 @@ double op_lgamma(double i){
 /*
  * Draw a proposal for the ith component of an alpha vector
  */
-double alphaProposal(const NumericVector* alpha, double sigma, int i){
+double alphaProposal(const NumericVector &alpha, double sigma, int i){
 	double na;
-	na = ::Rf_rnorm((*alpha)[i],sigma);
+	na = ::Rf_rnorm(alpha[i],sigma);
 	return na;
 }
 
-void completeLL(NumericMatrix* z,NumericVector* lnull, NumericVector* lresp,NumericVector* cll){
+void completeLL(NumericMatrix &z,NumericVector &lnull, NumericVector &lresp,NumericVector &cll){
 	int i;
-	for(i=0;i< z->nrow();i++){
-		(*cll)[i] = (*z)(i,0)*(*lnull)(i)+(*z)(i,1)*(*lresp)(i);
+	for(i=0;i< z.nrow();i++){
+		cll[i] = z(i,0)*lnull(i)+z(i,1)*lresp(i);
 #ifdef NDEBUG
-		printf("%f = %f*%f + %f*%f\n",(*cll)[i],(*z)(i,0),(*lnull)(i),(*z)(i,1),(*lresp)(i));
+		printf("%f = %f*%f + %f*%f\n",cll[i],z(i,0),lnull(i),z(i,1),lresp(i));
 #endif
 	}
 }
-void simZ(NumericVector q,NumericVector *lnull, NumericVector *lresp,NumericMatrix* z,NumericVector *p){
+void simZ(NumericVector &q,NumericVector &lnull, NumericVector &lresp,NumericMatrix& z,NumericVector &p){
 	int i;
 	double lq = ::log(q[0]);
 	double mlq = ::log(1.0-q[0]);
@@ -411,22 +411,22 @@ void simZ(NumericVector q,NumericVector *lnull, NumericVector *lresp,NumericMatr
 	printf("lq=%f mlq=%f\n",lq,mlq);
 #endif
 
-	for(i=0;i < lnull->length(); i++){
-		(*lnull)[i]=(*lnull)[i]+lq;
-		(*lresp)[i]=(*lresp)[i]+mlq;
-		double mx=std::max((*lnull)[i],(*lresp)[i]);
-		(*p)[i] = ::exp((*lnull)[i]-::log(::exp((*lnull)[i]-mx)+::exp((*lresp)[i]-mx))-mx);
-		(*z)(i,0) = ::Rf_rbinom(1.0,(*p)[i]);
-		(*z)(i,1) = 1.0-(*z)(i,0);
+	for(i=0;i < lnull.length(); i++){
+		lnull[i]=lnull[i]+lq;
+		lresp[i]=lresp[i]+mlq;
+		double mx=std::max(lnull[i],lresp[i]);
+		p[i] = ::exp(lnull[i]-::log(::exp(lnull[i]-mx)+::exp(lresp[i]-mx))-mx);
+		z(i,0) = ::Rf_rbinom(1.0,p[i]);
+		z(i,1) = 1.0-z(i,0);
 #ifdef NDEBUG
-		printf("z1: %f z2: %f\n",(*z)(i,0),(*z)(i,1));
+		printf("z1: %f z2: %f\n",z(i,0),z(i,1));
 		printf("Loop %d in simZ okay\n",i);
 #endif
 	}
 }
-inline double simQ(NumericMatrix* z){
-	double alpha=std::accumulate((z->column(0)).begin(),(z->column(0)).end(),0.0);
-	double beta=std::accumulate((z->column(1)).begin(),(z->column(1)).end(),0.0);
+inline double simQ(NumericMatrix &z){
+	double alpha=std::accumulate((z.column(0)).begin(),(z.column(0)).end(),0.0);
+	double beta=std::accumulate((z.column(1)).begin(),(z.column(1)).end(),0.0);
 	double q = ::Rf_rbeta(alpha+0.0001,beta+0.0001);
 	return q;
 }
