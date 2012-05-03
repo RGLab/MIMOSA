@@ -27,16 +27,16 @@ makeLogLikeNULLComponent<-function(data.stim,data.unstim){
 	data<-data.stim+data.unstim
 	ll<-function(x){
 		a<-x[(length(x)/2+1):length(x)]
-		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)-
-				rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)#-
+				#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 makeLogLikeRespComponent<-function(data.stim,data.unstim){
 	ll<-function(x){
 		a<-x[(length(x)/2+1):length(x)]
 		b<-x[1:(length(x)/2)]
-		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)-
-				rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)#-
+				#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 
@@ -217,8 +217,8 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	pu.u<-unstim/rowSums(unstim)
 	pu.s<-stim[which(z[,1]==1),,drop=FALSE]/rowSums(stim[which(z[,1]==1),,drop=FALSE])
 	
-	colnames(pu.u)<-letters[1:length(pu.u)]
-	colnames(pu.s)<-letters[1:length(pu.s)]
+	colnames(pu.u)<-letters[1:ncol(pu.u)]
+	colnames(pu.s)<-letters[1:ncol(pu.s)]
 	
 	pu<-(rbind(pu.u,pu.s))
 	ps.s<-stim[z[,2]==1,,drop=FALSE]/rowSums(stim[z[,2]==1,,drop=FALSE])
@@ -236,7 +236,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	
 	w<-colSums(z)/sum(z)
 	if(initonly){
-		return(list(q=w[1],z=z,ws=alpha.s,wu=alpha.u,Sstim=mean(rowSums(stim)),Sunstim=mean(rowSums(unstim))))
+		return(list(q=w[1],z=z,alpha.s=alpha.s*1000,alpha.u=alpha.u*1000))
 	}
 	#EM
 	LL<-NULL

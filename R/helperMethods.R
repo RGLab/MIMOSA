@@ -17,6 +17,22 @@ estimate_logZus<-function(alpha.u,beta.u,alpha.s,beta.s,B,lower.tail=TRUE)
 	return(log(I))
 }
 
+setGeneric("Data",function(x)standardGeneric("Data"))
+setMethod("Data","BetaMixResult",function(x)x@data[,c("Ns","ns","Nu","nu")])
+
+setGeneric("fisherTest",function(x,...)standardGeneric("fisherTest"))
+setMethod("fisherTest","BetaMixResult",function(x,threshold=0.01,alternative="greater"){
+			p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),"fdr")<threshold
+		})
+getRxCode<-function(bmr,ics){
+	ids<-rownames(Data(bmr))
+	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
+}
+
+fisherVsBB<-function(bmrlist){
+	lapply(bmrlist,function(x)data.frame(Fisher=prop.table(table(factor(fisherTest(x),levels=c("TRUE","FALSE")),getRxCode(x,hvtn)))["TRUE",],BB=prop.table(table(factor(x@fdr<0.01,levels=c("TRUE","FALSE")),getRxCode(x,hvtn)))["TRUE",]))
+}
+
 
 #The mean,sample-size parameterization of the beta-binomial 
 f0<-function(p,z,d,w,alternative=alternative,mciter=mciter){-CompleteDataLLRcpp(d=d,alpha0=p[3]*p[4],beta0=(1-p[3])*p[4],alphaS=p[1]*p[2],betaS=(1-p[1])*p[2],z=z,w=w,alternative=alternative,mciter=mciter)}

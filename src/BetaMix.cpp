@@ -99,7 +99,7 @@ RcppExport SEXP CompleteDataLLRcpp(SEXP ns,SEXP Ns, SEXP nu, SEXP Nu, SEXP alpha
 	Rcpp::IntegerVector MCMCINTS(_MCMCINTS);
 	std::string ALT_GT("greater");
 	std::string ALT_NE("not equal");
-	double ll2=0,ll=0;
+	double ll=0;
 	Rcpp::IntegerVector _ns(ns);
 	Rcpp::IntegerVector _Ns(Ns);
 	Rcpp::IntegerVector _nu(nu);
