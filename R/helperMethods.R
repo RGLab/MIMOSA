@@ -30,14 +30,14 @@ setMethod("fisherTest","BetaMixResult",function(x,threshold=0.01,alternative="gr
 #	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
 #}
 
-fisherVsBB<-function(bmrlist,threshold,column,subset){
+fisherVsBB<-function(bmrlist,threshold,column,subset,margin=NULL){
 	if(class(bmrlist)=="BetaMixResult"){
 		bmrlist<-list(bmrlist)
 	}
 	mycall<-substitute(subset)
 	lapply(bmrlist,function(x){
 				subset<-eval(mycall,pData(x))
-				data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]))["TRUE",],BB=prop.table(table(factor(x@fdr<=threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]))["TRUE",])
+				data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",],BB=prop.table(table(factor(x@fdr<=threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",])
 			})
 }
 

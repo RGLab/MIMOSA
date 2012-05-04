@@ -1,4 +1,4 @@
-bmrROC <- function(ics,posVisit,negVisit,polyCytokine,stimulation,control,Parent,column="visit")
+bmrROC <- function(ics,posVisit,negVisit,polyCytokine,stimulation,control,Parent,column="visit",margin=2)
 {
 	filter<-substitute(filter)
 	pos<-extractDataPoly(ics=ics,cytokineA="foo",cytokineB="foo",and=polyCytokine,stim=stimulation,control=control,subset=c(posVisit,Parent))
@@ -25,19 +25,21 @@ bmrROC <- function(ics,posVisit,negVisit,polyCytokine,stimulation,control,Parent
 	
 	bmr<-BetaMix(mm,alternative="greater",scl=10)
 	pData(bmr)<-m[,c("ID","rx_code","visit")]
-	rocdata<-mclapply(seq(0,1,l=500),function(i){
-				d<-fisherVsBB(bmr,threshold=i,column="visit",subset=!rx_code%in%c("P1-P2","P3-P4"))
+	rocdata<-lapply(seq(0,1,l=500),function(i){
+				d<-fisherVsBB(bmr,threshold=i,column="visit",subset=!rx_code%in%c("P1-P2","P3-P4"),margin=margin)
 				rn<-rownames(d[[1]])
 				data.frame(melt(d[[1]]),visit=rn,threshold=i)
 			} )
 	tmp<-do.call(rbind,rocdata)
-	colnames(tmp)<-c("Method","Response.Rate","Visit","Nominal.FDR")   
+	colnames(tmp)<-c("Method","Response.Rate","Visit","Nominal.FDR")  
 	tmp$Visit<-factor(tmp$Visit)
 	#tmp$Visit<-factor(tmp$Visit,labels=c("Day 0", "50 Days Post Vaccine 3"))
-	Title<-paste(stimulation," / ",polyCytokine," CD4+ Tcells from \n (visit ",negVisit," ) and (visit ",posVisit,")")
+	Title1<-paste(stimulation," / ",polyCytokine," CD4+ Tcells from \n (visit ",negVisit," ) and (visit ",posVisit,")")
 	form<-as.formula(paste("`",posVisit,"`~`",negVisit,"`",sep=""))
 	#xyplot(`Response.Rate`~`Nominal.FDR`|Visit,group=Method,tmp,auto.key=T,type="l",lwd=2,main=T,par.strip.text=list(cex=0.8),par.settings=list(par.main.text=list(cex=0.8)))
-	xyplot(`12`~`2`,group=Method,cast(melt(id=c("Method","Visit","Nominal.FDR"),measure="Response.Rate",tmp),Nominal.FDR+Method~Visit),main=Title,par.settings=list(par.main.text=list(cex=0.8)),type="l",auto.key=TRUE,lwd=2,xlab="FPR",ylab="TPR")
+	plt<-xyplot(form,group=Method,cast(melt(id=c("Method","Visit","Nominal.FDR"),measure="Response.Rate",tmp),Nominal.FDR+Method~Visit),main=Title1,par.settings=list(par.main.text=list(cex=0.8)),type="l",auto.key=TRUE,lwd=2,xlab="FPR",ylab="TPR")
+	plt2<-xyplot(Response.Rate~Nominal.FDR,group=Method,subset(tmp,Visit==2),xlab="Nominal FDR",ylab="Observed FDR",main=Title1,type="l",panel=function(...){panel.abline(0,1,lty=2);panel.xyplot(...);},auto.key=TRUE,par.settings=list(par.main.text=list(cex=0.8)))
+	return(list(roc=plt,fdr=plt2))
 }
 
 
