@@ -250,7 +250,10 @@ fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
 	if(inherits(result,"character")){
 		return(result)
 	}
-	result$cz<-cbind(result$cz,1-result$cz)
+	result$z<-cbind(result$z,1-result$z)
+	result$getmcmc<-function(x=outfile){
+		mcmc(read.table(x,sep="\t",header=T));
+	}
 	result
 }
 #test<-function(iter,burn,w.stepS=0.01,w.stepU=0.001,sigmaS=20,sigmaU=20){

@@ -54,6 +54,7 @@ setMethod("extractData",c("ICS","character","character","character"),
 			attr(myframe,"stimulation")<-stim
 			attr(myframe,"control")<-control
 			attr(myframe,"cytokine")<-subset
+			#TODO construct an AnnotatedDataFrame for each observation
 			return(myframe)
 		})
 

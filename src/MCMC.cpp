@@ -2,12 +2,14 @@
 #include <armadillo>
 #include <RcppArmadillo.h>
 #include <assert.h>
+#include <omp.h>
 #include <gsl/gsl_cblas.h>
 #include <Rmath.h>
 #include <iostream>
 #include <fstream>
 #include "MIMOSA.h"
 #undef NDEBUG
+#define _REENTRANT
 
 #define RATE 2.4
 #define DEFAULT_RATE  0.4
@@ -98,6 +100,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	NumericVector work(alphas.length(),0.0);
 	NumericVector cll(stim.nrow(),0.0);
 	NumericVector p(z.nrow(),0.0);
+//TODO compute posterior probabilities from p
 	NumericVector cz(z.nrow(),0.0);
 	std::copy((z.column(0)).begin(),(z.column(0)).end(),cz.begin());
 
@@ -207,9 +210,9 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			q[0]=simQ(z);
 
 			//simulate z
-			//loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
-			//loglikeresp(stim,alphas,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
-			//simZ(q,llnullRes,llrespRes,z,p); //overwrites the current z
+			loglikenull(sum_stim_unstim,alphau,llnullRes,sum_data_alphau,work);
+			loglikeresp(stim,alphas,unstim,alphau,llrespRes,sum_data_alpha,sum_data_alphau,work);
+			simZ(q,llnullRes,llrespRes,z,p); //overwrites the current z
 		}
 
 		/*
@@ -310,10 +313,11 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	fflush(file);
 	fclose(file);
 	return Rcpp::List::create(Rcpp::Named("q") = q,
-			Rcpp::Named("z") = z,
+			Rcpp::Named("z") = cz,
 			Rcpp::Named("alpha.u") = alphau,
 			Rcpp::Named("alpha.s") = alphas,
-			Rcpp::Named("cz") = cz);
+			Rcpp::Named("stepsizeS") = sigmas,
+			Rcpp::Named("stepsizeU") = sigmau);
 	END_RCPP
 }
 
@@ -321,43 +325,45 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
  * Null component log likelihood
  * data is the data, alpha is the parameters, output is the result, sum_dat_alphau is data+alpha
  */
-void loglikenull(const NumericMatrix &data,const NumericVector  &alpha,NumericVector &output, NumericMatrix &sum_dat_alphau,NumericVector &work){
-	int i,j;
-	double da,a;
-	a=lkbeta(alpha,work);
+void loglikenull(const NumericMatrix &data,const NumericVector  &alpha,NumericVector &output, NumericMatrix &sum_dat_alphau,NumericVector work){
+	int i=0,j=0;
+	double da=0,a=0;
+	a=lkbeta(alpha);
+//#pragma omp parallel for firstprivate(j) private(da) lastprivate(i)
 	for(i=0;i<data.nrow();i++){
 		for(j=0;j<data.ncol();j++){
 			sum_dat_alphau(i,j)=data(i,j)+alpha[j];
 		}
-		da=lkbeta(sum_dat_alphau.row(i),work);
+		da=lkbeta(sum_dat_alphau.row(i));
 		output[i]=da-a;
 	}
+	//printf("Thread started on obeservation %i",i);
 }
 /*
  * Responder component log-likelihood
  */
-void loglikeresp(const NumericMatrix  &stim, const NumericVector  &alphas,const  NumericVector  &unstim, const NumericVector  &alphau,NumericVector &output, NumericMatrix &sum_dat_alphas,NumericMatrix &sum_dat_alphau, NumericVector &work){
+void loglikeresp(const NumericMatrix  &stim, const NumericVector  &alphas,const  NumericVector  &unstim, const NumericVector  &alphau,NumericVector &output, NumericMatrix &sum_dat_alphas,NumericMatrix &sum_dat_alphau, NumericVector work){
 	int i,j;
 	double da,db,a,b;
-
-	a=lkbeta(alphas,work);
-	b=lkbeta(alphau,work);
-
+	b=lkbeta(alphau);
+	a=lkbeta(alphas);
+//#pragma omp parallel for firstprivate(j) private(da,db) lastprivate(i)
 	for(i=0;i<stim.nrow();i++){
 		for(j=0;j<stim.ncol();j++){
 			sum_dat_alphas(i,j)=stim(i,j)+alphas[j];
 			sum_dat_alphau(i,j)=unstim(i,j)+alphau[j];
 		}
-		da=lkbeta(sum_dat_alphas.row(i),work);
-		db=lkbeta(sum_dat_alphau.row(i),work);
+		da=lkbeta(sum_dat_alphas.row(i));
+		db=lkbeta(sum_dat_alphau.row(i));
 		output(i)=da+db-a-b;
 	}
+
 }
 
 /*
  * K-dimensional beta function
  */
-double lkbeta(const NumericVector  &alpha,NumericVector &work){
+inline double lkbeta(const NumericVector  &alpha,NumericVector &work){
 	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
 	double log_gamma_sum_alpha=lgamma(sum_alpha);
 	std::transform(alpha.begin(),alpha.end(),work.begin(),op_lgamma);
@@ -368,7 +374,27 @@ double lkbeta(const NumericVector  &alpha,NumericVector &work){
 /*
  * K-dimensional Beta function
  */
-double lkbeta(const NumericMatrix::Row  &alpha,NumericVector &work){
+inline double lkbeta(const NumericVector& alpha){
+	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
+	double log_gamma_sum_alpha = lgamma(sum_alpha);
+	double sum_log_gamma_alpha=0;
+	for(int i=0;i<alpha.length();i++){
+		sum_log_gamma_alpha=sum_log_gamma_alpha+lgamma(alpha(i));
+	}
+	return sum_log_gamma_alpha-log_gamma_sum_alpha;
+}
+
+inline double lkbeta(const NumericMatrix::Row &alpha){
+	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
+	double log_gamma_sum_alpha = lgamma(sum_alpha);
+	double sum_log_gamma_alpha=0;
+	for(int i=0;i<alpha.size();i++){
+		sum_log_gamma_alpha=sum_log_gamma_alpha+lgamma(alpha[i]);
+	}
+	return sum_log_gamma_alpha-log_gamma_sum_alpha;
+}
+
+inline double lkbeta(const NumericMatrix::Row  &alpha,NumericVector &work){
 	double sum_alpha = std::accumulate(alpha.begin(),alpha.end(),0.0);
 	double log_gamma_sum_alpha=lgamma(sum_alpha);
 	std::transform(alpha.begin(),alpha.end(),work.begin(),op_lgamma);

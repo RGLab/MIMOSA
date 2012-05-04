@@ -6,7 +6,9 @@ useDynLib(package="MIMOSA")
 
 importClassesFrom(methods, array, character, data.frame, factor, integer,
                   matrix, numeric)
-
+importFrom(Biobase,pData,"pData<-")
+importFrom("flowCore","Data")
+importClassesFrom(Biobase,AnnotatedDataFrame)
 importMethodsFrom(methods, coerce, show)
 importFrom(compiler,cmpfun)
 importFrom(MASS,kde2d)
@@ -25,7 +27,7 @@ importFrom(stats, dbeta, ecdf, fisher.test, optim, p.adjust, pbeta, qbeta,
 importFrom(utils, head)
 
 exportClasses(ICS,BetaMixResult)
-exportMethods(show,summary,extractData,volcanoPlot,likelihoodSurfacePlot)
-export(BetaMix,ICS,lkbeta,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,extractDataMultinomDir,print.MDlist,MDMix)
+exportMethods(show,summary,extractData,volcanoPlot,likelihoodSurfacePlot,pData,"pData<-",Data,fisherTest)
+export(BetaMix,ICS,lkbeta,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,bmrROC,extractDataMultinomDir,extractDataPoly,print.MDlist,MDMix,fisherVsBB)
 
 	

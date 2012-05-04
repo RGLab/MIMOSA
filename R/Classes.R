@@ -17,9 +17,9 @@ setClass("ICS",representation=list(pos="integer",neg="integer",fname="factor",fc
 )
 
 #Holds the output of BetaMix
-setClass("BetaMixResult",representation=list(alternative.model="character",cytokine="character",control="character",stimulation="character",ll="numeric",traj="numeric",iter="numeric",z="matrix",w="numeric",alpha0="numeric",beta0="numeric",alphaS="numeric",betaS="numeric",fdr="numeric",data="data.frame"))
+setClass("BetaMixResult",representation=list(alternative.model="character",cytokine="character",control="character",stimulation="character",ll="numeric",traj="numeric",iter="numeric",z="matrix",w="numeric",alpha0="numeric",beta0="numeric",alphaS="numeric",betaS="numeric",fdr="numeric",data="data.frame",pd="AnnotatedDataFrame"))
 
-setClass("MDMixResult",representation=list(llnull="function",llresp="function",gresp="function",w="numeric",z="matrix",hresp="function",gnull="function",ll="numeric",hnull="function",par.unstim="numeric",par.stim="numeric",data="list"))
+setClass("MDMixResult",representation=list(llnull="function",llresp="function",gresp="function",w="numeric",z="matrix",hresp="function",gnull="function",ll="numeric",hnull="function",par.unstim="numeric",par.stim="numeric",data="list",pd="AnnotatedDataFrame"))
 
 setClassUnion("MixResult",c("BetaMixResult","MDMixResult"))
 #Constructors

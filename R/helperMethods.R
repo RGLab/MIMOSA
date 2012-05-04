@@ -17,23 +17,41 @@ estimate_logZus<-function(alpha.u,beta.u,alpha.s,beta.s,B,lower.tail=TRUE)
 	return(log(I))
 }
 
-setGeneric("Data",function(x)standardGeneric("Data"))
-setMethod("Data","BetaMixResult",function(x)x@data[,c("Ns","ns","Nu","nu")])
+setGeneric("Data",function(object)standardGeneric("Data"))
+setMethod("Data","BetaMixResult",function(object)object@data[,c("Ns","ns","Nu","nu")])
 
 setGeneric("fisherTest",function(x,...)standardGeneric("fisherTest"))
 setMethod("fisherTest","BetaMixResult",function(x,threshold=0.01,alternative="greater"){
-			p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),"fdr")<threshold
+			p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),"fdr")<=threshold
 		})
-getRxCode<-function(bmr,ics){
-	ids<-rownames(Data(bmr))
-	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
+
+#getRxCode<-function(bmr,ics){
+#	ids<-rownames(Data(bmr))
+#	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
+#}
+
+fisherVsBB<-function(bmrlist,threshold,column,subset){
+	if(class(bmrlist)=="BetaMixResult"){
+		bmrlist<-list(bmrlist)
+	}
+	mycall<-substitute(subset)
+	lapply(bmrlist,function(x){
+				subset<-eval(mycall,pData(x))
+				data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]))["TRUE",],BB=prop.table(table(factor(x@fdr<=threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]))["TRUE",])
+			})
 }
 
-fisherVsBB<-function(bmrlist,ics,threshold){
-	lapply(bmrlist,function(x)data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold),levels=c("TRUE","FALSE")),getRxCode(x,ics)))["TRUE",],BB=prop.table(table(factor(x@fdr<threshold,levels=c("TRUE","FALSE")),getRxCode(x,ics)))["TRUE",]))
+mergeICSData<-function(x){
+	data.frame(cytokine=x@fname,parent=x@parent,antigen=x@antigen,ID=x@ID,x@rest)
 }
 
-
+setMethod("pData","BetaMixResult",function(object){
+			pData(object@pd)
+		})
+setMethod("pData<-",c("BetaMixResult","data.frame"),function(object,value){
+			pData(object@pd)<-value
+			object
+		})
 #The mean,sample-size parameterization of the beta-binomial 
 f0<-function(p,z,d,w,alternative=alternative,mciter=mciter){-CompleteDataLLRcpp(d=d,alpha0=p[3]*p[4],beta0=(1-p[3])*p[4],alphaS=p[1]*p[2],betaS=(1-p[1])*p[2],z=z,w=w,alternative=alternative,mciter=mciter)}
 f0m<-function(p,z,d,w,alternative=alternative,mciter=mciter,alpha0,beta0){-CompleteDataLLRcpp(d=d,alpha0=alpha0,beta0=beta0,alphaS=p[1]*p[2],betaS=(1-p[1])*p[2],z=z,w=w,alternative=alternative,mciter=mciter)}
@@ -246,7 +264,7 @@ setMethod("summary","BetaMixResult",function(object,...){
 			if(is.null(threshold)){
 				threshold<-0.01
 			}
-			cat("Positivity: ",table(factor(object@fdr<threshold,levels=c("FALSE","TRUE")))[2]," of ",length(object@fdr)," at ",threshold*100,"% FDR\n");
+			cat("Positivity: ",table(factor(object@fdr<=threshold,levels=c("FALSE","TRUE")))[2]," of ",length(object@fdr)," at ",threshold*100,"% FDR\n");
 		})
 #plot method for BetaMixResult, will plot the log likelihood trajectory of the model fitting process
 plot.BetaMixResult<-function(x,y,...){

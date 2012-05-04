@@ -10,6 +10,6 @@ License: Artistic-2.0
 Imports: graphics, lattice, methods, reshape, stats, utils, compiler
 Depends: methods, Rcpp (>= 0.9.7),  MCMCpack, reshape, MASS
 LinkingTo: Rcpp, RcppArmadillo
-Collate: Classes.R BetaMix.R CompleteDataLL.R MarginalGT.R MarginalNE.R MarginalNULL.R MultinomialDirichlet.R betaintegral.R constrained.R MonteCarlo.R contourPlot.R densityplot.R extractData.R gibbsPsPu.R helperMethods.R initBetaMix.R likelihoodsurface.R posteriorSample.R testPolyfunctionality.R volcanoPlot.R 
+Collate: Classes.R BetaMix.R CompleteDataLL.R MarginalGT.R MarginalNE.R MarginalNULL.R MultinomialDirichlet.R betaintegral.R constrained.R MonteCarlo.R contourPlot.R densityplot.R extractData.R gibbsPsPu.R helperMethods.R initBetaMix.R likelihoodsurface.R posteriorSample.R testPolyfunctionality.R volcanoPlot.R ComplexAnalysis.R
 LazyLoad: yes
 LazyData: yes
