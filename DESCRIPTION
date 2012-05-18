@@ -8,7 +8,7 @@ Maintainer: Greg Finak <gfinak@fhcrc.org>
 Description: Modeling count data using Dirichlet-multinomial and beta-binomial mixtures with applications to single-cell assays.
 License: Artistic-2.0
 Imports: graphics, lattice, methods, reshape, stats, utils, compiler
-Depends: methods, Rcpp (>= 0.9.7),  MCMCpack, reshape, MASS
+Depends: methods, Rcpp (>= 0.9.7),  MCMCpack, reshape, MASS, pracma, ggplot2
 LinkingTo: Rcpp, RcppArmadillo
 Collate: Classes.R BetaMix.R CompleteDataLL.R MarginalGT.R MarginalNE.R MarginalNULL.R MultinomialDirichlet.R betaintegral.R constrained.R MonteCarlo.R contourPlot.R densityplot.R extractData.R gibbsPsPu.R helperMethods.R initBetaMix.R likelihoodsurface.R posteriorSample.R testPolyfunctionality.R volcanoPlot.R ComplexAnalysis.R
 LazyLoad: yes

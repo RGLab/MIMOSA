@@ -25,9 +25,9 @@
 #subset are the levels of parent and fname to be extracted from the nesting. Order is important
 
 #TODO update extractData to deal with double-positive cytokines.
-setGeneric("extractData",function(ics,control,stim,subset){ standardGeneric("extractData")});
+setGeneric("extractData",function(ics,control,stim,subset,...){ standardGeneric("extractData")});
 setMethod("extractData",c("ICS","character","character","character"),
-		function(ics,control="Neg Cont",stim="CMV",subset=c("cd4","IFNg")){
+		function(ics,control="Neg Cont",stim="CMV",subset=c("cd4","IFNg"),subset.mapping=NULL){
 			x<-ics@.Data
 			e<-eval(parse(text=eval(paste('x[["',paste(subset,collapse='"]][["'),'"]]',sep=""))))
 			if(is.null(e)){
@@ -37,14 +37,14 @@ setMethod("extractData",c("ICS","character","character","character"),
 			#Only returns data if the subgroup has both the control and stimulated antigen
 			myframe<-do.call(rbind,lapply(e,function(x){
 								if(!is.null(x)){
-								sub<-subset(x,antigen==stim|antigen==control)
-								if(nrow(sub)!=2){
-									return(NULL)
+									sub<-subset(x,antigen==stim|antigen==control)
+									if(nrow(sub)!=2){
+										return(NULL)
+									}
+									cast(melt(as.data.frame(sub),id="antigen"),~antigen+variable)
 								}
-								cast(melt(as.data.frame(sub),id="antigen"),~antigen+variable)
-							}
 							}))
-						
+			
 			#Drop the "value" column, we don't need it. 
 			myframe<-subset(myframe,select=setdiff(colnames(myframe),"value"))
 			#construct new column names that are required by MIMOSA code "ns","nu", "Ns","Nu", the positive (n) and negative (N) stimulated (s) and unstimulated (u) counts.
@@ -54,7 +54,19 @@ setMethod("extractData",c("ICS","character","character","character"),
 			attr(myframe,"stimulation")<-stim
 			attr(myframe,"control")<-control
 			attr(myframe,"cytokine")<-subset
+			
 			#TODO construct an AnnotatedDataFrame for each observation
+			if(!is.null(subset.mapping)){
+				merged<-MIMOSA:::mergeICSData(ics)
+				m<-merge(myframe,merged,by.x="row.names",by.y="ID")
+				m<-subset(m,antigen==stim)
+				m<-m[apply(sapply(seq_along(subset),function(i)get(subset.mapping[i],m)==subset[i]),1,all),]
+				m<-rename(m,c(Row.names="ID"))
+				m<-m[match(rownames(myframe),m$ID),]
+				adf<-new("AnnotatedDataFrame",m)
+				attr(myframe,"pData")<-adf
+				class(myframe)<-c(class(myframe),"icsdata")
+			}
 			return(myframe)
 		})
 

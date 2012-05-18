@@ -30,7 +30,7 @@ ICS<-function(x=data.frame(pos=NA_integer_,neg=NA_integer_,fname=NA_character_,f
 	value
 }
 
-BetaMixResult<-function(alternative.model=NA_character_,cytokine=NA_character_,control=NA_character_,stimulation=NA_character_,ll,traj,iter,z,w,alpha0,beta0,alphaS,betaS,data){
-	new("BetaMixResult",alternative.model=alternative.model,control=control,stimulation=stimulation,cytokine=cytokine,ll=ll,traj=traj,iter=iter,z=z,w=w,alpha0=alpha0,beta0=beta0,alphaS=alphaS,betaS=betaS,fdr=fdr(z),data=data)	
+BetaMixResult<-function(alternative.model=NA_character_,cytokine=NA_character_,control=NA_character_,stimulation=NA_character_,ll,traj,iter,z,w,alpha0,beta0,alphaS,betaS,data,pd=new("AnnotatedDataFrame")){
+	new("BetaMixResult",alternative.model=alternative.model,control=control,stimulation=stimulation,cytokine=cytokine,ll=ll,traj=traj,iter=iter,z=z,w=w,alpha0=alpha0,beta0=beta0,alphaS=alphaS,betaS=betaS,fdr=fdr(z),data=data,pd=pd)	
 }
 

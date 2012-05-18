@@ -28,6 +28,6 @@ importFrom(utils, head)
 
 exportClasses(ICS,BetaMixResult)
 exportMethods(show,summary,extractData,volcanoPlot,likelihoodSurfacePlot,pData,"pData<-",Data,fisherTest)
-export(BetaMix,ICS,lkbeta,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,bmrROC,extractDataMultinomDir,extractDataPoly,print.MDlist,MDMix,fisherVsBB)
+export(BetaMix,ICS,lkbeta,BetaMixResult,plot.BetaMixResult,densityplot.BetaMixResult,contourPlot,testPolyfunctionality,bmrROC,extractDataMultinomDir,extractDataPoly,print.MDlist,MDMix,fisherVsBB,setpData,getpData,setpData.icsdata,getpData.icsdata,refactorPData)
 
 	

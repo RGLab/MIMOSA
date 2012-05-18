@@ -2,6 +2,9 @@ BetaMix <-
 		function(d=NULL,maxiter=20,shrink=1,alternative.model="greater",mciter=50,fixedNULL=FALSE,ics=NULL,priorXi=1,inits=NULL,scl=10,K=200,fixedHyperParameters=NULL){
 	#If we fix the hyperparemeters, we'll just do a likelihood ratio test with some shrinkage
 	#priorXi is a uniform Beta(Xi,Xi) prior on the mixing proportions. By default it is set to 2.
+	if(!any(class(d)%in%"icsdata")){
+		stop("Whoops.. you need to update your code to use structures other than the 'icsdata' S3 class")
+	}
 	alternative.model<-match.arg(alternative.model,c("greater","not equal"))
 	#result<-replicate(1,{
 	LL<--.Machine$double.xmax
@@ -85,7 +88,7 @@ BetaMix <-
 	}
 	
 	if(!fail){
-		result<-BetaMixResult(alternative.model=alternative.model,control=attr(d,"control"),stimulation=attr(d,"stimulation"),cytokine=attr(d,"cytokine"),ll=ll,iter=iter,traj=lltraj,z=inits$z,w=inits$w,alpha0=inits$alpha0,beta0=inits$beta0,alphaS=inits$alphaS,betaS=inits$betaS,data=as.data.frame(d))
+		result<-BetaMixResult(alternative.model=alternative.model,control=attr(d,"control"),stimulation=attr(d,"stimulation"),cytokine=attr(d,"cytokine"),ll=ll,iter=iter,traj=lltraj,z=inits$z,w=inits$w,alpha0=inits$alpha0,beta0=inits$beta0,alphaS=inits$alphaS,betaS=inits$betaS,data=as.data.frame(d),pd=attr(d,"pData"))
 	}else{
 		return(new("BetaMixResult",data=as.data.frame(d),z=matrix(rep(NA_real_,nrow(d)*2),ncol=2),fdr=rep(NA_real_,nrow(d))))
 	}

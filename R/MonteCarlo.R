@@ -244,9 +244,32 @@ fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
 	return(list(z=sz,mcmc=mcmc(f[seq(burn,iter,by=thin),])))
 }
 
+icsdata2mvicsdata<-function(x){
+	if(any(class(x)%in%"icsdata")){
+		xx<-list(n.stim=x[,c("Ns","ns")],n.unstim=x[,c("Nu","nu")])
+		attr(xx,"pData")<-attributes(x)$pData
+		class(xx)<-c(class(xx),"mvicsdata")
+		return(xx)
+	}else{
+		return(x)
+	}
+}
 
-.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat"){
-	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),package="MIMOSA")
+.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater"){
+	alternative<-match.arg(alternative,c("greater","not equal"))
+	data<-icsdata2mvicsdata(data)
+	#If the alternative hypothesis is one-sided, then compute a filter for pu>ps and pass that to the MCMC code
+	if(alternative=="greater"){
+		#ps<-do.call(rbind,apply(data$n.stim,1,function(x)data.frame(prop.table(x))[-1L,,drop=FALSE]))
+		#pu<-do.call(rbind,apply(data$n.unstim,1,function(x)data.frame(prop.table(x))[-1L,,drop=FALSE]))
+		ps<-t(do.call(cbind,apply(data$n.stim,1,function(x)(data.frame(prop.table(x))[,,drop=FALSE]))))
+		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[,,drop=FALSE]))))
+		
+		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
+	}else{
+		filter<-rep(FALSE,nrow(data$n.stim))
+	}
+	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),package="MIMOSA")
 	if(inherits(result,"character")){
 		return(result)
 	}
@@ -254,6 +277,8 @@ fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
 	result$getmcmc<-function(x=outfile){
 		mcmc(read.table(x,sep="\t",header=T));
 	}
+	attr(result,"class")<-c(attr(result,"class"),"MDMixResult")
+	attr(result,"pData")<-attr(data,"pData")
 	result
 }
 #test<-function(iter,burn,w.stepS=0.01,w.stepU=0.001,sigmaS=20,sigmaU=20){

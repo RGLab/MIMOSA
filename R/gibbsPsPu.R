@@ -135,7 +135,8 @@ gibbsPsPu <-
 
 #Given z, returns the q-values for each observation. The q-value for observation j is the false discovery rate for observations with q<q_j
 fdr<-function(z){
-	fdr<-rep(0,nrow(z)); o<-order(z[,2],decreasing=T); fdr[o]<-(cumsum(z[o,1])/1:nrow(z))
+	fdr<-rep(0,nrow(z)); o<-order(z[,2],decreasing=T); 
+	fdr[o]<-(cumsum(z[o,1])/1:nrow(z))
 	return(fdr)
 }
 

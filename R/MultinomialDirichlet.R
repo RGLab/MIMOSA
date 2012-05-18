@@ -159,14 +159,28 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 }
 
 simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2){
-	pu<-rdirichlet(1,alpha.u)
-	pu<-matrix(pu,nrow=N,ncol=length(pu),byrow=T)
-	if(N*(1-w)>0){
-	ps<-matrix(pu[1,],nrow=round(N*(1-w)),ncol=length(alpha.s),byrow=T)
+	nnull<-round((1-w)*N)
+	nresp<-N-round((1-w)*N)
+	pu<-rdirichlet(nnull,alpha.u)
+	#pu<-matrix(pu,nrow=N,ncol=length(pu),byrow=T)
+	if(nnull>0){
+		ps<-pu
 	}else{
+		#empty matrix when all responders
 		ps<-matrix(ncol=length(alpha.s),nrow=0)
 	}
-	ps<-rbind(ps,rdirichlet(round(N*w),alpha.s))
+	i<-nnull+1
+	ps<-rbind(ps,matrix(0,nrow=nresp,ncol=length(alpha.s)))
+	pu<-rbind(pu,matrix(0,nrow=nresp,ncol=length(alpha.u)))
+	while(i<=nnull+nresp){
+		p.s<-rdirichlet(1,alpha.s)
+		p.u<-rdirichlet(1,alpha.u)
+		if(any(p.s>p.u)){
+			ps[i,]<-p.s
+			pu[i,]<-p.u
+			i<-i+1
+		}
+	}
 	NU<-runif(N,1.5*10^n,1.5*10^n)
 	NS<-runif(N,1.5*10^n,1.5*10^n)
 	nu<-t(sapply(seq_along(1:N),function(i)rmultinom(1,NU[i],pu[i,])))
@@ -185,20 +199,27 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 #' @return 
 #' @author Greg Finak
 #' @export
+#' TODO filtering of pu>ps needs to be corrected here.
 MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE){
+	data<-icsdata2mvicsdata(data)
 	unstim<-data$n.unstim
 	stim<-data$n.stim
 	match.arg(alternative,c("greater","not equal"))
+	#TODO generalize so that this works for multivariate 
 	if(alternative=="greater"){
 		alternative<-"greater"
+		filt<-apply(stim,1,function(x)prop.table(x)[2])<apply(unstim,1,function(x)prop.table(x)[2])		
 	}else if(alternative=="not equal"){
 		alternative<-"two.sided"
+		filt<-rep(FALSE,nrow(stim))
 	}
 	#fisher's exact test of all the marginals
-	if(ncol(unstim)==4){
-		mm<-do.call(cbind,lapply(2:4,function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative="two.sided")$p.value)))
-		browser()
-		mm<-p.adjust(mm,"fdr")<0.05
+	#TODO generalize for multivariate
+	if(ncol(unstim)>2){
+		#TODO double check that Fisher's gives the right result here for one sided test
+		mm<-do.call(cbind,lapply(2:ncol(unstim),function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative=alternative)$p.value)))
+		mm<-matrix(p.adjust(mm,"fdr")<0.05,ncol=ncol(unstim)-1)
+		#returns all non-significant
 		mm<-apply(mm,1,function(x)all(!x))
 	}else{ #two-D case
 		mm<-sapply(1:nrow(unstim),function(i)fisher.test(matrix(unlist(c(unstim[i,c("Nu","nu")],stim[i,c("Ns","ns")])),ncol=2,byrow=TRUE),alternative=alternative)$p.value)
@@ -214,16 +235,12 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	z[!mm,2]<-1
 		
 	#estimate hyperparamters.
-	pu.u<-unstim/rowSums(unstim)
-	pu.s<-stim[which(z[,1]==1),,drop=FALSE]/rowSums(stim[which(z[,1]==1),,drop=FALSE])
+	pu<-prop.table(colMeans(unstim))
+	ps<-prop.table(colMeans(stim[which(z[,2]==1),,drop=FALSE]))
+	alpha.u<-round(colMeans(unstim))
+	alpha.s<-round(colMeans(stim[which(z[,2]==1),,drop=FALSE]))
 	
-	colnames(pu.u)<-letters[1:ncol(pu.u)]
-	colnames(pu.s)<-letters[1:ncol(pu.s)]
 	
-	pu<-(rbind(pu.u,pu.s))
-	ps.s<-stim[z[,2]==1,,drop=FALSE]/rowSums(stim[z[,2]==1,,drop=FALSE])
-	alpha.u<-colMeans(pu)
-	alpha.s<-colMeans(ps.s)
 	if(any(is.nan(alpha.s)))
 		alpha.s[is.nan(alpha.s)]<-1
 	if(any(is.nan(alpha.u)))
@@ -232,11 +249,11 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	alpha.s[alpha.s==0]<-1e-6
 	alpha.u[alpha.u==0]<-1e-6
 	
-	guess<-c(alpha.s,alpha.u)
+	guess<-c(ps,pu)
 	
 	w<-colSums(z)/sum(z)
 	if(initonly){
-		return(list(q=w[1],z=z,alpha.s=alpha.s*1000,alpha.u=alpha.u*1000))
+		return(list(q=w[1],z=z,alpha.s=alpha.s,alpha.u=alpha.u))
 	}
 	#EM
 	LL<-NULL
@@ -287,6 +304,11 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	
 		den<-apply(cbind(log(w[1])+llnull(new), log(w[2])+llresp(new)), 1, function(x)log(sum(exp(x-max(x))))+max(x))
 		z2<-exp((llresp(new)+log(w[2]))-(den))
+		
+		if(any(filt)&alternative=="greater"){
+			##Fix z's for pu>ps when alternative is greater
+			z2[filt]<-0
+		}
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
 		cll<--sum(sapply((llnull(new)+log(w[1]))*z[,1],function(x)ifelse(is.nan(x),0,x))+sapply((llresp(new)+log(w[2]))*z[,2],function(x)ifelse(is.nan(x),0,x)))
@@ -314,7 +336,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	if(any(new<0)){
 		warning("Failed to converge: negative parameter estimates")
 		m<-"Failed to converge: negative parameter estimates"
-		class("m")<-"try-error"
+		class(m)<-"try-error"
 		return(m)
 	}
 	return(new("MDMixResult",llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,ll=LL,par.stim=new[1:(length(new)/2)],par.unstim=new[(length(new)/2 + 1):length(new)],data=data))

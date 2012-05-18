@@ -1,5 +1,4 @@
 
-#black magic for the initialization
 initBetaMix <-
 		function(data=NULL,fixedNULL=FALSE,ics=NULL,alternative="greater",priorXi=1,scl=10,K=200,mciter=200){
 	K<-200;
@@ -106,7 +105,7 @@ initBetaMix <-
 	if(alternative=="not equal")
 		alt<-"two.sided"
 	d<-as.data.frame(data[,c("ns","nu","Ns","Nu")])
-	fisher.p<-apply(d,1,function(x)fisher.test(matrix(x,2,byrow=T),alternative=alt)$p)
+	fisher.p<-apply(d,1,function(x)fisher.test(matrix(unlist(x),2,byrow=T),alternative=alt)$p)
 	fisher.p.w<-p.adjust(fisher.p,"fdr")<0.05
 	ord<-order(fisher.p,decreasing=F)
 	l<-length(which(fisher.p.w[ord]))

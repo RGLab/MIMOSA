@@ -1,5 +1,5 @@
-#include <Rcpp.h>;
-#include <cmath>;
+#include <Rcpp.h>
+#include <cmath>
 #define NSAMPS 100
 using namespace Rcpp;
 
