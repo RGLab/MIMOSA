@@ -5,7 +5,7 @@
 
 #define RATE 2.4
 #define DEFAULT_RATE  0.4
-#define UPPER 0.5
+#define UPPER 0.6
 #define LOWER 0.15
 
 using namespace Rcpp;
