@@ -52,7 +52,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	Rcpp::LogicalVector filter(_filter);
 	std::string outfile = Rcpp::as<std::string>(_outfile);
 	//normalizing constant for the alternative in the one-sided 2x2 case.
-	std::vector<double> normconst(0,z.nrows());
+	std::vector<double> normconst(0,z.nrow());
 
 	printf("Creating %s\n",outfile.data());
 	FILE* file = fopen(outfile.data(),"w");
