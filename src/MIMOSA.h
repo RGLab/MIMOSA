@@ -17,15 +17,15 @@ using namespace Rcpp;
 RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 //double lkbeta(const NumericMatrix::Row& ,NumericVector&);
 //double lkbeta(const NumericVector &,NumericVector&);
-double lkbeta(const NumericMatrix::Row& );
-double lkbeta(const NumericVector &);
+double lkbeta(const std::vector<double>&,int,int);
+double lkbeta(const std::vector<double>&);
 
 double op_lgamma(double);
-void loglikenull(const NumericMatrix&  ,const NumericVector&  ,NumericVector& ,NumericMatrix& );
-void loglikeresp(const NumericMatrix &stim,const NumericVector &alphas, const NumericVector  &unstim, const NumericVector  &alphau,NumericVector &output, NumericMatrix &sum_dat_alphas,NumericMatrix &sum_dat_alphau);
-double alphaProposal(const NumericVector&,double, int);
-void completeLL(NumericMatrix &z,NumericVector &lnull, NumericVector &lresp,NumericVector &cll, LogicalVector &filter);
-void simZ(NumericVector &,NumericVector&, NumericVector&,NumericMatrix&,NumericVector&,LogicalVector &filter);
-double simQ(NumericMatrix &z);
+void loglikenull(const std::vector<double>&  ,const std::vector<double>&  ,std::vector<double>& ,std::vector<double>&,int ,int );
+void loglikeresp(const std::vector<double> &stim,const std::vector<double> &alphas, const std::vector<double>  &unstim, const std::vector<double>  &alphau,std::vector<double> &output, std::vector<double> &sum_dat_alphas,std::vector<double> &sum_dat_alphau,int,int);
+double alphaProposal(const std::vector<double>&,double, int);
+void completeLL(std::vector<double> &z,std::vector<double> &lnull, std::vector<double> &lresp,std::vector<double> &cll, std::vector<bool> &filter,int, int);
+void simZ(std::vector<double> &,std::vector<double>&, std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<bool> &filter,int, int);
+double simQ(std::vector<double> &z,int ,int);
 bool FILTER = false;
 #endif
