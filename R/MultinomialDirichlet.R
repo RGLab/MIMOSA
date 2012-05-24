@@ -222,7 +222,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		#returns all non-significant
 		mm<-apply(mm,1,function(x)all(!x))
 	}else{ #two-D case
-		mm<-sapply(1:nrow(unstim),function(i)fisher.test(matrix(unlist(c(unstim[i,c("Nu","nu")],stim[i,c("Ns","ns")])),ncol=2,byrow=TRUE),alternative=alternative)$p.value)
+		mm<-sapply(1:nrow(unstim),function(i)fisher.test(matrix(unlist(c(unstim[i,],stim[i,])),ncol=2,byrow=TRUE),alternative=alternative)$p.value)
 		mm<-p.adjust(mm,"fdr")<0.05
 		mm<-!mm
 	}
