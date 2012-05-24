@@ -12,7 +12,7 @@
 /*
  * 15 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST){
 	BEGIN_RCPP
 	using namespace Rcpp;
 	using namespace arma;
@@ -29,10 +29,13 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	std::vector<bool> filter(rfilter.length(),0);
 	filter.resize(rfilter.length());
 	copy(rfilter.begin(),rfilter.end(),filter.begin());
-	FILTER = Rcpp::as<bool> (_FILTER);
 
+	FILTER = Rcpp::as<bool> (_FILTER);
+	FAST = Rcpp::as<bool> (_FAST);
 	double UPPER = Rcpp::as<double>(_UPPER);
 	double LOWER = Rcpp::as<double>(_LOWER);
+
+
 	std::vector< double > stdalphas = Rcpp::as<std::vector<double> >(_alphas);
 	std::vector< double > stdalphau = Rcpp::as<std::vector<double> 	>(_alphau);
 	double q = Rcpp::as<double>(_q);
@@ -161,7 +164,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	/*
 	 * Initialize the normalizing constants OMP
 	 */
-	if(k==2&FILTER){
+	if(k==2&FILTER&!FAST){
 		double nc=1,numerator=0,denominator=0;
 		std::vector<double> u(2,0), s(2,0);
 		NumericVector samps(MCITER), Snum(MCITER),Sden(MCITER);
@@ -200,7 +203,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
 
 			//If alternative is greater than.. then compute the normalizing constant for the real one sided model
-			if(FILTER&k==2){
+			if(FILTER&k==2&!FAST){
 				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,normconst,P,k);
 				std::transform(stdllrespRes.begin(),stdllrespRes.end(),normconst.begin(),stdllrespRes.begin(),plus<double>());
 			}
@@ -217,7 +220,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
 			loglikeresp(stdstim,stdnextalphavec,stdunstim,stdalphau,stdllrespResNew,stdsum_data_alpha,stdsum_data_alphau,P,k);
 			//If alternative is greater than.. then compute the normalizing constant for the real one sided
-			if(FILTER&k==2){
+			if(FILTER&k==2&!FAST){
 				normalizingConstant(stdstim,stdunstim,stdnextalphavec,stdalphau,normconstnew,P,k);
 				std::transform(stdllrespResNew.begin(),stdllrespResNew.end(),normconstnew.begin(),stdllrespResNew.begin(),plus<double>());
 			}
@@ -258,19 +261,19 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			/*
 			 * Compute log likelihood
 			 */
-//			loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
-//			loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
-//
-//			if(FILTER&k==2){
-//				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,normconst,P,k);
-//				std::transform(stdllrespRes.begin(),stdllrespRes.end(),normconst.begin(),stdllrespRes.begin(),plus<double>());
-//			}
-//			//compute z1*lnull+z2*lresp+prior
-//			completeLL(z,stdllnullRes,stdllrespRes,cll,filter,P,k,normconst);
-//			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
+			//			loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
+			//			loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
+			//
+			//			if(FILTER&k==2){
+			//				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,normconst,P,k);
+			//				std::transform(stdllrespRes.begin(),stdllrespRes.end(),normconst.begin(),stdllrespRes.begin(),plus<double>());
+			//			}
+			//			//compute z1*lnull+z2*lresp+prior
+			//			completeLL(z,stdllnullRes,stdllrespRes,cll,filter,P,k,normconst);
+			//			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 			loglikenull(stdsum_stim_unstim,stdnextalphavec,stdllnullResNew,stdsum_data_alphau,P,k);
 			loglikeresp(stdstim,stdalphas,stdunstim,stdnextalphavec,stdllrespResNew,stdsum_data_alpha,stdsum_data_alphau,P,k);
-			if(FILTER&k==2){
+			if(FILTER&k==2&!FAST){
 				normalizingConstant(stdstim,stdunstim,stdalphas,stdnextalphavec,normconstnew,P,k);
 				std::transform(stdllrespResNew.begin(),stdllrespResNew.end(),normconstnew.begin(),stdllrespResNew.begin(),plus<double>());
 			}
@@ -303,10 +306,10 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
 			//loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
 
-//			if(FILTER){
-//				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,normconst,P,k);
-//				std::transform(stdllrespRes.begin(),stdllrespRes.end(),normconst.begin(),stdllrespRes.begin(),plus<double>());
-//			}
+			//			if(FILTER){
+			//				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,normconst,P,k);
+			//				std::transform(stdllrespRes.begin(),stdllrespRes.end(),normconst.begin(),stdllrespRes.begin(),plus<double>());
+			//			}
 
 			simZ(q,stdllnullRes,stdllrespRes,z,p,filter,P,k); //overwrites the current z
 		}
@@ -535,9 +538,9 @@ double alphaProposal(const std::vector<double> &alpha, double sigma, int i){
 void completeLL(std::vector<double> &z,std::vector<double> &lnull, std::vector<double> &lresp,std::vector<double> &cll,std::vector<bool> &filter,int P, int k){
 	int i;
 	for(i=0;i< P;i++){
-		//		if(filter[i]){
-		//			z[i+P]=0.0;z[i]=1.0;
-		//		}
+		if(FAST&filter[i]){
+			z[i+P]=0.0;z[i]=1.0;
+		}
 		cll[i] = z[i]*lnull[i]+z[i+P]*(lresp[i]);
 	}
 }
@@ -550,13 +553,12 @@ void simZ(double &q,std::vector<double> &lnull, std::vector<double> &lresp,std::
 		lresp[i]=lresp[i]+mlq;
 		double mx=std::max(lnull[i],lresp[i]);
 		p[i] = ::exp(lnull[i]-::log(::exp(lnull[i]-mx)+::exp(lresp[i]-mx))-mx);
-		//		if(!filter[i]){
-		z[i] = ::Rf_rbinom(1.0,p[i]);
-		z[i+P] = 1.0-z[i];
-		//		}else{
-		//			p[i]=1;
-		//		}
-
+		if(FAST&filter[i]){
+			p[i]=1;
+		}else{
+			z[i] = ::Rf_rbinom(1.0,p[i]);
+			z[i+P] = 1.0-z[i];
+		}
 	}
 }
 inline double simQ(std::vector<double> &z, int P,int k){
@@ -581,10 +583,8 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 			s[j]=stim[i+j*P]+alphas[j];
 			u[j]=unstim[i+j*P]+alphau[j];
 		}
-		for(int foo=0;foo<sampsSu.size();foo++){
-			sampsSu[foo] = ::Rf_rbeta(u[1],u[0]);
-			sampsu[foo] = ::Rf_rbeta(alphau[1],alphau[0]);
-		}
+		sampsSu = rbeta(MCITER,u[1],u[0]);
+		sampsu = rbeta(MCITER,alphau[1],alphau[0]);
 		Snum=pbeta(sampsSu,s[1],s[0],false,false);
 		Sden=pbeta(sampsu,alphas[1],alphas[0],false,false);
 

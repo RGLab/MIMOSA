@@ -11,9 +11,9 @@ using namespace Rcpp;
 
 
 /*
- * 10 parameters
+ * 15 parameters
  */
-RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 //double lkbeta(const NumericMatrix::Row& ,NumericVector&);
 //double lkbeta(const NumericVector &,NumericVector&);
 double lkbeta(const std::vector<double>&,int,int,int);
@@ -27,5 +27,5 @@ void completeLL(std::vector<double> &z,std::vector<double> &lnull, std::vector<d
 void simZ(double &,std::vector<double>&, std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<bool> &filter,int, int);
 double simQ(std::vector<double> &z,int ,int);
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &normconst, int,int);
-bool FILTER;
+bool FILTER, FAST;
 #endif

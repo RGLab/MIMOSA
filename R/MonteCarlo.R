@@ -255,7 +255,7 @@ icsdata2mvicsdata<-function(x){
 	}
 }
 
-.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15){
+.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15,FAST=FALSE){
 	alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
 	#If the alternative hypothesis is one-sided, then compute a filter for pu>ps and pass that to the MCMC code
@@ -271,7 +271,7 @@ icsdata2mvicsdata<-function(x){
 		filter<-rep(FALSE,nrow(data$n.stim))
 		FILTER<-FALSE
 	}
-	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,package="MIMOSA")
+	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,FAST,package="MIMOSA")
 	if(inherits(result,"character")){
 		return(result)
 	}
