@@ -79,6 +79,26 @@ setMethod("fisherTest","BetaMixResult",function(x,threshold=NULL,alternative="gr
 #	subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
 #}
 
+estimateProportions2<-function(x,alternative="greater"){
+	UseMethod("estimateProportions");
+}
+
+estimateProportions2.MDMixResult<-function(x,alternative="greater"){
+	match.arg(alternative,c("greater","not equal"))
+	params<-colMeans(x$getmcmc())
+	q<-params[length(params)]
+	alphau<-params[((length(params)-1)/2+1):(length(params)-1)]
+	alphas<-params[1:((length(params)-1)/2)]
+	if(alternative=="greater"){
+		posterior<-cbind(pu=prop.table(t(t(x$n.unstim)+alphau+alphas),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas+alphau),margin=1)[,2])*x$z[,1] + cbind(pu=prop.table(t(t(x$n.unstim)+alphau),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas),margin=1)[,2])*x$z[,2]
+		ml<-cbind(pu=prop.table(x$n.unstim,margin=1)[,2],ps=prop.table(x$n.stim,margin=1)[,2])
+		return(list(posterior,ml))
+	}else{
+		posterior<-cbind(pu=prop.table(t(t(x$n.unstim)+alphau+alphas),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas+alphau),margin=1)[,2])*x$z[,1] + cbind(pu=prop.table(t(t(x$n.unstim)+alphau),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas),margin=1)[,2])*x$z[,2]
+		ml<-cbind(pu=prop.table(x$n.unstim,margin=1)[,2],ps=prop.table(x$n.stim,margin=1)[,2])
+		return(list(posterior,ml))
+	}
+}
 
 huberFilter<-function(object,sd=2){
 	if(any(class(object)=="icsdata")){

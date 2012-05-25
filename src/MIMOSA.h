@@ -5,8 +5,7 @@
 
 #define RATE 2.4
 #define DEFAULT_RATE  0.4
-#define UPPER 0.6
-#define LOWER 0.15
+
 
 using namespace Rcpp;
 
@@ -14,7 +13,7 @@ using namespace Rcpp;
 /*
  * 10 parameters
  */
-RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 //double lkbeta(const NumericMatrix::Row& ,NumericVector&);
 //double lkbeta(const NumericVector &,NumericVector&);
 double lkbeta(const NumericMatrix::Row& );
@@ -27,5 +26,6 @@ double alphaProposal(const NumericVector&,double, int);
 void completeLL(NumericMatrix &z,NumericVector &lnull, NumericVector &lresp,NumericVector &cll, LogicalVector &filter);
 void simZ(NumericVector &,NumericVector&, NumericVector&,NumericMatrix&,NumericVector&,LogicalVector &filter);
 double simQ(NumericMatrix &z);
-bool FILTER = false;
+bool FILTER = false,FAST=false;
+double LOWER=0.15, UPPER=0.5;
 #endif
