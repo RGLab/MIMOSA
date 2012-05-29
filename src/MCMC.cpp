@@ -257,7 +257,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 				accepts[j]=accepts[j]+1;
 				stdalphas[j]=stdnextalphavec[j];
-				oldll=newll-prior;
+				oldll=newll-priornext;
 				//std::copy(stdllnullResNew.begin(),stdllnullResNew.end(),stdllnullRes.begin());
 				std::copy(stdllrespResNew.begin(),stdllrespResNew.end(),stdllrespRes.begin());
 			}else{
@@ -314,7 +314,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 				acceptu[j]=acceptu[j]+1;
 				stdalphau[j]=stdnextalphavec[j];
-				oldll=newll-prior;
+				oldll=newll-priornext;
 				std::copy(stdllnullResNew.begin(),stdllnullResNew.end(),stdllnullRes.begin());
 				std::copy(stdllrespResNew.begin(),stdllrespResNew.end(),stdllrespRes.begin());
 			}else{
