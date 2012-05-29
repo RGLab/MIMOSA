@@ -260,8 +260,8 @@ icsdata2mvicsdata<-function(x){
 	data<-icsdata2mvicsdata(data)
 	#If the alternative hypothesis is one-sided, then compute a filter for pu>ps and pass that to the MCMC code
 	if(alternative=="greater"){
-		ps<-t(do.call(cbind,apply(data$n.stim,1,function(x)(data.frame(prop.table(x))[,,drop=FALSE]))))
-		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[,,drop=FALSE]))))		
+		ps<-t(do.call(cbind,apply(data$n.stim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))
+		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))		
 		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
 		if(!FAST){
 			FILTER<-TRUE
