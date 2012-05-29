@@ -197,7 +197,7 @@ if(FAST){
 				//copy new ll to old ll for responding component
 				std::copy(llrespResNEW.begin(),llrespResNEW.end(),llrespRes.begin());
 				//subtract the prior for the alpha we just simulated.. that will change
-				oldll=newll-prior;
+				oldll=newll-priornext;
 			}else{
 #ifdef NDEBUG
 				printf("REJECTED alphas_%d %f prob %f newll %f oldll %f\n",j,nextalphavec[j],::exp(newll-oldll),newll,oldll);
@@ -243,7 +243,7 @@ if(FAST){
 				acceptu[j]=acceptu[j]+1;
 				alphau[j]=nextalphavec[j];
 				//copy new to old
-				oldll=newll-prior;
+				oldll=newll-priornext;
 				std::copy(llnullResNEW.begin(),llnullResNEW.end(),llnullRes.begin());
 				std::copy(llrespResNEW.begin(),llrespResNEW.end(),llrespRes.begin());
 			}else{
