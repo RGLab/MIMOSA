@@ -266,7 +266,7 @@ icsdata2mvicsdata<-function(x){
 		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[,,drop=FALSE]))))
 		
 		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
-		FILTER<-TRUE
+		FILTER=TRUE
 	}else{
 		filter<-rep(FALSE,nrow(data$n.stim))
 		FILTER<-FALSE
@@ -278,6 +278,12 @@ icsdata2mvicsdata<-function(x){
 	result$z<-cbind(result$z,1-result$z)
 	result$getmcmc<-function(x=outfile){
 		mcmc(read.table(x,sep="\t",header=T));
+	}
+	result$getP<-function(x=paste(outfile,"P",sep="")){
+		d<-mcmc(read.table(x,sep="\t",header=T));
+		nc<-ncol(d)
+		d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+		d
 	}
 	attr(result,"class")<-c(attr(result,"class"),"MDMixResult")
 	attr(result,"pData")<-attr(data,"pData")

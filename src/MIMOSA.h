@@ -28,4 +28,6 @@ void simZ(double &,std::vector<double>&, std::vector<double>&,std::vector<double
 double simQ(std::vector<double> &z,int ,int);
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &normconst, int,int);
 bool FILTER, FAST;
+double normconstIBeta(double as, double bs, double au, double bu);
+void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
 #endif
