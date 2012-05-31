@@ -8,7 +8,7 @@
 #include <fstream>
 #include <R_ext/Utils.h>
 #include "MIMOSA.h"
-//#define NDEBUG
+#define NDEBUG
 /*
  * 16 parameters
  */
@@ -57,9 +57,6 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	Rcpp::NumericVector const tune(_tune);
 
 	std::string outfile = Rcpp::as<std::string>(_outfile);
-	//normalizing constant for the alternative in the one-sided 2x2 case.
-	std::vector<double> normconst((int)z.size()/2,0);
-	std::vector<double> normconstnew((int)z.size()/2,0);
 
 	std::string outfilep(outfile.data());
 	outfilep.append("P");
@@ -174,48 +171,26 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	 */
 
 	/*
-	 * Initialize the normalizing constants OMP
+	 * Initialize the normalizing constants
 	 */
-	if(k==2&FILTER&!FAST){
-		double nc=1,numerator=0,denominator=0;
-		std::vector<double> u(2,0), s(2,0);
-		NumericVector samps(MCITER), Snum(MCITER),Sden(MCITER);
-		for(int i=0;i<P;i++){
-
-			for(int j=0;j<2;j++){
-				s[j]=stim[i+j*P]+stdalphas[j];
-				u[j]=unstim[i+j*P]+stdalphau[j];
-			}
-			samps = rbeta(MCITER,u[1],u[0]);
-			samps = rbeta(MCITER,stdalphau[1],stdalphau[0]);
-
-			Snum=pbeta(samps,s[1],s[0],false,false);
-			Sden=pbeta(samps,stdalphas[1],stdalphas[0],false,false);
-
-			numerator=std::accumulate(Snum.begin(),Snum.end(),0.0)/(double)MCITER;
-			denominator=std::accumulate(Sden.begin(),Sden.end(),0.0)/(double)MCITER;
-			normconst[i] = log(numerator)-log(denominator);
-			normconstnew[i] = log(numerator)-log(denominator);
-		}
-	}
 
 
 	for(iteration = 0; iteration < NITERS; iteration++){
 		for(j=0;j<k;j++){
 			/*
-			 * Simulate one alphas step
+			 * prior for the current alphas_j
 			 */
-			//prior logdexp(1/10000)
 			prior=::Rf_dexp(stdalphas[j],EXPRATE,true);
 			std::copy(stdalphas.begin(),stdalphas.end(),stdnextalphavec.begin());
 
-			//current log likelihood
+			//current null marginal log likelihood
 			loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
 
-			//If alternative is greater than.. then compute the normalizing constant for the real one sided model
+			//If alternative is greater compute the ratio of normalizing constants for the alternative marginal log likelihood
 			if(FILTER&k==2&!FAST){
 				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,stdllrespRes,P,k);
 			}else{
+				//otherwise the two sided marginal log likelihood
 				loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
 			}
 
@@ -224,15 +199,16 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 
 
-
+			//simulate alphas_j
 			stdnextalphavec[j]=alphaProposal(stdalphas,sigmas[j]*rateS[j],j);
 			priornext=::Rf_dexp(stdnextalphavec[j],EXPRATE,true);
-			//don't need to compute this right now
-			//loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
-			//If alternative is greater .. then compute the normalizing constant for the real one sided
+
+			//don't need to recompute the null marginal log likelihood since it doesn't depend on alphas_j
 			if(FILTER&k==2&!FAST){
+				//compute one sided marginal log likelihood
 				normalizingConstant(stdstim,stdunstim,stdnextalphavec,stdalphau,stdllrespResNew,P,k);
 			}else{
+				//two sided
 				loglikeresp(stdstim,stdnextalphavec,stdunstim,stdalphau,stdllrespResNew,stdsum_data_alpha,stdsum_data_alphau,P,k);
 			}
 			//compute z1*lnull+z2*lresp+prior
@@ -243,55 +219,44 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 
 			if(stdnextalphavec[j]>0&&(::log(Rf_runif(0.0,1.0)) <= (newll-oldll) )&&(!ISNAN(newll-oldll))){
-				//increment acceptance count for alphasj
 #ifdef NDEBUG
 				printf("ACCEPTED alphas_%d %f prob: %f newll %f oldll %f\n",j,stdnextalphavec[j],::exp(newll-oldll), newll, oldll);
 #endif
-				accepts[j]=accepts[j]+1;
-				stdalphas[j]=stdnextalphavec[j];
-				oldll=newll-priornext;
-				std::copy(stdllnullResNew.begin(),stdllnullResNew.end(),stdllnullRes.begin());
+				accepts[j]=accepts[j]+1;//increment acceptance count
+				stdalphas[j]=stdnextalphavec[j]; //new alphas_j is accepted
+				oldll=newll-priornext; //save the new complete data log likelihood (minus the prior for alphas_j) so we don't recompute it for the next step
+				std::copy(stdllnullResNew.begin(),stdllnullResNew.end(),stdllnullRes.begin()); //ditto for the null and alternative marginal log likelihood
 				std::copy(stdllrespResNew.begin(),stdllrespResNew.end(),stdllrespRes.begin());
 			}else{
-				//subtract alpha-specific stuff from the likelihood. Recompute them at the next step.
-				oldll=oldll-prior;
+				oldll=oldll-prior; //reject so just subtract the alpha-specific prior
 #ifdef NDEBUG
-				printf("REJECTED alphas_%d %f prob %f newll %f oldll %f\n",j,stdnextalphavec[j],::exp(newll-oldll),newll,oldll);
+				printf("REJECTED alphau_%d %f, deltall: %f newll %f oldll %f\n",j,stdnextalphavec[j],(newll-oldll),newll, oldll);
 #endif
 			}
 
 
 
 			/*
-			 * Simulate one alphau step
+			 * Simulate alphau_j
 			 */
-			//prior logexp(0.0001)
+			//prior for the current alphau_j
 			prior=Rf_dexp(stdalphau[j],EXPRATE,true);
 			oldll=oldll+prior;
+			//copy the alphau vector to the proposal vector.
 			std::copy(stdalphau.begin(),stdalphau.end(),stdnextalphavec.begin());//copy the current alpha vector to the new alpha vector prior to drawing a sample
 
+			//simulate alphau)j
 			stdnextalphavec[j]=alphaProposal(stdalphau,sigmau[j]*rateU[j],j);
 			priornext=Rf_dexp(stdnextalphavec[j],EXPRATE,true);
-			/*
-			 * Compute log likelihood
-			 */
-			//loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
-			//loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
 
-			//compute the new normalizing constant for the current alpha and add it to the log-likelihood
-			if(FILTER&k==2&!FAST){
-				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,stdllrespRes,P,k);
-				completeLL(z,stdllnullRes,stdllrespRes,cll,filter,P,k);
-				oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
-			}
-
+			//don't need to recompute the current complete data log likelihood. It's the same as before, just differs by the prior.
 
 			//compute z1*lnull+z2*lresp+prior
-			loglikenull(stdsum_stim_unstim,stdnextalphavec,stdllnullResNew,stdsum_data_alphau,P,k);
+			loglikenull(stdsum_stim_unstim,stdnextalphavec,stdllnullResNew,stdsum_data_alphau,P,k); //new null marginal likelihood.
 			if(FILTER&k==2&!FAST){
-				normalizingConstant(stdstim,stdunstim,stdalphas,stdnextalphavec,stdllrespResNew,P,k);
-
+				normalizingConstant(stdstim,stdunstim,stdalphas,stdnextalphavec,stdllrespResNew,P,k); //new responder marginal LL - one sided
 			}else{
+				//two sided
 				loglikeresp(stdstim,stdalphas,stdunstim,stdnextalphavec,stdllrespResNew,stdsum_data_alpha,stdsum_data_alphau,P,k);
 			}
 			//compute z1*lnull+z2*lresp+prior
@@ -306,8 +271,9 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				printf("ACCEPTED alphau_%d %f, prob ratio %f newll %f oldll %f\n",j,stdnextalphavec[j],::exp(newll-oldll),newll, oldll);
 #endif
 				acceptu[j]=acceptu[j]+1;
-				stdalphau[j]=stdnextalphavec[j];
-				oldll=newll-priornext;
+				stdalphau[j]=stdnextalphavec[j];//new alphau_j is accepted
+				oldll=newll-priornext; //complete data log likelihood (minus the prior)
+				//marginal null and alternative log likelihoods for the accepted parameter are saved so we don't have to recompute them
 				std::copy(stdllnullResNew.begin(),stdllnullResNew.end(),stdllnullRes.begin());
 				std::copy(stdllrespResNew.begin(),stdllrespResNew.end(),stdllrespRes.begin());
 			}else{
@@ -316,19 +282,10 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				printf("REJECTED alphau_%d %f, deltall: %f newll %f oldll %f\n",j,stdnextalphavec[j],(newll-oldll),newll, oldll);
 #endif
 			}
-
-			//simulate q
-
-			loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k);
-			if(FILTER&k==2&!FAST){
-				normalizingConstant(stdstim,stdunstim,stdalphas,stdalphau,stdllrespRes,P,k);
-
-			}else{
-				loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
-			}
-
-			simZ(q,stdllnullRes,stdllrespRes,z,p,filter,P,k); //overwrites the current z
+			//simulate q (w)
 			q=simQ(z,P,k);
+			//simulate z
+			simZ(q,stdllnullRes,stdllrespRes,z,p,filter,P,k); //overwrites the current z. A running average is stored in cz
 
 		}
 
@@ -613,56 +570,52 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 			s[j]=stim[i+j*P]+alphas[j];
 			u[j]=unstim[i+j*P]+alphau[j];
 		}
+		//alphas[1] is alpha, alphas[0] is beta
+		//data+hyperparameters
 		numerator=nc((double)s[1],(double)s[0],(double)u[1],(double)u[0],20);
+		//hyperparameters only
 		denominator=nc((double)alphas[1],(double)alphas[0],(double)alphau[1],(double)alphau[0],20);
-//		printf("alphas+data: %f \tbetas+data %f\n",s[0],s[1]);
-//		printf("alphau+data: %f \tbetau+data %f\n",u[0],u[1]);
-//		printf("alphas: %f \tbetas %f\n",alphas[0],alphas[1]);
-//		printf("alphau: %f \tbetau %f\n",alphau[0],alphau[1]);
-//		printf("numerator: %f \tdenominator %f\n",numerator,denominator);
 		llresp[i]=(numerator)-(denominator);
-		//printf("llresp[%d]=%f\t",i,llresp[i]);
 	}
-//	exit(0);
 }
 
 
-double normconstIBeta(double as, double bs, double au, double bu){
-	double alphas=(double)ceil(as);
-	double betas = (double)ceil(bs);
-	double alphau = (double)ceil(au);
-	double betau = (double)ceil(bu);
-	double res=0,sum=0;
-	double upper = (double) (alphau+betau);
-	double K = -::Rf_lbeta(alphas,betas)+Rf_lgammafn(alphau+betau)-Rf_lgammafn(alphas+betas+alphau+betau-1);
-#ifdef NDEBUG
-	printf("as=%f bs=%f au=%f bu=%f\n",as,bs,au,bu);
-	printf("INTS: as=%f bs=%f au=%f bu=%f\n",alphas,betas,alphau,betau);
-	printf("upper=%f\n",upper);
-	printf("K=%f\n",K);
-	printf("-::Rf_lbeta(alphas,betas)=%f\n",-::Rf_lbeta(alphas,betas));
-	printf("Rf_lgammafn(alphau+betau)=%f\n",Rf_lgammafn(alphau+betau));
-	printf("-Rf_lgammafn(alphas+betas+alphau-1)=%f\n",-Rf_lgammafn(alphas+betas+alphau-1));
-#endif
-	for(int j = (int)alphau;j< ((int)upper);j++){
-#ifdef NDEBUG
-		printf("j=%d\n",j);
-		printf("Rf_lgammafn(alphas+j)=%f\n",Rf_lgammafn(alphas+j));
-		printf("Rf_lgammafn(alphau+betau+betas-1)=%f\n",Rf_lgammafn(alphau+betau+betas-j-1));
-		printf("-Rf_lgammafn(j+1)=%f\n",-Rf_lgammafn(j+1));
-		printf("-Rf_lgammafn(alphau+betau-j)=%f\n",-Rf_lgammafn(alphau+betau-j));
-		printf("sm = %f\n",K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j));
-#endif
-		res=K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j);
-		res = ::exp(res);
-#ifdef NDEBUG
-		printf("expres = %f, exponent of negative number = %f\n",res,exp(-1.0));
-#endif
-		sum=sum+res;
-	}
-
-	return(sum);
-}
+//double normconstIBeta(double as, double bs, double au, double bu){
+//	double alphas=(double)ceil(as);
+//	double betas = (double)ceil(bs);
+//	double alphau = (double)ceil(au);
+//	double betau = (double)ceil(bu);
+//	double res=0,sum=0;
+//	double upper = (double) (alphau+betau);
+//	double K = -::Rf_lbeta(alphas,betas)+Rf_lgammafn(alphau+betau)-Rf_lgammafn(alphas+betas+alphau+betau-1);
+//#ifdef NDEBUG
+//	printf("as=%f bs=%f au=%f bu=%f\n",as,bs,au,bu);
+//	printf("INTS: as=%f bs=%f au=%f bu=%f\n",alphas,betas,alphau,betau);
+//	printf("upper=%f\n",upper);
+//	printf("K=%f\n",K);
+//	printf("-::Rf_lbeta(alphas,betas)=%f\n",-::Rf_lbeta(alphas,betas));
+//	printf("Rf_lgammafn(alphau+betau)=%f\n",Rf_lgammafn(alphau+betau));
+//	printf("-Rf_lgammafn(alphas+betas+alphau-1)=%f\n",-Rf_lgammafn(alphas+betas+alphau-1));
+//#endif
+//	for(int j = (int)alphau;j< ((int)upper);j++){
+//#ifdef NDEBUG
+//		printf("j=%d\n",j);
+//		printf("Rf_lgammafn(alphas+j)=%f\n",Rf_lgammafn(alphas+j));
+//		printf("Rf_lgammafn(alphau+betau+betas-1)=%f\n",Rf_lgammafn(alphau+betau+betas-j-1));
+//		printf("-Rf_lgammafn(j+1)=%f\n",-Rf_lgammafn(j+1));
+//		printf("-Rf_lgammafn(alphau+betau-j)=%f\n",-Rf_lgammafn(alphau+betau-j));
+//		printf("sm = %f\n",K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j));
+//#endif
+//		res=K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j);
+//		res = ::exp(res);
+//#ifdef NDEBUG
+//		printf("expres = %f, exponent of negative number = %f\n",res,exp(-1.0));
+//#endif
+//		sum=sum+res;
+//	}
+//
+//	return(sum);
+//}
 
 //samples P's for the 2-d case only.
 void sampleP(std::vector<double>& sumdata,std::vector<double>& stim,std::vector<double>& unstim,std::vector<double>& alphas,std::vector<double>& alphau,std::vector<double>& z, std::vector<double> &ps, std::vector<double> &pu, int P,int k){
@@ -682,12 +635,8 @@ void sampleP(std::vector<double>& sumdata,std::vector<double>& stim,std::vector<
 double nc(double as, double bs, double au,double bu,double B){
 	double K,mx,sm=0;
 	std::vector<double> s(B+1,0);
-	std::vector<double> mxv(B+1,0);
-//	printf("as:%f\tbs:%f\tau:%f\tbu:%f\n",as,bs,au,bu);
 	K=::Rf_lbeta(au+as,bu+bs)-::log(au);
 	s[0]=K;
-//	printf("log(K)=%f\tlbeta(au+as,bu+bs)=%f\t-log(au)=%f\n",::Rf_lbeta(au+as,bu+bs)-::log(au),Rf_lbeta(au+as,bu+bs),-log(au));
-//	printf("K=\t%f\n",K);
 	for(int i=0;i<(s.size()-1);i++){
 		s[i+1]=(Rf_lbeta(au+1,i+1)+Rf_lbeta(au+as+i+1,bu+bs)-Rf_lbeta(au+bu,i+1)-log(au));
 	}
@@ -701,11 +650,4 @@ double nc(double as, double bs, double au,double bu,double B){
 	return(sm);
 }
 
-//computeZonly <- function (alpha.0, alpha.s, beta.0, beta.s, B) {
-//  n<-0:B
-//  Z<-exp(lbeta(alpha.0+alpha.s,beta.0+beta.s)-log(alpha.0))+
-//    sum(exp(lbeta(alpha.0+1,n+1)+lbeta(alpha.0+alpha.s+n+1,beta.0+beta.s)-
-//    lbeta(alpha.0+beta.0,n+1)-log(alpha.0)))
-//  return(Z)
-//}
 
