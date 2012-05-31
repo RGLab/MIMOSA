@@ -581,43 +581,6 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 }
 
 
-//double normconstIBeta(double as, double bs, double au, double bu){
-//	double alphas=(double)ceil(as);
-//	double betas = (double)ceil(bs);
-//	double alphau = (double)ceil(au);
-//	double betau = (double)ceil(bu);
-//	double res=0,sum=0;
-//	double upper = (double) (alphau+betau);
-//	double K = -::Rf_lbeta(alphas,betas)+Rf_lgammafn(alphau+betau)-Rf_lgammafn(alphas+betas+alphau+betau-1);
-//#ifdef NDEBUG
-//	printf("as=%f bs=%f au=%f bu=%f\n",as,bs,au,bu);
-//	printf("INTS: as=%f bs=%f au=%f bu=%f\n",alphas,betas,alphau,betau);
-//	printf("upper=%f\n",upper);
-//	printf("K=%f\n",K);
-//	printf("-::Rf_lbeta(alphas,betas)=%f\n",-::Rf_lbeta(alphas,betas));
-//	printf("Rf_lgammafn(alphau+betau)=%f\n",Rf_lgammafn(alphau+betau));
-//	printf("-Rf_lgammafn(alphas+betas+alphau-1)=%f\n",-Rf_lgammafn(alphas+betas+alphau-1));
-//#endif
-//	for(int j = (int)alphau;j< ((int)upper);j++){
-//#ifdef NDEBUG
-//		printf("j=%d\n",j);
-//		printf("Rf_lgammafn(alphas+j)=%f\n",Rf_lgammafn(alphas+j));
-//		printf("Rf_lgammafn(alphau+betau+betas-1)=%f\n",Rf_lgammafn(alphau+betau+betas-j-1));
-//		printf("-Rf_lgammafn(j+1)=%f\n",-Rf_lgammafn(j+1));
-//		printf("-Rf_lgammafn(alphau+betau-j)=%f\n",-Rf_lgammafn(alphau+betau-j));
-//		printf("sm = %f\n",K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j));
-//#endif
-//		res=K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j);
-//		res = ::exp(res);
-//#ifdef NDEBUG
-//		printf("expres = %f, exponent of negative number = %f\n",res,exp(-1.0));
-//#endif
-//		sum=sum+res;
-//	}
-//
-//	return(sum);
-//}
-
 //samples P's for the 2-d case only.
 void sampleP(std::vector<double>& sumdata,std::vector<double>& stim,std::vector<double>& unstim,std::vector<double>& alphas,std::vector<double>& alphau,std::vector<double>& z, std::vector<double> &ps, std::vector<double> &pu, int P,int k){
 	for(int i=0;i<P;i++){
