@@ -8,7 +8,7 @@
 #include <fstream>
 #include <R_ext/Utils.h>
 #include "MIMOSA.h"
-#define NDEBUG
+//#define NDEBUG
 /*
  * 16 parameters
  */
@@ -538,6 +538,7 @@ void simZ(double &q,std::vector<double> &lnull, std::vector<double> &lresp,std::
 		lnull[i]=lnull[i]+lq;
 		lresp[i]=lresp[i]+mlq;
 		double mx=std::max(lnull[i],lresp[i]);
+		//printf("null:%f\talternative: %f\n",lnull[i],lresp[i]);
 		if(FAST&filter[i]){
 			p[i]=1;
 		}else{
@@ -555,7 +556,7 @@ inline double simQ(std::vector<double> &z, int P,int k){
 			ab[j]=ab[j]+z[j*P+i];
 		}
 	}
-	q = ::Rf_rbeta(ab[0]+1,ab[1]+1);
+	q = 1.0-::Rf_rbeta(ab[1]+1,ab[0]+1);
 	return q;
 }
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){
