@@ -5,7 +5,7 @@
 
 #define RATE 2.4
 #define DEFAULT_RATE  0.4
-#define MCITER 50
+#define MCITER 1000
 
 using namespace Rcpp;
 
@@ -13,7 +13,7 @@ using namespace Rcpp;
 /*
  * 15 parameters
  */
-RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP, SEXP);
 //double lkbeta(const NumericMatrix::Row& ,NumericVector&);
 //double lkbeta(const NumericVector &,NumericVector&);
 double lkbeta(const std::vector<double>&,int,int,int);
@@ -30,4 +30,5 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 bool FILTER, FAST, EXPRATE;
 double normconstIBeta(double as, double bs, double au, double bu);
 void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
+double nc(double as, double bs, double au,double bu,double B);
 #endif
