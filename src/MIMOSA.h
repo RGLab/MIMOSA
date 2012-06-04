@@ -31,4 +31,5 @@ bool FILTER, FAST, EXPRATE;
 double normconstIBeta(double as, double bs, double au, double bu);
 void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
 double nc(double as, double bs, double au,double bu,double B);
+double normconstMC(double as, double bs,double au, double bu);
 #endif

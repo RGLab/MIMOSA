@@ -21,7 +21,8 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	bool fixed = false;
 
 	Rcpp::RNGScope globalscope;
-
+	//	printf("%f\n",normconstIBeta(10,3000,1.5,3000));
+	//	exit(0);
 	/*
 	 * Copy R variables to standard vectors
 	 */
@@ -230,7 +231,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			}else{
 				oldll=oldll-prior; //reject so just subtract the alpha-specific prior
 #ifdef NDEBUG
-				printf("REJECTED alphau_%d %f, deltall: %f newll %f oldll %f\n",j,stdnextalphavec[j],(newll-oldll),newll, oldll);
+				printf("REJECTED alphas_%d %f, deltall: %f newll %f oldll %f\n",j,stdnextalphavec[j],(newll-oldll),newll, oldll);
 #endif
 			}
 
@@ -388,6 +389,11 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				std::copy(p.begin(),p.end(),cz.begin());
 			}
 			printf("--- Done %i iterations ---\n",(int)iteration+1);
+			printf("\n Acceptance rates:");
+			for(int j = 0; j < accepts.length(); j++){
+				printf("%f %f",accepts[j],acceptu[j]);
+			}
+			printf("\n");
 		}
 
 		if(iteration>=BURNIN&&iteration%(int)THINNING==0&&fixed){
@@ -446,14 +452,15 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 void loglikenull(const std::vector<double> &data,const std::vector<double>  &alpha,std::vector<double> &output, std::vector<double> &sum_dat_alphau,int P, int k){
 	int i=0,j=0;
 	double da=0,a=0;
-	a=lkbeta(alpha);
-	for(i=0;i<P;i++){
-		for(j=0;j<k;j++){
-			sum_dat_alphau[j*P+i]=data[j*P+i]+alpha[j];
+		a=lkbeta(alpha);
+		for(i=0;i<P;i++){
+			for(j=0;j<k;j++){
+				sum_dat_alphau[j*P+i]=data[j*P+i]+alpha[j];
+			}
+			da=lkbeta(sum_dat_alphau,i,k,P);
+			output[i]=da-a;
 		}
-		da=lkbeta(sum_dat_alphau,i,k,P);
-		output[i]=da-a;
-	}
+
 }
 /*
  * Responder component log-likelihood
@@ -561,10 +568,10 @@ inline double simQ(std::vector<double> &z, int P,int k){
 }
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){
 	assert(k==2);
-	double numerator=0,denominator=0;
+	double numerator=0,denominator=0,nummc,denommc;
+	double C=1,CC=1;
+	//If any alphas are <= 0 fill with nan;
 	std::vector<double> u(2,0), s(2,0);
-
-
 	int i=0,j=0;
 	for(i=0;i<P;i++){
 		for(j=0;j<2;j++){
@@ -573,11 +580,84 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 		}
 		//alphas[1] is alpha, alphas[0] is beta
 		//data+hyperparameters
-		numerator=nc((double)s[1],(double)s[0],(double)u[1],(double)u[0],20);
+		numerator=normconstIBeta((double)s[0],(double)s[1],(double)u[0],(double)u[1]);
 		//hyperparameters only
-		denominator=nc((double)alphas[1],(double)alphas[0],(double)alphau[1],(double)alphau[0],20);
-		llresp[i]=(numerator)-(denominator);
+		denominator=normconstIBeta((double)alphas[0],(double)alphas[1],(double)alphau[0],(double)alphau[1]);
+//		nummc = normconstMC((double)s[1],(double)s[0],(double)u[1],(double)u[0]);
+//		denommc = normconstMC((double)alphas[1],(double)alphas[0],(double)alphau[1],(double)alphau[1]);
+
+		CC=numerator-denominator;
+		CC=log(1-exp(CC))+1;
+//		C=nummc-denommc;
+		//		printf("C=%f\n",::exp(C));
+		double K=lgamma((double)s[1])+lgamma((double)s[0])-lgamma(s[1]+s[0])+lgamma((double)u[1])+lgamma((double)u[0])-lgamma(u[1]+u[0])-lgamma((double)alphas[1])-lgamma((double)alphas[0])+lgamma(alphas[1]+alphas[0])-lgamma((double)alphau[1])-lgamma((double)alphau[0])+lgamma(alphau[1]+alphau[0]);
+//		double K = ::Rf_lbeta((double) s[1],(double) s[0])+::Rf_lbeta((double) u[1], (double) u[0])-::Rf_lbeta((double) alphas[1],(double)alphas[0])-::Rf_lbeta((double)alphau[1],(double)alphau[0]);
+		if(ISNAN(CC)){
+//			printf("s0: %f s1: %f u0: %f u1: %f as0: %f as1: %f au0: %f au1: %f \n",s[0],s[1],u[0],u[1],alphas[0],alphas[1],alphau[0],alphau[1]);
+//			printf("numerator: %f  denominator %f  C: %f\n",numerator,denominator,numerator-denominator);
+//			printf("log(1-exp(C))=%f\n",log(1-exp(numerator-denominator)));
+			nummc = normconstMC((double)s[1],(double)s[0],(double)u[1],(double)u[0]);
+			denommc = normconstMC((double)alphas[1],(double)alphas[0],(double)alphau[1],(double)alphau[1]);
+			C=nummc-denommc;
+			CC=C;
+		}
+//		printf("mc: %f  approx: %f, diff: %f\n",K+CC,K+C,CC-C);
+		llresp[i]=K+C;
+		//printf("%f\n",llresp[i]);
 	}
+}
+
+double normconstMC(double as, double bs, double au, double bu){
+	double res;
+	NumericVector r = rbeta(50,au,bu);
+	r=pbeta(r,as,bs,false,false);
+	res = std::accumulate(r.begin(),r.end(),0.0)/r.length();
+	return res;
+}
+
+double normconstIBeta(double as, double bs, double au, double bu){
+	double alphas=(double)ceil(as);
+	double betas = (double)ceil(bs);
+	double alphau = (double)ceil(au);
+	double betau = (double)ceil(bu);
+	if(alphas<=0||betas<=0||alphau<=0||betau<=0){
+		return 0/0; //if any parameters are negative return a large negative value so that we reject automatically.
+	}
+	double sum=0,mx=0;
+	double upper = (double) (alphau+betau);
+	std::vector<double> res((int)betau,0.0);
+	//	printf("as=%f bs=%f au=%f bu=%f\n",as,bs,au,bu);
+	//	printf("INTS: as=%f bs=%f au=%f bu=%f\n",alphas,betas,alphau,betau);
+	//	printf("upper: %d, alphau: %d size: %d\n",upper, alphau,res.size());
+	double K = -::Rf_lbeta(alphas,betas)+Rf_lgammafn(alphau+betau)-Rf_lgammafn(alphas+betas+alphau+betau-1);
+#ifdef FOO
+	printf("upper=%f\n",upper);
+	printf("K=%f\n",K);
+	printf("-::Rf_lbeta(alphas,betas)=%f\n",-::Rf_lbeta(alphas,betas));
+	printf("Rf_lgammafn(alphau+betau)=%f\n",Rf_lgammafn(alphau+betau));
+	printf("-Rf_lgammafn(alphas+betas+alphau-1)=%f\n",-Rf_lgammafn(alphas+betas+alphau-1));
+#endif
+	for(int j = (int)alphau;j< ((int)upper);j++){
+#ifdef FOO
+		printf("j=%d\n",j);
+		printf("Rf_lgammafn(alphas+j)=%f\n",Rf_lgammafn(alphas+j));
+		printf("Rf_lgammafn(alphau+betau+betas-1)=%f\n",Rf_lgammafn(alphau+betau+betas-j-1));
+		printf("-Rf_lgammafn(j+1)=%f\n",-Rf_lgammafn(j+1));
+		printf("-Rf_lgammafn(alphau+betau-j)=%f\n",-Rf_lgammafn(alphau+betau-j));
+		printf("sm = %f\n",K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j));
+#endif
+		res[j-(int)alphau]=K+Rf_lgammafn(alphas+j)+Rf_lgammafn(alphau+betau+betas-j-1)-Rf_lgammafn(j+1)-Rf_lgammafn(alphau+betau-j);
+	}
+
+	//todo normalized sum of exponentials
+	std::vector<double>::iterator where=std::max_element(res.begin(),res.end());
+	mx = *where;
+	for(int i=0;i<res.size();i++){
+		sum=sum+::exp(res[i]-mx);
+	}
+	sum=log(sum)+mx;
+	//printf("%f \n",sum);
+	return(sum);
 }
 
 
