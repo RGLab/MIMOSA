@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <omp.h>
 #include <Rmath.h>
+#include <math.h>
 #include <iostream>
 #include <fstream>
 #include <R_ext/Utils.h>
@@ -621,7 +622,7 @@ double normconstIBeta(double as, double bs, double au, double bu){
 	double alphau = (double)ceil(au);
 	double betau = (double)ceil(bu);
 	if(alphas<=0||betas<=0||alphau<=0||betau<=0){
-		return 0/0; //if any parameters are negative return a large negative value so that we reject automatically.
+		return 0.0/0.0; //if any parameters are negative return nan.
 	}
 	double sum=0,mx=0;
 	double upper = (double) (alphau+betau);
