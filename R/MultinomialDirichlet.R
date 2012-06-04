@@ -175,7 +175,7 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 	while(i<=nnull+nresp){
 		p.s<-rdirichlet(1,alpha.s)
 		p.u<-rdirichlet(1,alpha.u)
-		if(any(p.s>p.u)){
+		if(any(p.s[-1L]>p.u[-1L])){
 			ps[i,]<-p.s
 			pu[i,]<-p.u
 			i<-i+1

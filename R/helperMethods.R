@@ -14,6 +14,33 @@ extractANDOR<-function(ics,cell1,cell2,cell3,Control,visit,Stim,parent,...){
 	D
 }
 
+estimateProportions2<-function(x,method="mode"){
+	UseMethod("estimateProportions2");
+}
+
+estimateProportions2.MDMixResult<-function(x,method="mode"){
+	match.arg(method,c("mode","mean"))
+	posterior<-x$getP()
+	if(method=="mean"){
+		posterior.diff<-do.call(rbind,lapply(posterior,function(x)mean(apply(do.call(cbind,x)[,2:1],1,diff))))
+		posterior.lods<-do.call(rbind,lapply(posterior,function(x){d<-(apply(do.call(cbind,x)[,2:1],1,function(x)diff(log(x))));mean(d[is.finite(d)])}))
+		ml<-cbind(pu=prop.table(as.matrix(x$n.unstim),margin=1)[,2],ps=prop.table(as.matrix(x$n.stim),margin=1)[,2])
+		ml.differences<-apply(ml,1,diff)
+		ml.logodds<-apply(ml,1,function(x)diff(log(x)))
+		return(list(posterior.logodds=posterior.lods,posterior.differences=posterior.diff,ml.differences=ml.differences,ml.logodds=ml.logodds))
+	}
+	if(method=="mode"){
+		posterior.diff<-do.call(rbind,lapply(posterior,function(x)mlv(apply(do.call(cbind,x)[,2:1],1,diff),method="mfv")[[1]]))
+		posterior.lods<-do.call(rbind,lapply(posterior,function(x)mlv(apply(do.call(cbind,x)[,2:1],1,function(x)diff(log(x))),method="mfv")[[1]]))
+		ml<-cbind(pu=prop.table(as.matrix(x$n.unstim),margin=1)[,2],ps=prop.table(as.matrix(x$n.stim),margin=1)[,2])
+		ml.differences<-apply(ml,1,diff)
+		ml.logodds<-apply(ml,1,function(x)diff(log(x)))
+		return(list(posterior.logodds=posterior.lods,posterior.differences=posterior.diff,ml.differences=ml.differences,ml.logodds=ml.logodds))
+	}
+}
+
+
+
 proportions.icsdata<-function(object){
 	r<-t(apply(object,1,function(x)cbind(prop.table(x[c("Ns","ns")])[2],prop.table(x[c("Nu","nu")])[2])))
 	colnames(r)<-c("ps","pu")

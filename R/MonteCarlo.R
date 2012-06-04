@@ -75,7 +75,7 @@ simAlpha.u<-function(alpha.s,alpha.u,z,S,llnull,llresp,i,rate){
 #TODO: prior on Q so that rbeta is positive
 
 simQ<-function(z){
-	rbeta(1,sum(z[,1])+0.0001,sum(z[,2])+0.0001)
+	rbeta(1,sum(z[,1])+1,sum(z[,2])+1)
 }
 
 simZ<-function(q,alpha.s,alpha.u,llnull,llresp){
@@ -170,79 +170,79 @@ simZ<-function(q,alpha.s,alpha.u,llnull,llresp){
 #	}
 #}
 
-fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
-	if(burn>=iter){
-		burn<-round(iter/2)
-	}
-	if(is.null(data)){
-		stop("Must provide data")
-	}
-	if(is.null(inits)){
-		stop("Must provide initializing values")
-	}
-	llnull<-compiler::cmpfun(MIMOSA:::makeLogLikeNULLComponent(data$n.stim,data$n.unstim))
-	llresp<-compiler::cmpfun(MIMOSA:::makeLogLikeRespComponent(data$n.stim,data$n.unstim))
-	
-	alpha.s=inits$alpha.s
-	alpha.u=inits$alpha.u
-	q=inits$q
-	z=inits$z
-	Ss<-Su<-rep(10,length(alpha.s))
-	rate.s<-rate.u<-rep(0,length(alpha.s))
-	f<-matrix(0,nrow=iter,ncol=length(alpha.s)+length(alpha.u)+1)
-	cn<-c(paste("alpha.s",1:length(alpha.s),sep=""),paste("alpha.u",1:length(alpha.u),sep=""),"q")
-	colnames(f)<-cn
-	tune=200
-	fixed<-FALSE
-	i<-1
-	repeat{
-		for(j in seq_along(alpha.s)){
-			res<-MIMOSA:::simAlpha.s(alpha.s,alpha.u,z,Ss[j],llnull,llresp,j,rate.s)
-			alpha.s<-res[[1]]
-			rate.s[j]<-res[[2]][j]
-			res<-MIMOSA:::simAlpha.u(alpha.s,alpha.u,z,Su[j],llnull,llresp,j,rate.u)
-			alpha.u<-res[[1]]
-			rate.u[j]<-res[[2]][j]
-		}
-		if(i%%tune==0&!fixed){
-			if(any(rate.u/tune>0.55|rate.u/tune<0.35|rate.s/tune>0.55|rate.s/tune<0.35)){
-				cat(rate.s/tune," ",rate.u/tune,"\n")
-				w.u<-which(rate.u/tune>0.55|rate.u/tune<0.35)
-				w.s<-which(rate.s/tune>0.55|rate.s/tune<0.35)
-				for(j in w.s){
-					Ss[j]<-Ss[j]*0.5+0.5*sd(f[(i-tune+1):(i-1),j])
-					Ss[j]<-Ss[j]*((rate.s[j]/tune)/0.44)^2
-				}
-				for(j in w.u){
-					Su[j]<-Su[j]*0.5+0.5*sd(f[(i-tune+1):(i-1),length(rate.u)+j])
-					Su[j]<-Su[j]*((rate.u[j]/tune)/0.44)^2
-				}
-				Ss[Ss==0]<-1
-				Su[Su==0]<-1
-				rate.u<-rate.s<-rep(0,length(rate.s))
-			}else {
-				cat("Fixing: ",rate.s/tune," ",rate.u/tune,"\n")
-				fixed<-TRUE
-				assign("i",1)
-			}
-			assign("i",1)
-		}
-		z<-MIMOSA:::simZ(q=q,alpha.s=alpha.s,alpha.u=alpha.u,llnull,llresp)
-		if(i==burn&fixed){
-			sz=z
-		}else if(i>burn&fixed){
-			sz=(sz+z/(i-burn))*((i-burn)/(i-burn+1))	
-		}
-		q<-MIMOSA:::simQ(z=z)
-		f[i,]<-c(alpha.s,alpha.u,q)
-		i<-i+1
-		if(i==iter&fixed){
-			break
-		}
-	}
-	write.table(f,file="mcmc.dat")
-	return(list(z=sz,mcmc=mcmc(f[seq(burn,iter,by=thin),])))
-}
+#fitMCMC<-function(data=NULL,inits=NULL,iter=5000,burn=2000,thin=1){
+#	if(burn>=iter){
+#		burn<-round(iter/2)
+#	}
+#	if(is.null(data)){
+#		stop("Must provide data")
+#	}
+#	if(is.null(inits)){
+#		stop("Must provide initializing values")
+#	}
+#	llnull<-compiler::cmpfun(MIMOSA:::makeLogLikeNULLComponent(data$n.stim,data$n.unstim))
+#	llresp<-compiler::cmpfun(MIMOSA:::makeLogLikeRespComponent(data$n.stim,data$n.unstim))
+#	
+#	alpha.s=inits$alpha.s
+#	alpha.u=inits$alpha.u
+#	q=inits$q
+#	z=inits$z
+#	Ss<-Su<-rep(10,length(alpha.s))
+#	rate.s<-rate.u<-rep(0,length(alpha.s))
+#	f<-matrix(0,nrow=iter,ncol=length(alpha.s)+length(alpha.u)+1)
+#	cn<-c(paste("alpha.s",1:length(alpha.s),sep=""),paste("alpha.u",1:length(alpha.u),sep=""),"q")
+#	colnames(f)<-cn
+#	tune=200
+#	fixed<-FALSE
+#	i<-1
+#	repeat{
+#		for(j in seq_along(alpha.s)){
+#			res<-MIMOSA:::simAlpha.s(alpha.s,alpha.u,z,Ss[j],llnull,llresp,j,rate.s)
+#			alpha.s<-res[[1]]
+#			rate.s[j]<-res[[2]][j]
+#			res<-MIMOSA:::simAlpha.u(alpha.s,alpha.u,z,Su[j],llnull,llresp,j,rate.u)
+#			alpha.u<-res[[1]]
+#			rate.u[j]<-res[[2]][j]
+#		}
+#		if(i%%tune==0&!fixed){
+#			if(any(rate.u/tune>0.55|rate.u/tune<0.35|rate.s/tune>0.55|rate.s/tune<0.35)){
+#				cat(rate.s/tune," ",rate.u/tune,"\n")
+#				w.u<-which(rate.u/tune>0.55|rate.u/tune<0.35)
+#				w.s<-which(rate.s/tune>0.55|rate.s/tune<0.35)
+#				for(j in w.s){
+#					Ss[j]<-Ss[j]*0.5+0.5*sd(f[(i-tune+1):(i-1),j])
+#					Ss[j]<-Ss[j]*((rate.s[j]/tune)/0.44)^2
+#				}
+#				for(j in w.u){
+#					Su[j]<-Su[j]*0.5+0.5*sd(f[(i-tune+1):(i-1),length(rate.u)+j])
+#					Su[j]<-Su[j]*((rate.u[j]/tune)/0.44)^2
+#				}
+#				Ss[Ss==0]<-1
+#				Su[Su==0]<-1
+#				rate.u<-rate.s<-rep(0,length(rate.s))
+#			}else {
+#				cat("Fixing: ",rate.s/tune," ",rate.u/tune,"\n")
+#				fixed<-TRUE
+#				assign("i",1)
+#			}
+#			assign("i",1)
+#		}
+#		z<-MIMOSA:::simZ(q=q,alpha.s=alpha.s,alpha.u=alpha.u,llnull,llresp)
+#		if(i==burn&fixed){
+#			sz=z
+#		}else if(i>burn&fixed){
+#			sz=(sz+z/(i-burn))*((i-burn)/(i-burn+1))	
+#		}
+#		q<-MIMOSA:::simQ(z=z)
+#		f[i,]<-c(alpha.s,alpha.u,q)
+#		i<-i+1
+#		if(i==iter&fixed){
+#			break
+#		}
+#	}
+#	write.table(f,file="mcmc.dat")
+#	return(list(z=sz,mcmc=mcmc(f[seq(burn,iter,by=thin),])))
+#}
 
 icsdata2mvicsdata<-function(x){
 	if(any(class(x)%in%"icsdata")){
@@ -255,12 +255,21 @@ icsdata2mvicsdata<-function(x){
 	}
 }
 
+<<<<<<< HEAD
 .fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",FAST=FALSE,LOWER=0.15,UPPER=0.5){
+=======
+.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15,FAST=FALSE,EXPRATE=1e-4,fixedNULL=FALSE){
+>>>>>>> refs/heads/fixednull
 	alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
+	EXPRATE=1/EXPRATE
+	if(fixedNULL){
+		#get additional unstimulated samples.
+	}
 	#If the alternative hypothesis is one-sided, then compute a filter for pu>ps and pass that to the MCMC code
 	if(alternative=="greater"){
 		ps<-t(do.call(cbind,apply(data$n.stim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))
+<<<<<<< HEAD
 		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))		
 		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
 		if(!FAST){
@@ -274,6 +283,17 @@ icsdata2mvicsdata<-function(x){
 		FAST<-FALSE
 	}
 	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.logical(FAST),as.logical(FILTER),as.numeric(LOWER),as.numeric(UPPER),package="MIMOSA")
+=======
+		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))
+		
+		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
+		FILTER=TRUE
+	}else{
+		filter<-rep(FALSE,nrow(data$n.stim))
+		FILTER<-FALSE
+	}
+	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,FAST,as.numeric(EXPRATE),fixedNULL, package="MIMOSA")
+>>>>>>> refs/heads/fixednull
 	if(inherits(result,"character")){
 		return(result)
 	}
@@ -281,8 +301,16 @@ icsdata2mvicsdata<-function(x){
 	result$getmcmc<-function(x=outfile){
 		mcmc(read.table(x,sep="\t",header=T));
 	}
+	result$getP<-function(x=paste(outfile,"P",sep="")){
+		d<-mcmc(read.table(x,sep="\t",header=T));
+		nc<-ncol(d)
+		d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+		d
+	}
 	attr(result,"class")<-c(attr(result,"class"),"MDMixResult")
 	attr(result,"pData")<-attr(data,"pData")
+	result$n.stim<-data$n.stim
+	result$n.unstim<-data$n.unstim
 	result
 }
 #test<-function(iter,burn,w.stepS=0.01,w.stepU=0.001,sigmaS=20,sigmaU=20){
