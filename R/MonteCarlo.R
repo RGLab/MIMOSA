@@ -255,11 +255,7 @@ icsdata2mvicsdata<-function(x){
 	}
 }
 
-<<<<<<< HEAD
-.fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",FAST=FALSE,LOWER=0.15,UPPER=0.5){
-=======
 .fitMCMC<-function(data,inits,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15,FAST=FALSE,EXPRATE=1e-4,fixedNULL=FALSE){
->>>>>>> refs/heads/fixednull
 	alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
 	EXPRATE=1/EXPRATE
@@ -269,21 +265,6 @@ icsdata2mvicsdata<-function(x){
 	#If the alternative hypothesis is one-sided, then compute a filter for pu>ps and pass that to the MCMC code
 	if(alternative=="greater"){
 		ps<-t(do.call(cbind,apply(data$n.stim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))
-<<<<<<< HEAD
-		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))		
-		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
-		if(!FAST){
-			FILTER<-TRUE
-		}else{
-			FILTER<-FALSE
-		}
-	}else{
-		filter<-rep(FALSE,nrow(data$n.stim))
-		FILTER<-FALSE;
-		FAST<-FALSE
-	}
-	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.logical(FAST),as.logical(FILTER),as.numeric(LOWER),as.numeric(UPPER),package="MIMOSA")
-=======
 		pu<-t(do.call(cbind,apply(data$n.unstim,1,function(x)(data.frame(prop.table(x))[-1L,,drop=FALSE]))))
 		
 		filter<-sapply(1:nrow(ps),function(i)all(ps[i,]<pu[i,]))
@@ -293,7 +274,6 @@ icsdata2mvicsdata<-function(x){
 		FILTER<-FALSE
 	}
 	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,FAST,as.numeric(EXPRATE),fixedNULL, package="MIMOSA")
->>>>>>> refs/heads/fixednull
 	if(inherits(result,"character")){
 		return(result)
 	}
