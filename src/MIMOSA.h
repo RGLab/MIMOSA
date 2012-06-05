@@ -29,8 +29,8 @@ void simZ(double &,std::vector<double>&, std::vector<double>&,std::vector<double
 double simQ(std::vector<double> &z,int ,int);
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &normconst, int,int);
 bool FILTER, FAST, EXPRATE;
-double normconstIBeta(double as, double bs, double au, double bu);
-double normconstIBeta2(double au, double bu, double as, double bs);
+//double normconstIBeta(double as, double bs, double au, double bu);
+double normconstIBeta(double au, double bu, double as, double bs);
 void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
 double nc(double as, double bs, double au,double bu,double B);
 double normconstMC(double as, double bs,double au, double bu);

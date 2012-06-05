@@ -22,7 +22,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	bool fixed = false;
 
 	Rcpp::RNGScope globalscope;
-//			printf("%f %f %f %f\n",exp(normconstIBeta(15,3000,30,3000)),(normconstMC(30,3000,15,3000)),(1-exp(normconstIBeta(30,3000,15,3000))),(normconstMC(30,3000,15,3000)));
+//			printf("%f %f %f %f\n",exp(normconstIBeta(15,3000,30,3000)),(normconstMC(30,3000,15,3000)),(exp(normconstIBeta(3000,30,3000,15))),(normconstMC(3000,30,3000,15)));
 //			exit(0);
 	/*
 	 * Copy R variables to standard vectors
@@ -593,7 +593,7 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 		//alphas[1] is alpha, alphas[0] is beta
 		//data+hyperparameters
 		//printf("alphas %f, betas %f, alphau %f betau %f\n",alphas[1],alphas[0],alphau[1],alphau[0]);
-		numerator=normconstIBeta((double)s[0],(double)s[1],(double)u[0],(double)u[0]);
+		numerator=normconstIBeta((double)s[0],(double)s[1],(double)u[0],(double)u[1]);
 		//hyperparameters only
 		denominator=normconstIBeta((double)alphas[0],(double)alphas[1],(double)alphau[0],(double)alphau[1]);
 //						nummc = normconstMC((double)s[1],(double)s[0],(double)u[1],(double)u[0]);
@@ -604,8 +604,8 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 
 //		C=log(nummc)-log(denommc);
 //		printf("C: %f CC: %f  diff: %f\n",C,CC, C-CC);
-		double K=lgamma((double)s[1])+lgamma((double)s[0])-lgamma(s[1]+s[0])+lgamma((double)u[1])+lgamma((double)u[0])-lgamma(u[1]+u[0])-lgamma((double)alphas[1])-lgamma((double)alphas[0])+lgamma(alphas[1]+alphas[0])-lgamma((double)alphau[1])-lgamma((double)alphau[0])+lgamma(alphau[1]+alphau[0]);
-		//		double K = ::Rf_lbeta((double) s[1],(double) s[0])+::Rf_lbeta((double) u[1], (double) u[0])-::Rf_lbeta((double) alphas[1],(double)alphas[0])-::Rf_lbeta((double)alphau[1],(double)alphau[0]);
+		//double K=lgamma((double)s[1])+lgamma((double)s[0])-lgamma(s[1]+s[0])+lgamma((double)u[1])+lgamma((double)u[0])-lgamma(u[1]+u[0])-lgamma((double)alphas[1])-lgamma((double)alphas[0])+lgamma(alphas[1]+alphas[0])-lgamma((double)alphau[1])-lgamma((double)alphau[0])+lgamma(alphau[1]+alphau[0]);
+		double K = ::Rf_lbeta((double) s[1],(double) s[0])+::Rf_lbeta((double) u[1], (double) u[0])-::Rf_lbeta((double) alphas[1],(double)alphas[0])-::Rf_lbeta((double)alphau[1],(double)alphau[0]);
 		if(ISNAN(CC)){
 			//			printf("s0: %f s1: %f u0: %f u1: %f as0: %f as1: %f au0: %f au1: %f \n",s[0],s[1],u[0],u[1],alphas[0],alphas[1],alphau[0],alphau[1]);
 			//			printf("numerator: %f  denominator %f  C: %f\n",numerator,denominator,numerator-denominator);
@@ -615,8 +615,8 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 			C=nummc-denommc;
 			CC=C;
 		}
-//		printf("mc: %f acpprox: %f difference %f\n",C+K,K+CC,CC-C);
-		llresp[i]=K+C;
+//		printf("mc: %f acpprox: %f difference %f\n",C+K,K+CC,C-CC);
+		llresp[i]=K+CC;
 		//printf("%f\n",llresp[i]);
 	}
 }
