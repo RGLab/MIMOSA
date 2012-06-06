@@ -5,7 +5,6 @@
 
 #define RATE 2.4
 #define DEFAULT_RATE  0.4
-#define MCITER 1000
 
 
 using namespace Rcpp;
@@ -14,7 +13,10 @@ using namespace Rcpp;
 /*
  * 15 parameters
  */
-RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP, SEXP);
+RcppExport SEXP fitMCMC(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+//RcppExport SEXP fitMCMCMultiStim(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+
+
 //double lkbeta(const NumericMatrix::Row& ,NumericVector&);
 //double lkbeta(const NumericVector &,NumericVector&);
 double lkbeta(const std::vector<double>&,int,int,int);
@@ -28,10 +30,12 @@ void completeLL(std::vector<double> &z,std::vector<double> &lnull, std::vector<d
 void simZ(double &,std::vector<double>&, std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<bool> &filter,int, int);
 double simQ(std::vector<double> &z,int ,int);
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &normconst, int,int);
-bool FILTER, FAST, EXPRATE;
+bool FILTER, FAST;
+double EXPRATE=1000;
 //double normconstIBeta(double as, double bs, double au, double bu);
 double normconstIBeta(double au, double bu, double as, double bs);
 void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
 double nc(double as, double bs, double au,double bu,double B);
 double normconstMC(double as, double bs,double au, double bu);
+
 #endif

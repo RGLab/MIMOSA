@@ -13,7 +13,7 @@
 /*
  * 16 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST,SEXP _EXPRATE,SEXP _fixedNULL){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST,SEXP _EXPRATE){
 	BEGIN_RCPP
 	//TODO add argument to pass the complete list of unstimulated samples.
 	using namespace Rcpp;
@@ -34,11 +34,11 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 	FILTER = Rcpp::as<bool> (_FILTER);
 	FAST = Rcpp::as<bool> (_FAST);
-	bool fixedNULL = Rcpp::as<bool>(_fixedNULL);
 	double UPPER = Rcpp::as<double>(_UPPER);
 	double LOWER = Rcpp::as<double>(_LOWER);
 	bool REJECT = false;
 	EXPRATE = Rcpp::as<double>(_EXPRATE);
+	//printf("exponential prior rate = %f\n",EXPRATE);
 
 	std::vector< double > stdalphas = Rcpp::as<std::vector<double> >(_alphas);
 	std::vector< double > stdalphau = Rcpp::as<std::vector<double> 	>(_alphau);
@@ -204,7 +204,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 			//simulate alphas_j
 			stdnextalphavec[j]=alphaProposal(stdalphas,sigmas[j]*rateS[j],j);
-			if(stdnextalphavec[j]>0){
+			if(stdnextalphavec[j]>2){
 				priornext=::Rf_dexp(stdnextalphavec[j],EXPRATE,true);
 
 				//don't need to recompute the null marginal log likelihood since it doesn't depend on alphas_j
@@ -238,7 +238,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				oldll=oldll-prior; //reject so just subtract the alpha-specific prior
 #ifdef NDEBUG
 				printf("REJECTED alphas_%d %f, deltall: %f newll %f oldll %f\n",j,stdnextalphavec[j],(newll-oldll),newll, oldll);
-				REJECT=FALSE
+				REJECT=false;
 #endif
 			}
 
@@ -255,7 +255,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 			//simulate alphau)j
 			stdnextalphavec[j]=alphaProposal(stdalphau,sigmau[j]*rateU[j],j);
-			if(stdnextalphavec[j]>0){
+			if(stdnextalphavec[j]>2){
 				priornext=Rf_dexp(stdnextalphavec[j],EXPRATE,true);
 
 				//don't need to recompute the current complete data log likelihood. It's the same as before, just differs by the prior.
@@ -601,11 +601,12 @@ void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,s
 
 		//		printf("nummc: %f denommc: %f numerator: %f, denominator %f\n",nummc,denommc, numerator, denominator);
 		CC=numerator-denominator;
+		//printf("alphas %f betas %f alphau %f betau %f\n",alphas[1], alphas[0], alphau[1],alphau[0]);
 
 //		C=log(nummc)-log(denommc);
-//		printf("C: %f CC: %f  diff: %f\n",C,CC, C-CC);
-		//double K=lgamma((double)s[1])+lgamma((double)s[0])-lgamma(s[1]+s[0])+lgamma((double)u[1])+lgamma((double)u[0])-lgamma(u[1]+u[0])-lgamma((double)alphas[1])-lgamma((double)alphas[0])+lgamma(alphas[1]+alphas[0])-lgamma((double)alphau[1])-lgamma((double)alphau[0])+lgamma(alphau[1]+alphau[0]);
-		double K = ::Rf_lbeta((double) s[1],(double) s[0])+::Rf_lbeta((double) u[1], (double) u[0])-::Rf_lbeta((double) alphas[1],(double)alphas[0])-::Rf_lbeta((double)alphau[1],(double)alphau[0]);
+	//	printf("C: %f CC: %f  diff: %f\n",C,CC, C-CC);
+		double K=lgamma((double)s[1])+lgamma((double)s[0])-lgamma(s[1]+s[0])+lgamma((double)u[1])+lgamma((double)u[0])-lgamma(u[1]+u[0])-lgamma((double)alphas[1])-lgamma((double)alphas[0])+lgamma(alphas[1]+alphas[0])-lgamma((double)alphau[1])-lgamma((double)alphau[0])+lgamma(alphau[1]+alphau[0]);
+		//double K = ::Rf_lbeta((double) s[1],(double) s[0])+::Rf_lbeta((double) u[1], (double) u[0])-::Rf_lbeta((double) alphas[1],(double)alphas[0])-::Rf_lbeta((double)alphau[1],(double)alphau[0]);
 		if(ISNAN(CC)){
 			//			printf("s0: %f s1: %f u0: %f u1: %f as0: %f as1: %f au0: %f au1: %f \n",s[0],s[1],u[0],u[1],alphas[0],alphas[1],alphau[0],alphau[1]);
 			//			printf("numerator: %f  denominator %f  C: %f\n",numerator,denominator,numerator-denominator);
@@ -659,14 +660,15 @@ double normconstMC(double as, double bs, double au, double bu){
 
 
 double normconstIBeta(double au, double bu, double as, double bs){
-	double alphau = ceil(au);
-	double betaU = ceil(bu);
+	double alphau = round(au);
+	double betaU = round(bu);
 	double alphas = as;
 	double betas = bs;
 	double mx;
 	std::vector<double> upper((int)betaU,0.0);
 	double sum=0;
 	double K=-Rf_lbeta(alphas,betas)+lgamma(alphau+betaU);
+	//printf("summation length: %d\n",betaU);
 	for(int j=alphau;j<=alphau+betaU-1;j++){
 		upper[j-alphau]=Rf_lbeta(j+alphas,alphau+betaU-1-j+betas)-lgamma(j+1)-lgamma(alphau+betaU-j)+K;
 	}
@@ -676,7 +678,6 @@ double normconstIBeta(double au, double bu, double as, double bs){
 		sum=sum+::exp(upper[i]-mx);
 	}
 	sum=log(sum)+mx;
-
 	return sum;
 }
 //double normconstIBeta(double as, double bs, double au, double bu){

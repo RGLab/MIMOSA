@@ -326,7 +326,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		#	break;
 		#}
 		LL<-c(LL,cll)
-		cat(cll,"\n")
+		#cat(cll,"\n")
 		last<-cll
 	}
 	gnull<-makeGradientNULLComponent(stim,unstim,z)
