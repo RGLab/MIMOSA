@@ -255,14 +255,14 @@ icsdata2mvicsdata<-function(x){
 	}
 }
 
-.fitMCMC<-function(data,inits=NULL,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15,FAST=FALSE,EXPRATE=1e-4){
+.fitMCMC<-function(data,inits=NULL,iter, burn, thin,tune=100,outfile="mcmc.dat",alternative="greater",UPPER=0.5,LOWER=0.15,FAST=FALSE,EXPRATE=1e-2){
 	alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
 	if(is.null(inits)){
 		r<-MDMix(data);
 		inits<-list(alpha.s=r@par.stim,alpha.u=r@par.unstim,q=r@w[1],z=round(r@z))
 	}
-	EXPRATE=1/EXPRATE
+#	EXPRATE=1/EXPRATE
 #	if(fixedNULL){
 #		#get additional unstimulated samples.
 #	}

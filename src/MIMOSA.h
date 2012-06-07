@@ -32,10 +32,13 @@ double simQ(std::vector<double> &z,int ,int);
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &normconst, int,int);
 bool FILTER, FAST;
 double EXPRATE=1000;
+int ntune=0;
 //double normconstIBeta(double as, double bs, double au, double bu);
 double normconstIBeta(double au, double bu, double as, double bs);
 void sampleP(std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,std::vector<double>&,int,int);
 double nc(double as, double bs, double au,double bu,double B);
 double normconstMC(double as, double bs,double au, double bu);
+double dgeom(int k,double p);
+double alphaDiscreteProposal(const std::vector<double> &alpha, double d, int i);
 
 #endif
