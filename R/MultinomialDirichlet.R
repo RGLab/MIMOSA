@@ -28,7 +28,7 @@ makeLogLikeNULLComponent<-function(data.stim,data.unstim){
 	ll<-function(x){
 		a<-x[(length(x)/2+1):length(x)]
 		apply(data,1,function(y)lkbeta(y+a))-lkbeta(a)#-
-				#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 makeLogLikeRespComponent<-function(data.stim,data.unstim){
@@ -36,7 +36,7 @@ makeLogLikeRespComponent<-function(data.stim,data.unstim){
 		a<-x[(length(x)/2+1):length(x)]
 		b<-x[1:(length(x)/2)]
 		apply(data.stim,1,function(y)lkbeta(y+b))+apply(data.unstim,1,function(y)lkbeta(y+a))-lkbeta(b)-lkbeta(a)#-
-				#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
+		#rowSums(lfactorial(data.stim))-rowSums(lfactorial(data.unstim))+lfactorial(rowSums(data.stim))+lfactorial(rowSums(data.unstim))
 	}
 }
 
@@ -158,7 +158,7 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 	return(hess)
 }
 
-simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2){
+simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2,alternative="greater"){
 	nnull<-round((1-w)*N)
 	nresp<-N-round((1-w)*N)
 	pu<-rdirichlet(nnull,alpha.u)
@@ -172,14 +172,22 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2)
 	i<-nnull+1
 	ps<-rbind(ps,matrix(0,nrow=nresp,ncol=length(alpha.s)))
 	pu<-rbind(pu,matrix(0,nrow=nresp,ncol=length(alpha.u)))
-	while(i<=nnull+nresp){
-		p.s<-rdirichlet(1,alpha.s)
-		p.u<-rdirichlet(1,alpha.u)
-		if(any(p.s[-1L]>p.u[-1L])){
-			ps[i,]<-p.s
-			pu[i,]<-p.u
-			i<-i+1
-		}
+	if(alternative=="greater"){
+		while(i<=nnull+nresp){
+			p.s<-rdirichlet(1,alpha.s)
+			p.u<-rdirichlet(1,alpha.u)
+			if(any(p.s[-1L]>p.u[-1L])){
+				ps[i,]<-p.s
+				pu[i,]<-p.u
+				i<-i+1
+			}
+		}		
+	}else{
+		p.s<-rdirichlet(nresp,alpha.s)	
+		p.u<-rdirichlet(nresp,alpha.u)
+		i<-(nnull+1):(nnull+nresp)
+		ps[i,]<-p.s
+		pu[i,]<-p.u
 	}
 	NU<-runif(N,1.5*10^n,1.5*10^n)
 	NS<-runif(N,1.5*10^n,1.5*10^n)
@@ -233,7 +241,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	z<-matrix(0,length(mm),2)
 	z[mm,1]<-1
 	z[!mm,2]<-1
-		
+	
 	#estimate hyperparamters.
 	pu<-prop.table(colMeans(unstim))
 	ps<-prop.table(colMeans(stim[which(z[,2]==1),,drop=FALSE]))
@@ -299,9 +307,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		}
 #		t<-trust(optFun,parinit=guess,rinit=1,rmax=10^6,minimize=TRUE,z=z)
 #		guess<-new<-t$argument
-
+		
 		#compute z's and w's
-	
+		
 		den<-apply(cbind(log(w[1])+llnull(new), log(w[2])+llresp(new)), 1, function(x)log(sum(exp(x-max(x))))+max(x))
 		z2<-exp((llresp(new)+log(w[2]))-(den))
 		
@@ -394,15 +402,15 @@ extractDataMultinomDir<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,
 setOldClass("MDlist")
 
 setMethod(show,"MDlist",function(object){
-	cat("Cytokines ",attr(object,"cytokines"),"\n")
-	cat("Stimulation ",attr(object,"stim"),"\n")
-	cat("Subset ", attr(object,"subset"),"\n")
-	cat("Number of obs: ",nrow(object[[1]]),"\n")
-})
+			cat("Cytokines ",attr(object,"cytokines"),"\n")
+			cat("Stimulation ",attr(object,"stim"),"\n")
+			cat("Subset ", attr(object,"subset"),"\n")
+			cat("Number of obs: ",nrow(object[[1]]),"\n")
+		})
 
 print.MDlist<-function(x){
-			cat("Cytokines ",attr(x,"cytokines"),"\n")
-			cat("Stimulation ",attr(x,"stim"),"\n")
-			cat("Subset ", attr(x,"subset"),"\n")
-			cat(nrow(x[[1]])," observations","\n")
+	cat("Cytokines ",attr(x,"cytokines"),"\n")
+	cat("Stimulation ",attr(x,"stim"),"\n")
+	cat("Subset ", attr(x,"subset"),"\n")
+	cat(nrow(x[[1]])," observations","\n")
 }
