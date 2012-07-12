@@ -1,5 +1,5 @@
 #include <Rcpp.h>
-#include <armadillo>
+//#include <armadillo>
 #include <RcppArmadillo.h>
 #include <assert.h>
 #include <omp.h>
@@ -9,6 +9,7 @@
 #include <fstream>
 #include <R_ext/Utils.h>
 #include "MIMOSA.h"
+//#define DEBUG2
 //#define NDEBUG
 /*
  * 16 parameters
@@ -65,7 +66,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	std::string outfilep(outfile.data());
 	outfilep.append("P");
 
-	printf("Creating %s\n",outfile.data());
+	Rprintf("Creating %s\n",outfile.data());
 	FILE* file = fopen(outfile.data(),"w");
 	FILE* fileP = fopen(outfilep.data(),"w");
 	if(file==NULL|fileP==NULL){
@@ -112,7 +113,13 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	 * so we can easily compute variances and so forth.
 	 */
 	arma::mat Ms(int(TUNING),alphas.size());
+#ifdef DEBUG2
+	Rprintf("init Ms\n");
+#endif
 	arma::mat Mu(int(TUNING),alphau.size());
+#ifdef DEBUG2
+	Rprintf("init Mu\n");
+#endif
 
 	/*
 	 * Precompute and preallocate a few things we'll need
@@ -131,8 +138,13 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	NumericVector sigmau(alphau.size(),10.0);
 
 	arma::vec rateS(alphas.size());
+#ifdef DEBUG2
+	Rprintf("init rateS\n");
+#endif
 	arma::vec rateU(alphau.size());
-
+#ifdef DEBUG2
+	Rprintf("init rateU\n");
+#endif
 	rateS.fill(RATE);
 	rateU.fill(RATE);
 	NumericVector accepts(alphas.size(),0.0);
@@ -360,18 +372,45 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			 */
 			//Fill in the Ms and Mu matrices
 			asi = conv_to<arma::vec>::from(alphas);
+#ifdef DEBUG2
+			Rprintf("conv alphas to asi\n");
+#endif
 			aui = conv_to<arma::vec>::from(alphau);
-
-			Ms.row(iteration%(int)TUNING) = asi;
-			Mu.row(iteration%(int)TUNING) = aui;
+#ifdef DEBUG2
+			Rprintf("conv alphau to aui\n");
+#endif
+//print some dimensions
+#ifdef DEBUG2
+			Rprintf("Ms size is %d rows by %d columns and asi size is %d rows by %d columns\n",Ms.n_rows,Ms.n_cols,asi.n_rows,asi.n_cols);
+#endif
+			Ms.row(iteration%(int)TUNING) = trans(asi);
+#ifdef DEBUG2
+			Rprintf("assign asi to Ms.row\n");
+#endif
+			Mu.row(iteration%(int)TUNING) = trans(aui);
+#ifdef DEBUG2
+			Rprintf("assign aui to Mu.row\n");
+#endif
 			//Tuning
 			if(((iteration+1) % (int)TUNING)==0){
 				ntune=ntune+1;
 				//Compute the covariances
 				arma::mat covarianceS = arma::cov(Ms);
+#ifdef DEBUG2
+				Rprintf("compute cov Ms\n");
+#endif
 				arma::mat covarianceU = arma::cov(Mu);
+#ifdef DEBUG2
+				Rprintf("compute cov Mu\n");
+#endif
 				arma::vec dS = arma::sqrt(covarianceS.diag());
+#ifdef DEBUG2
+				Rprintf("sqrt diag S\n");
+#endif
 				arma::vec dU = arma::sqrt(covarianceU.diag());
+#ifdef DEBUG2
+				Rprintf("sqrt diag U\n");
+#endif
 				//Weight and assign
 				//Tweak the acceptance rates
 				accepts=accepts/TUNING;
@@ -430,16 +469,16 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 					}
 
 				}else{
-					printf("Fixed step size\n");
-					printf("sigmas: ");
+					Rprintf("Fixed step size\n");
+					Rprintf("sigmas: ");
 					for(int j=0;j<sigmas.length();j++){
-						printf("%f %f ",sigmas[j],sigmau[j]);
+						Rprintf("%f %f ",sigmas[j],sigmau[j]);
 					}
-					printf("\n Acceptance rates:");
+					Rprintf("\n Acceptance rates:");
 					for(int j = 0; j < accepts.length(); j++){
-						printf("%f %f ",accepts[j],acceptu[j]);
+						Rprintf("%f %f ",accepts[j],acceptu[j]);
 					}
-					printf("\n");
+					Rprintf("\n");
 					fixed=true;
 					iteration = 0;
 					//write out the headers for the two data files
@@ -460,7 +499,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			if(iteration==0){
 				std::copy(p.begin(),p.end(),cz.begin());
 			}
-			printf("--- Done %i iterations ---\n",(int)iteration+1);
+			Rprintf("--- Done %i iterations ---\n",(int)iteration+1);
 			//			printf("\n Acceptance rates:");
 			//			for(int j = 0; j < accepts.length(); j++){
 			//				printf("%f %f",accepts[j],acceptu[j]);
@@ -498,7 +537,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			fprintf(file,"%f\n",q);
 		}
 #ifdef NDEBUG
-		printf("alphas: %f %f alphau: %f %f\n",alphas[0],alphas[1],alphau[0],alphau[1]);
+		Rprintf("alphas: %f %f alphau: %f %f\n",alphas[0],alphas[1],alphau[0],alphau[1]);
 #endif
 	}
 	if(!fixed){

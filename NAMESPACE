@@ -7,10 +7,10 @@ useDynLib(package="MIMOSA")
 importClassesFrom(methods, array, character, data.frame, factor, integer,
                   matrix, numeric)
 importFrom(Biobase,pData,"pData<-")
-importFrom("flowCore","Data")
+#importFrom("flowCore","Data")
 importClassesFrom(Biobase,AnnotatedDataFrame)
 importMethodsFrom(methods, coerce, show)
-importFrom(compiler,cmpfun)
+#importFrom(compiler,cmpfun)
 importFrom(MASS,kde2d)
 
 importFrom(graphics, abline, contour, legend, plot, points)

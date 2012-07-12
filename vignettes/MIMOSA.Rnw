@@ -38,7 +38,7 @@ We see that this ICS assay has 27 samples (subjects), contains cytokine expressi
 From an ICS object we can extract and analyze the data for any given contrast of control and stimulation for a specific cytokine and parent population. The data is extracted using the \textit{extractData} method, returning a data frame, which serves as input to the BetaMix function that does the model fitting. 
 
 <<extract>>=
-data<-extractData(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","TNFa"))
+data<-extractData(HVTN049.ics, control="negctrl1",stim="ENV-1-PTEG",subset=c("cd4","TNFa"),subset.mapping=c("parent","cytokine"))
 head(data)
 @
 
@@ -80,29 +80,29 @@ contourPlot(result,which=5,nsamps=2000,n=30)
 
 Here the mixture of beta distributions is clearly visible. The x and y axes represent the number of cytokine positive cells in the stimulated and unstimulated samples. \textit{nsamps} specifies how many samples to draw for the kernel density estimate, while \textit{n} specifies how many levels to draw for the contour plot. The samples are overlaid on the contour plot. Note that they are integer--valued. The bottom--right component represents the $p_s>p_u$ component, whereas te upper--left component represents the $p_s=p_u$ component. The red point represents the observed value of $n_s$ and $n_u$.
 
-\section{Polyfunctionality}
-We can use the model to assess polyfunctionality in a stepwise manner. For a pair of cytokines (say IL2 and IFNg), we first identify all samples that are responders with respect to each of the cytokines independently. Then if we have the ``IFNg or IL2'' counts or the ``IFNg and IL2'' counts we can test for polyfunctionality on samples that are positive for both IL2 and IFNg. 
-
-We can do this very simply in MIMOSA with the \textit{testPolyfunctionality} function. We pass the names of the stimulation and control, as well as the two cytokines for which polyfunctionality is to be determined. There are two subtle differences: first, the subset argument now only takes the name of the parent population. It is not necessary to specify the cytokine name in the subset. Second, there is an additional argument ``or'' which takes the name of the ``OR'' counts in the ICS data strucutre. In our case, since we're looing at IFNg and IL2, we want the OR counts for these two cytokines. They are tabulated under the ``IFNg.IL2'' level in the \textit{fname} column.
-
-<<polyfunctionality>>=
-poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="TNFa",cytokineB="IFNg",subset=c("cd4"),or="IFNg.TNFa",scl=5)
-@
-
-<<unifunctionality,echo=FALSE,results=hide>>=
-ifng<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=5)
-tnfa<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","TNFa")),scl=5)
-@
-
-The function computes the unifunctional positivity calls, then the polyfunctional positivity calls, returning a \textit{BetaMixResult} object.
-
-<<summary>>=
-summary(ifng,threshold=1e-5)
-summary(tnfa,threshold=1e-5)
-summary(poly,threshold=1e-5)
-@
-
-Interestingly, because of the low background for polyfunctional cells, the sensitivity is increased and all samples are detected as responding to stimulation for TNFa and IFNg in the Env stimulated CD4+ cells. 
+% \section{Polyfunctionality}
+% We can use the model to assess polyfunctionality in a stepwise manner. For a pair of cytokines (say IL2 and IFNg), we first identify all samples that are responders with respect to each of the cytokines independently. Then if we have the ``IFNg or IL2'' counts or the ``IFNg and IL2'' counts we can test for polyfunctionality on samples that are positive for both IL2 and IFNg. 
+% 
+% We can do this very simply in MIMOSA with the \textit{testPolyfunctionality} function. We pass the names of the stimulation and control, as well as the two cytokines for which polyfunctionality is to be determined. There are two subtle differences: first, the subset argument now only takes the name of the parent population. It is not necessary to specify the cytokine name in the subset. Second, there is an additional argument ``or'' which takes the name of the ``OR'' counts in the ICS data strucutre. In our case, since we're looing at IFNg and IL2, we want the OR counts for these two cytokines. They are tabulated under the ``IFNg.IL2'' level in the \textit{fname} column.
+% 
+% <<polyfunctionality>>=
+% poly<-testPolyfunctionality(ics=HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",cytokineA="TNFa",cytokineB="IFNg",subset=c("cd4"),or="IFNg.TNFa",scl=5)
+% @
+% 
+% <<unifunctionality,echo=FALSE,results=hide>>=
+% ifng<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","IFNg")),scl=5)
+% tnfa<-BetaMix(extractData(HVTN049.ics,stim="ENV-1-PTEG",control="negctrl1",subset=c("cd4","TNFa")),scl=5)
+% @
+% 
+% The function computes the unifunctional positivity calls, then the polyfunctional positivity calls, returning a \textit{BetaMixResult} object.
+% 
+% <<summary>>=
+% summary(ifng,threshold=1e-5)
+% summary(tnfa,threshold=1e-5)
+% summary(poly,threshold=1e-5)
+% @
+% 
+% Interestingly, because of the low background for polyfunctional cells, the sensitivity is increased and all samples are detected as responding to stimulation for TNFa and IFNg in the Env stimulated CD4+ cells. 
 
 
 \end{document}
