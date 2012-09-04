@@ -1,3 +1,30 @@
+list2icsdata<-function(x,cytokine="READOUT",stimulation="ANTIGENID",control=NULL){
+	if(ncol(x$n.stim)>2){
+		foo<-cbind(x$n.stim[,1],rowSums(x$n.stim[,2:ncol(x$n.stim)]))
+	}else{
+		foo<-x$n.stim
+	}
+	if(ncol(x$n.unstim)>2){
+		bar<-cbind(x$n.unstim[,1],rowSums(x$n.unstim[,2:ncol(x$n.unstim)]))
+	}else{
+		bar<-x$n.unstim
+	}
+	foo<-cbind(foo,bar)
+	pd<-attr(x,"pData")
+	attr(foo,"pData")<-pd
+	C<-as.character(unique(get(cytokine,pData(pd))))
+	attr(foo,"cytokine")<-C
+	if(is.null(control)){
+		C<-"Media+cells"
+	}
+	attr(foo,"control")<-C
+	C<-as.character(unique(get(stimulation,pData(pd))))
+	attr(foo,"stimulation")<-C
+	colnames(foo)<-c("Ns","ns","Nu","nu")
+	class(foo)<-c(class(foo),"icsdata")
+	foo
+}
+
 BetaMix <-
 		function(d=NULL,maxiter=20,shrink=1,alternative.model="greater",mciter=50,fixedNULL=FALSE,ics=NULL,priorXi=1,inits=NULL,scl=10,K=200,fixedHyperParameters=NULL){
 	#If we fix the hyperparemeters, we'll just do a likelihood ratio test with some shrinkage
