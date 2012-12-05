@@ -74,8 +74,10 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   mf.ref<-model.frame(formula,data)[eval(substitute(ref),pData(data)),,drop=FALSE]
   mf.test<-model.frame(formula,data)[eval(substitute(subset),pData(data)),,drop=FALSE]
   
-  spl.ref<-model.part(formula,mf.ref,rhs=2)
-  spl.test<-model.part(formula,mf.test,rhs=2)
+  if(length(formula)[2]>1){
+    spl.ref<-model.part(formula,mf.ref,rhs=2)
+    spl.test<-model.part(formula,mf.test,rhs=2)
+  }
   interact<-function(x,...){
     if(length(x)==1){
       return(factor(x[[1]]))
@@ -86,10 +88,17 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
       interaction(x[[1]],Recall(x[[-1L]],drop=TRUE),...)
     }
   }
-  ref<-split(model.part(formula,mf.ref,lhs=1),interact(spl.ref))
-  test<-split(model.part(formula,mf.test,lhs=1),interact(spl.test))
-  pd<-split(model.part(formula,mf.test,rhs=1:2),interact(spl.test))
-  result<-vector("list",length(test))
+  if(length(formula)[2]>1){
+    ref<-split(model.part(formula,mf.ref,lhs=1),interact(spl.ref))
+    test<-split(model.part(formula,mf.test,lhs=1),interact(spl.test))
+    pd<-split(model.part(formula,mf.test,rhs=1:2),interact(spl.test))
+    result<-vector("list",length(test))
+  }else{
+    ref<-list(model.part(formula,mf.ref,lhs=1))
+    test<-list(model.part(formula,mf.test,lhs=1))
+    pd<-list(model.part(formula,mf.test,rhs=1))
+    result<-vector("list",1)
+  }
   for(i in 1:length(test)){
     #recycle the reference
     j<-data.frame(1:length(test),1:length(ref))[i,2]
