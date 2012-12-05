@@ -134,6 +134,12 @@ gibbsPsPu <-
 #}
 
 #Given z, returns the q-values for each observation. The q-value for observation j is the false discovery rate for observations with q<q_j
+
+#' Compute the fdr (q-value) from posterior probabilities
+#' 
+#' Given the z's from a MIMOSA model, calculates the q-values for each observation.
+#' 
+#' @param z matrix of posterior probabilties
 fdr<-function(z){
 	fdr<-rep(0,nrow(z)); o<-order(z[,2],decreasing=T); 
 	fdr[o]<-(cumsum(z[o,1])/1:nrow(z))

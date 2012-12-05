@@ -2,17 +2,17 @@
 #
 # Created on: Nov 30, 2011
 #     Author: finak
-extractANDOR<-function(ics,cell1,cell2,cell3,Control,visit,Stim,parent,...){
-	A<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell1),...)
-	B<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell2),...)
-	C<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell3),...)
-	D<-A[,1:2]+B[,1:2]+C[,1:2]
-	D<-cbind(D,A[,1:2]+A[,3:4]-D)
-	colnames(D)<-c("ns","nu","Ns","Nu")
-	attr(D,"pData")<-attributes(A)$pData
-	class(D)<-c(class(D),"icsdata")
-	D
-}
+# extractANDOR<-function(ics,cell1,cell2,cell3,Control,visit,Stim,parent,...){
+# 	A<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell1),...)
+# 	B<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell2),...)
+# 	C<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell3),...)
+# 	D<-A[,1:2]+B[,1:2]+C[,1:2]
+# 	D<-cbind(D,A[,1:2]+A[,3:4]-D)
+# 	colnames(D)<-c("ns","nu","Ns","Nu")
+# 	attr(D,"pData")<-attributes(A)$pData
+# 	class(D)<-c(class(D),"icsdata")
+# 	D
+# }
 
 estimateProportions2<-function(x,method="mode"){
 	UseMethod("estimateProportions2");
@@ -57,12 +57,12 @@ setpData<-function(x,y){
 	UseMethod("setpData")
 }
 
-getpData.icsdata<-function(obj){
-	pData(attr(obj,"pData"))
+getpData.icsdata<-function(x){
+	pData(attr(x,"pData"))
 }
-setpData.icsdata<-function(obj,pd){
-	pData(attr(obj,"pData"))<-pd
-	obj
+setpData.icsdata<-function(x,y){
+	pData(attr(x,"pData"))<-y
+	x
 }
 
 estimate_logZus<-function(alpha.u,beta.u,alpha.s,beta.s,B,lower.tail=TRUE)
@@ -92,14 +92,14 @@ refactorPData<-function(x){
 setGeneric("Data",function(object)standardGeneric("Data"))
 setMethod("Data","BetaMixResult",function(object)object@data[,c("Ns","ns","Nu","nu")])
 
-setGeneric("fisherTest",function(x,...)standardGeneric("fisherTest"))
-setMethod("fisherTest","BetaMixResult",function(x,threshold=NULL,alternative="greater",adjust="fdr"){
-			if(!is.null(threshold)){
-				p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)<=threshold
-			}else{
-				p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)
-			}		
-		})
+#setGeneric("fisherTest",function(x,...)standardGeneric("fisherTest"))
+#setMethod("fisherTest","BetaMixResult",function(x,threshold=NULL,alternative="greater",adjust="fdr"){
+#			if(!is.null(threshold)){
+#				p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)<=threshold
+#			}else{
+#				p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c("Nu","nu","Ns","ns")],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)
+#			}		
+#		})
 
 #getRxCode<-function(bmr,ics){
 #	ids<-rownames(Data(bmr))
@@ -146,132 +146,134 @@ huberFilter<-function(object,sd=2){
 	}
 }
 
-FDR<-function(x,test="Fisher",pdcol="visit",...){
-	match.arg(test,c("Fisher","BB","MCMC"))
-	if(class(x)=="BetaMixResult"){
-		pd<-pData(x)
-		if(x@alternative.model=="greater"){
-			fpfilter<-apply(proportions(x@data),1,function(x)x["pu"]>=x["ps"])
-			neg<-list(...)$neg
-		}
-	}else if (class(x)=="MDMixResult"){
-		pd<-pData(attr(x,"pData"))
-		fpfilter<-list(...)$fpfilter
-		neg<-list(...)$neg
-	}
-	category<-sapply(pd,is.factor)
-	pd[category]<-lapply(pd[category],factor)
-	if(!is.null(pdcol)){
-		pdc<-get(pdcol,pd)
-	}else{
-		pdc<-rep(TRUE,nrow(pd))
-	}
-	if(!is.null(list(...)$neg)){
-		fpfilter<-list(...)$fpfilter
-		pdc<-pdc==neg|fpfilter
-	}
-	S<-seq(0,1,l=10000)
-	if(test=="Fisher"&class(x)=="BetaMixResult"){
-		FT<-fisherTest(x,threshold=NULL,adjust="none",alternative=x@alternative.model)
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}else if(test=="BB"&class(x)=="BetaMixResult"){
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}else if(test=="MCMC"&any(class(x)=="MDMixResult")){
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}
-	return(data.frame(rate,nominal.fdr=S))
-}
+# FDR<-function(x,test="Fisher",pdcol="visit",...){
+# 	match.arg(test,c("Fisher","BB","MCMC"))
+# 	if(class(x)=="BetaMixResult"){
+# 		pd<-pData(x)
+# 		if(x@alternative.model=="greater"){
+# 			fpfilter<-apply(proportions(x@data),1,function(x)x["pu"]>=x["ps"])
+# 			neg<-list(...)$neg
+# 		}
+# 	}else if (class(x)=="MDMixResult"){
+# 		pd<-pData(attr(x,"pData"))
+# 		fpfilter<-list(...)$fpfilter
+# 		neg<-list(...)$neg
+# 	}
+# 	category<-sapply(pd,is.factor)
+# 	pd[category]<-lapply(pd[category],factor)
+# 	if(!is.null(pdcol)){
+# 		pdc<-get(pdcol,pd)
+# 	}else{
+# 		pdc<-rep(TRUE,nrow(pd))
+# 	}
+# 	if(!is.null(list(...)$neg)){
+# 		fpfilter<-list(...)$fpfilter
+# 		pdc<-pdc==neg|fpfilter
+# 	}
+# 	S<-seq(0,1,l=10000)
+# 	if(test=="Fisher"&class(x)=="BetaMixResult"){
+# 		FT<-fisherTest(x,threshold=NULL,adjust="none",alternative=x@alternative.model)
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}else if(test=="BB"&class(x)=="BetaMixResult"){
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}else if(test=="MCMC"&any(class(x)=="MDMixResult")){
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}
+# 	return(data.frame(rate,nominal.fdr=S))
+# }
 
-roc<-function(x,test="Fisher",pdcol="visit",...){
-	#check the alternative.. if it's 'greater' then anything where the empirical pu > ps should be in the true negative group.
-	match.arg(test,c("Fisher","BB","MCMC"))
-	if(class(x)=="BetaMixResult"){
-		pd<-pData(x)
-		if(x@alternative.model=="greater"){
-			fpfilter<-apply(proportions(x@data),1,function(x)x["pu"]>=x["ps"])
-			if(!is.null(list(...)$fpfilter)){
-				fpfilter<-fpfilter|list(...)$fpfilter
-			}
-			neg<-list(...)$neg
-		}
-	}else if (class(x)=="MDMixResult"){
-		pd<-pData(attr(x,"pData"))
-		fpfilter<-list(...)$fpfilter
-		neg<-list(...)$neg
-	}
-	category<-sapply(pd,is.factor)
-	pd[category]<-lapply(pd[category],factor)
-	if(!is.null(pdcol)){
-		pdc<-get(pdcol,pd)
-	}else{
-		pdc<-rep(TRUE,nrow(pd))
-	}
-	if(!is.null(list(...)$neg)){
-		pdc<-pdc==neg|fpfilter
-	}
-	S<-seq(0,1,l=10000)
-	if(test=="Fisher"&class(x)=="BetaMixResult"){
-		FT<-fisherTest(x,threshold=NULL,adjust="none",alternative=x@alternative.model)
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}else if(test=="BB"&class(x)=="BetaMixResult"){
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}else if(test=="MCMC"&any(class(x)=="MDMixResult")){
-		if(!is.na(match("parallel",loadedNamespaces()))){
-			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}else{
-			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
-		}
-	}
-	return(rate)
-}
+# roc<-function(x,test="Fisher",pdcol="visit",...){
+# 	#check the alternative.. if it's 'greater' then anything where the empirical pu > ps should be in the true negative group.
+# 	match.arg(test,c("Fisher","BB","MCMC"))
+# 	if(class(x)=="BetaMixResult"){
+# 		pd<-pData(x)
+# 		if(x@alternative.model=="greater"){
+# 			fpfilter<-apply(proportions(x@data),1,function(x)x["pu"]>=x["ps"])
+# 			if(!is.null(list(...)$fpfilter)){
+# 				fpfilter<-fpfilter|list(...)$fpfilter
+# 			}
+# 			neg<-list(...)$neg
+# 		}
+# 	}else if (class(x)=="MDMixResult"){
+# 		pd<-pData(attr(x,"pData"))
+# 		fpfilter<-list(...)$fpfilter
+# 		neg<-list(...)$neg
+# 	}
+# 	category<-sapply(pd,is.factor)
+# 	pd[category]<-lapply(pd[category],factor)
+# 	if(!is.null(pdcol)){
+# 		pdc<-get(pdcol,pd)
+# 	}else{
+# 		pdc<-rep(TRUE,nrow(pd))
+# 	}
+# 	if(!is.null(list(...)$neg)){
+# 		pdc<-pdc==neg|fpfilter
+# 	}
+# 	S<-seq(0,1,l=10000)
+# 	if(test=="Fisher"&class(x)=="BetaMixResult"){
+# 		FT<-fisherTest(x,threshold=NULL,adjust="none",alternative=x@alternative.model)
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}else if(test=="BB"&class(x)=="BetaMixResult"){
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}else if(test=="MCMC"&any(class(x)=="MDMixResult")){
+# 		if(!is.na(match("parallel",loadedNamespaces()))){
+# 			rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}else{
+# 			rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c("TRUE","FALSE")),pdc),margin=2)["TRUE",]))
+# 		}
+# 	}
+# 	return(rate)
+# }
+# 
+# fisherVsBB<-function(bmrlist,threshold,column,subset,margin=NULL,adjust.fisher="fdr",adjust.bb="fdr"){
+# 	if(class(bmrlist)=="BetaMixResult"){
+# 		bmrlist<-list(bmrlist)
+# 	}
+# 	mycall<-substitute(subset)
+# 	if(adjust.bb=="fdr"){
+# 		lapply(bmrlist,function(x){
+# 					subset<-eval(mycall,pData(x))
+# 					data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",],BB=prop.table(table(factor(x@fdr<=threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",])
+# 				})
+# 	}else{
+# 		lapply(bmrlist,function(x){
+# 					subset<-eval(mycall,pData(x))
+# 					data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",],BB=prop.table(table(factor(x@z[,2]>=1-threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",])
+# 				})
+# 	}
+# 	
+# 	
+# }
 
-fisherVsBB<-function(bmrlist,threshold,column,subset,margin=NULL,adjust.fisher="fdr",adjust.bb="fdr"){
-	if(class(bmrlist)=="BetaMixResult"){
-		bmrlist<-list(bmrlist)
-	}
-	mycall<-substitute(subset)
-	if(adjust.bb=="fdr"){
-		lapply(bmrlist,function(x){
-					subset<-eval(mycall,pData(x))
-					data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",],BB=prop.table(table(factor(x@fdr<=threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",])
-				})
-	}else{
-		lapply(bmrlist,function(x){
-					subset<-eval(mycall,pData(x))
-					data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",],BB=prop.table(table(factor(x@z[,2]>=1-threshold,levels=c("TRUE","FALSE"))[subset],get(column,pData(x))[subset]),margin=margin)["TRUE",])
-				})
-	}
-	
-	
-}
+# mergeICSData<-function(x){
+# 	data.frame(cytokine=x@fname,parent=x@parent,antigen=x@antigen,ID=x@ID,x@rest)
+# }
 
-mergeICSData<-function(x){
-	data.frame(cytokine=x@fname,parent=x@parent,antigen=x@antigen,ID=x@ID,x@rest)
-}
-
+#' @importMethodsFrom Biobase
 setMethod("pData","BetaMixResult",function(object){
 			pData(object@pd)
 		})
+#' @importMethodsFrom Biobase
 setMethod("pData<-",c("BetaMixResult","data.frame"),function(object,value){
 			pData(object@pd)<-value
 			object
@@ -293,42 +295,42 @@ f2.log<-function(x,alpha.u,beta.u,alpha.s,beta.s){exp(dbeta(x,alpha.s,beta.s,log
 #integrate(f2,0,1,alpha.u=10,beta.u=100,alpha.s=1,beta.s=100)
 
 
-calcSens<-function(S,delta,shrink){
-	data.frame(do.call(rbind,apply(S,2,function(x){do.call(rbind,lapply(x,function(x){x<-t(x)[2:1,2:1];rs<-rowSums(x);cs<-colSums(x);data.frame(ppv=x[1,1]/rs[1],npv=x[2,2]/rs[2],sensitivity=x[1,1]/cs[1],specificity=x[2,2]/cs[2])}))})),test=rep(gl(2,1,labels=c("Fisher","BetaBinomial")),length(delta)),Threshold=rep(delta,each=2),shrinkage=rep(shrink,length(delta)*2))
-}
-
-summarize<-function(r=NULL,tpr=0.1){
-	thresholds=seq(0,1,by=0.001)
-	d<-r@data;
-	N<-nrow(d)
-	fisher.p<-apply(d,1,function(x)fisher.test(matrix(x,2,byrow=T),alternative="greater")$p)
-	
-#Table for ROC curve
-	sensitivity<-rbind(sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),fisher=factor(fisher.p<x,levels=c("FALSE","TRUE"))))),sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),betabin=factor(r@z[,1]<x,levels=c("FALSE","TRUE"))))))
-	
-	sensitivity<-calcSens(sensitivity,thresholds,1)
-	
-#False discovery rates
-	fdr<-rbind(sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),fisher=factor(p.adjust(fisher.p,"fdr")<x,levels=c("FALSE","TRUE"))))),sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),betabin=factor(r@fdr<x,levels=c("FALSE","TRUE"))))))
-	fdr<-calcSens(fdr,thresholds,1)
-	
-#caculate the AUC from the Z's 
-	truth<-factor(c(rep(FALSE,N*(1-tpr)),rep(TRUE,N*(tpr))),levels=c("FALSE","TRUE"))
-	sm.betabin<-0
-	sm.fisher<-0
-	for(i in which(truth=="TRUE")){
-		for(j in which(truth!="TRUE")){
-			sm.betabin<-sm.betabin+as.numeric(r@z[i,2]>r@z[j,2])
-			##less than since these are p-values
-			sm.fisher<-sm.fisher+as.numeric(fisher.p[i]<fisher.p[j])
-		}
-	}
-	AUC.betabin<-sm.betabin/(length(which(truth=="TRUE"))*length(which(truth!="TRUE")))
-	AUC.fisher<-sm.fisher/(length(which(truth=="TRUE"))*length(which(truth!="TRUE")))
-	
-	
-	return(list(r,sensitivity,fdr,AUC.betabin,AUC.fisher))
-}
+# calcSens<-function(S,delta,shrink){
+# 	data.frame(do.call(rbind,apply(S,2,function(x){do.call(rbind,lapply(x,function(x){x<-t(x)[2:1,2:1];rs<-rowSums(x);cs<-colSums(x);data.frame(ppv=x[1,1]/rs[1],npv=x[2,2]/rs[2],sensitivity=x[1,1]/cs[1],specificity=x[2,2]/cs[2])}))})),test=rep(gl(2,1,labels=c("Fisher","BetaBinomial")),length(delta)),Threshold=rep(delta,each=2),shrinkage=rep(shrink,length(delta)*2))
+# }
+# 
+# summarize<-function(r=NULL,tpr=0.1){
+# 	thresholds=seq(0,1,by=0.001)
+# 	d<-r@data;
+# 	N<-nrow(d)
+# 	fisher.p<-apply(d,1,function(x)fisher.test(matrix(x,2,byrow=T),alternative="greater")$p)
+# 	
+# #Table for ROC curve
+# 	sensitivity<-rbind(sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),fisher=factor(fisher.p<x,levels=c("FALSE","TRUE"))))),sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),betabin=factor(r@z[,1]<x,levels=c("FALSE","TRUE"))))))
+# 	
+# 	sensitivity<-calcSens(sensitivity,thresholds,1)
+# 	
+# #False discovery rates
+# 	fdr<-rbind(sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),fisher=factor(p.adjust(fisher.p,"fdr")<x,levels=c("FALSE","TRUE"))))),sapply(thresholds,function(x)list(table(truth=factor(c(rep(FALSE,floor(N*(1-tpr))),rep(TRUE,N-floor(N*(1-tpr)))),levels=c("FALSE","TRUE")),betabin=factor(r@fdr<x,levels=c("FALSE","TRUE"))))))
+# 	fdr<-calcSens(fdr,thresholds,1)
+# 	
+# #caculate the AUC from the Z's 
+# 	truth<-factor(c(rep(FALSE,N*(1-tpr)),rep(TRUE,N*(tpr))),levels=c("FALSE","TRUE"))
+# 	sm.betabin<-0
+# 	sm.fisher<-0
+# 	for(i in which(truth=="TRUE")){
+# 		for(j in which(truth!="TRUE")){
+# 			sm.betabin<-sm.betabin+as.numeric(r@z[i,2]>r@z[j,2])
+# 			##less than since these are p-values
+# 			sm.fisher<-sm.fisher+as.numeric(fisher.p[i]<fisher.p[j])
+# 		}
+# 	}
+# 	AUC.betabin<-sm.betabin/(length(which(truth=="TRUE"))*length(which(truth!="TRUE")))
+# 	AUC.fisher<-sm.fisher/(length(which(truth=="TRUE"))*length(which(truth!="TRUE")))
+# 	
+# 	
+# 	return(list(r,sensitivity,fdr,AUC.betabin,AUC.fisher))
+# }
 
 simulate2<-function(obs=1000,As,Bs,A0,B0,NS,N0,w2,alternative="greater",truncated=FALSE){
 	#ps and pu for null component
@@ -439,44 +441,44 @@ plotPriors<-function(fit,a0=NULL,b0=NULL,as=NULL,bs=NULL,l=1000,...){
 }
 
 #Accessor and convenience methods
-setMethod("show","ICS",function(object){
-			cat(length(levels(object@ID))," Samples\n")
-			print(head(as(object,"data.frame")))	
-			cat("Antigens: ",levels(object@antigen),"\n")
-			cat("Populations: ",levels(object@parent),"\n")
-			cat("Cytokines: ",levels(object@fname),"\n")
-			
-			#Walk the nested list in .Data and summarize the levels
-			head<-mode(object@.Data)
-			this<-object@.Data
-			levels<-NULL
-			nlevels<-0;
-			while(head=="list"){
-				nlevels<-nlevels+1
-				levels<-c(levels,list(names(this)))
-				this<-this[[1]]
-				head<-mode(this)
-			}
-			
-			#Omit reporting the last level corresponding to patients
-			cat(nlevels-1," Levels of nesting\n")
-			for(i in 1:(nlevels-1)){
-				cat(rep("  ",i),i,". ",levels[[i]],"\n")
-			}
-		})
-#convert ICS to data.frame
-setAs("ICS","data.frame",def=function(from){
-			df<-data.frame(pos=from@pos,neg=from@neg,fname=from@fname,fcsfile=from@fcsfile,parent=from@parent,antigen=from@antigen,ID=from@ID,from@rest)
-			if(ncol(from@rest)>0){
-				colnames(df)[8:(7+ncol(from@rest))]<-colnames(from@rest)
-			}
-			return(df)
-		})
+# setMethod("show","ICS",function(object){
+# 			cat(length(levels(object@ID))," Samples\n")
+# 			print(head(as(object,"data.frame")))	
+# 			cat("Antigens: ",levels(object@antigen),"\n")
+# 			cat("Populations: ",levels(object@parent),"\n")
+# 			cat("Cytokines: ",levels(object@fname),"\n")
+# 			
+# 			#Walk the nested list in .Data and summarize the levels
+# 			head<-mode(object@.Data)
+# 			this<-object@.Data
+# 			levels<-NULL
+# 			nlevels<-0;
+# 			while(head=="list"){
+# 				nlevels<-nlevels+1
+# 				levels<-c(levels,list(names(this)))
+# 				this<-this[[1]]
+# 				head<-mode(this)
+# 			}
+# 			
+# 			#Omit reporting the last level corresponding to patients
+# 			cat(nlevels-1," Levels of nesting\n")
+# 			for(i in 1:(nlevels-1)){
+# 				cat(rep("  ",i),i,". ",levels[[i]],"\n")
+# 			}
+# 		})
+# #convert ICS to data.frame
+# setAs("ICS","data.frame",def=function(from){
+# 			df<-data.frame(pos=from@pos,neg=from@neg,fname=from@fname,fcsfile=from@fcsfile,parent=from@parent,antigen=from@antigen,ID=from@ID,from@rest)
+# 			if(ncol(from@rest)>0){
+# 				colnames(df)[8:(7+ncol(from@rest))]<-colnames(from@rest)
+# 			}
+# 			return(df)
+# 		})
 
 #prepCounts populates one of the slots in the ICS structure.
-setGeneric("prepCounts",function(ics,...){
-			standardGeneric("prepCounts")
-		})
+# setGeneric("prepCounts",function(ics,...){
+# 			standardGeneric("prepCounts")
+# 		})
 
 fa<-function(u,M){
 	u*M
@@ -491,17 +493,17 @@ fm<-function(a,b){
 	a+b
 }
 
-setMethod("prepCounts",signature="ICS",function(ics,extra.identifiers=NULL){
-			message("Hold on.. melting and casting.")
-			x<-as(ics,"data.frame")
-			if(!exists("extra.identifiers"))
-				extra.identifiers<-NULL
-			x<-melt(x,id=c("ID","antigen","parent","fcsfile","fname",extra.identifiers),measure=c("pos","neg"))
-			form<- paste(paste("antigen~variable|", paste(paste(extra.identifiers,sep = " ", collapse = "+"), ifelse(is.null(extra.identifiers),"", "+"))),"parent + fname + ID")
-			x<-cast(x,as.formula(form),fun.aggregate=sum)
-			return(x)
-		})
-#show method for BetaMixResult
+# setMethod("prepCounts",signature="ICS",function(ics,extra.identifiers=NULL){
+# 			message("Hold on.. melting and casting.")
+# 			x<-as(ics,"data.frame")
+# 			if(!exists("extra.identifiers"))
+# 				extra.identifiers<-NULL
+# 			x<-melt(x,id=c("ID","antigen","parent","fcsfile","fname",extra.identifiers),measure=c("pos","neg"))
+# 			form<- paste(paste("antigen~variable|", paste(paste(extra.identifiers,sep = " ", collapse = "+"), ifelse(is.null(extra.identifiers),"", "+"))),"parent + fname + ID")
+# 			x<-cast(x,as.formula(form),fun.aggregate=sum)
+# 			return(x)
+# 		})
+# #show method for BetaMixResult
 setMethod("show","BetaMixResult",function(object){
 			cat("BetaMixResult for contrast: ",object@stimulation,"-",object@control,"\n")
 			cat("Number of Samples: ",nrow(object@data),"\n")

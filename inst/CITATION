@@ -1,0 +1,12 @@
+bibentry(bibtype="Article",
+         author=c("Finak, G. and McDavid, A. and Chattopadhyay, P. and Dominguez, M. and Roederer, M. and Gottardo, R."),
+         title = "Mixture Models for Single Cell Assays with Applications to Vaccine Studies",
+         journal = "ArXiv e-prints",
+         archivePrefix = "arXiv",
+         eprint = "1208.5809",
+         primaryClass="stat.AP",
+         keywords =c("Statistics - Applications, Statistics - Methodology, 62P10 (Primary) 62F15, 62-02, 92-08 (Secondary)"),
+         year = 2012,
+         month = "aug",
+         adsurl = "http://adsabs.harvard.edu/abs/2012arXiv1208.5809F",
+         adsnote = "Provided by the SAO/NASA Astrophysics Data System")

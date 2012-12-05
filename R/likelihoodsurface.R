@@ -1,14 +1,3 @@
-#' likelihoodSurfacePlot
-#' @param bmr The BetaMixResult object
-#' @param grid.x The upper limit of the x grid to calculate the likelihood surface
-#' @param grid.y The upper limit of the y grid to calculate the likelihood surface
-#' @param whch The indxex of the observation for which to plot the likelihood surface
-#' @param nlevels The number of contour levels to plot
-#' @param fdr The false discovery rate threshold used to color significant points
-#' @returnType NULL 
-#' @return Silently returns NULL
-#' @author finak
-#' @export
 
 setGeneric("likelihoodSurfacePlot",
 		function(bmr, grid.x, grid.y, whch, nlevels, fdr, ...)

@@ -11,13 +11,7 @@
 #alpha.unstim
 #alpha.stim
 
-##compute the log of the k-dimensional beta function
-##' compute the log of the k-dimensional beta function
-##' @param alpha k-vector of beta function parameters
-##' @returnType numeric
-##' @return 
-##' @author Greg Finak
-##' @export
+
 lkbeta<-function(alpha){
 	sum(lgamma(alpha))-lgamma(sum(alpha))
 }
@@ -199,14 +193,15 @@ simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2,
 
 
 
-# EM fitting
+#' EM fitting of the Multinomial Dirichlet MIMOSA model.
 #' 
+#' This function fits the multinomial dirichelt MIMOSA model using EM. It can also be used to initialize the model parameters for the MCMC model.
 #' @param data The observed data
 #' @param modelmatrix a model matrix specifying which components should be computed
-#' @returnType 
-#' @return 
+#' @param alternative either "greater" or "not equal" to fit the one-sided or two-sided model.
+#' @param initonly \code{TRUE} or \code{FALSE} to return just the initialization parameters.
+#' @return An object of class \code{MDMixResult}
 #' @author Greg Finak
-#' @export
 #' TODO filtering of pu>ps needs to be corrected here.
 MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE){
 	data<-icsdata2mvicsdata(data)
@@ -292,7 +287,10 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		repeat{
 			t<-try(solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess)),silent=TRUE)
 			if(inherits(t,"try-error"))
-				t<-ginv(hessresp(guess)+hessnull(guess))%*%(gnull(guess)+gresp(guess)) #uses SVD
+				t<-try(ginv(hessresp(guess)+hessnull(guess))%*%(gnull(guess)+gresp(guess))) #uses SVD
+      if(inherits(t,"try-error")){
+        stop("Error in svd(X) : infinite or missing values in 'x'. Try fitting the model via MCMC")
+      }
 			new<-guess-t
 #			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
@@ -350,67 +348,67 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	return(new("MDMixResult",llnull=llnull,llresp=llresp,gresp=gresp,hresp=hessresp,gnull=gnull,w=w,hnull=hessnull,z=z,ll=LL,par.stim=new[1:(length(new)/2)],par.unstim=new[(length(new)/2 + 1):length(new)],data=data))
 }
 
-#' extracts bifunctional cytokine data from and ICS object given the two marginals (A, B) and A||B for stimualted and unstimulated. Used for the multinomial dirichlet model. ORDER OF CYTOKINES MATTERS!
-#' @param ics 
-#' @param cytokineA 
-#' @param cytokineB 
-#' @param or 
-#' @param stim 
-#' @param control 
-#' @param subset 
-#' @param shrink 
-#' @param scl 
-#' @returnType 
-#' @return 
-#' @author Greg Finak
-#' @export
-extractDataMultinomDir<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,stim=NULL,control=NULL,subset=NULL,shrink=1,scl=1){
-	if(any(c(is.null(ics),is.null(cytokineA),is.null(stim),is.null(cytokineB),is.null(or),is.null(control),is.null(subset)))){
-		stop("All arguments must be non--null");
-	}
-	A<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineA))
-	B<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineB))
-	OR<-extractData(ics,control=control,stim=stim,subset=c(subset,or))
-	AND<-A+B-OR
-	AND[,"Ns"]<-A[,"Ns"]+A[,"ns"]-AND[,"ns"]
-	AND[,"Nu"]<-A[,"Nu"]+A[,"nu"]-AND[,"nu"]
-	ds<-AND[,"ns"]
-	bs<-A[,"ns"]-AND[,"ns"]
-	cs<-B[,"ns"]-ds
-	as<-A[,"Ns"]-cs
-	
-	du<-AND[,"nu"]
-	bu<-A[,"nu"]-AND[,"nu"]
-	cu<-B[,"nu"]-du
-	au<-A[,"Nu"]-cu
-	
-	n.unstim<-cbind("u1"=au,"u2"=bu,"u3"=cu,"u4"=du)
-	n.stim<-cbind("s1"=as,"s2"=bs,"s3"=cs,"s4"=ds)
-	##rownames
-	rownames(n.unstim)<-rownames(A)
-	rownames(n.stim)<-rownames(A)
-	r<-(list(n.stim,n.unstim))
-	names(r)<-c("n.stim","n.unstim")
-	attr(r,"cytokines")<-c(cytokineA,cytokineB)
-	attr(r,"subset")<-subset
-	attr(r,"stim")<-stim
-	class(r)<-c("list","MDlist")
-	return(r)
-}
+# #' extracts bifunctional cytokine data from and ICS object given the two marginals (A, B) and A||B for stimualted and unstimulated. Used for the multinomial dirichlet model. ORDER OF CYTOKINES MATTERS!
+# #' @param ics 
+# #' @param cytokineA 
+# #' @param cytokineB 
+# #' @param or 
+# #' @param stim 
+# #' @param control 
+# #' @param subset 
+# #' @param shrink 
+# #' @param scl 
+# #' @returnType 
+# #' @return 
+# #' @author Greg Finak
+# #' @export
+# extractDataMultinomDir<-function(ics=NULL,cytokineA=NULL,cytokineB=NULL,or=NULL,stim=NULL,control=NULL,subset=NULL,shrink=1,scl=1){
+# 	if(any(c(is.null(ics),is.null(cytokineA),is.null(stim),is.null(cytokineB),is.null(or),is.null(control),is.null(subset)))){
+# 		stop("All arguments must be non--null");
+# 	}
+# 	A<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineA))
+# 	B<-extractData(ics,control=control,stim=stim,subset=c(subset,cytokineB))
+# 	OR<-extractData(ics,control=control,stim=stim,subset=c(subset,or))
+# 	AND<-A+B-OR
+# 	AND[,"Ns"]<-A[,"Ns"]+A[,"ns"]-AND[,"ns"]
+# 	AND[,"Nu"]<-A[,"Nu"]+A[,"nu"]-AND[,"nu"]
+# 	ds<-AND[,"ns"]
+# 	bs<-A[,"ns"]-AND[,"ns"]
+# 	cs<-B[,"ns"]-ds
+# 	as<-A[,"Ns"]-cs
+# 	
+# 	du<-AND[,"nu"]
+# 	bu<-A[,"nu"]-AND[,"nu"]
+# 	cu<-B[,"nu"]-du
+# 	au<-A[,"Nu"]-cu
+# 	
+# 	n.unstim<-cbind("u1"=au,"u2"=bu,"u3"=cu,"u4"=du)
+# 	n.stim<-cbind("s1"=as,"s2"=bs,"s3"=cs,"s4"=ds)
+# 	##rownames
+# 	rownames(n.unstim)<-rownames(A)
+# 	rownames(n.stim)<-rownames(A)
+# 	r<-(list(n.stim,n.unstim))
+# 	names(r)<-c("n.stim","n.unstim")
+# 	attr(r,"cytokines")<-c(cytokineA,cytokineB)
+# 	attr(r,"subset")<-subset
+# 	attr(r,"stim")<-stim
+# 	class(r)<-c("list","MDlist")
+# 	return(r)
+# }
 
 
-setOldClass("MDlist")
-
-setMethod(show,"MDlist",function(object){
-			cat("Cytokines ",attr(object,"cytokines"),"\n")
-			cat("Stimulation ",attr(object,"stim"),"\n")
-			cat("Subset ", attr(object,"subset"),"\n")
-			cat("Number of obs: ",nrow(object[[1]]),"\n")
-		})
-
-print.MDlist<-function(x){
-	cat("Cytokines ",attr(x,"cytokines"),"\n")
-	cat("Stimulation ",attr(x,"stim"),"\n")
-	cat("Subset ", attr(x,"subset"),"\n")
-	cat(nrow(x[[1]])," observations","\n")
-}
+# setOldClass("MDlist")
+# 
+# setMethod(show,"MDlist",function(object){
+# 			cat("Cytokines ",attr(object,"cytokines"),"\n")
+# 			cat("Stimulation ",attr(object,"stim"),"\n")
+# 			cat("Subset ", attr(object,"subset"),"\n")
+# 			cat("Number of obs: ",nrow(object[[1]]),"\n")
+# 		})
+# 
+# print.MDlist<-function(x,...){
+# 	cat("Cytokines ",attr(x,"cytokines"),"\n")
+# 	cat("Stimulation ",attr(x,"stim"),"\n")
+# 	cat("Subset ", attr(x,"subset"),"\n")
+# 	cat(nrow(x[[1]])," observations","\n")
+# }

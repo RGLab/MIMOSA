@@ -1,16 +1,53 @@
 Package: MIMOSA
 Type: Package
-Title:Mixture Models for Single-Cell Assays 
-Version: 0.7.0
+Title: Mixture Models for Single-Cell Assays
+Version: 0.8.0
 Date: 2011-10-26
-Author: Greg Finak <gfinak@fhcrc.org> 
+Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
-Description: Modeling count data using Dirichlet-multinomial and beta-binomial mixtures with applications to single-cell assays.
+Description: Modeling count data using Dirichlet-multinomial and beta-binomial
+    mixtures with applications to single-cell assays.
 License: Artistic-2.0
-Imports: Biobase, graphics, lattice, methods, reshape, stats, utils
+Imports:
+    Biobase,
+    graphics,
+    lattice,
+    methods,
+    reshape,
+    stats,
+    utils,
+    Formula
 Enhances: compiler
-Depends: methods, Rcpp (>= 0.9.0),  MCMCpack, reshape, MASS, pracma, ggplot2, modeest
+Depends:
+    R (>= 2.10),
+    methods,
+    Rcpp (>= 0.9.0),
+    MCMCpack,
+    reshape,
+    MASS,
+    pracma,
+    ggplot2,
+    modeest
 LinkingTo: Rcpp, RcppArmadillo
-Collate: Classes.R BetaMix.R CompleteDataLL.R MarginalGT.R MarginalNE.R MarginalNULL.R MultinomialDirichlet.R betaintegral.R constrained.R MonteCarlo.R contourPlot.R densityplot.R extractData.R gibbsPsPu.R helperMethods.R initBetaMix.R likelihoodsurface.R posteriorSample.R testPolyfunctionality.R volcanoPlot.R ComplexAnalysis.R
+Collate:
+    'Classes.R'
+    'BetaMix.R'
+    'CompleteDataLL.R'
+    'MarginalGT.R'
+    'MarginalNE.R'
+    'MarginalNULL.R'
+    'MultinomialDirichlet.R'
+    'betaintegral.R'
+    'constrained.R'
+    'MonteCarlo.R'
+    'contourPlot.R'
+    'densityplot.R'
+    'gibbsPsPu.R'
+    'helperMethods.R'
+    'initBetaMix.R'
+    'likelihoodsurface.R'
+    'posteriorSample.R'
+    'volcanoPlot.R'
+    'MIMOSA.R'
 LazyLoad: yes
 LazyData: yes
