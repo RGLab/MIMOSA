@@ -105,7 +105,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
     if(method%in%"mcmc"){
       res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
-      res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975)))
+      res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
       if(ncol(fitme[[1]])==2){
         res$p<-lapply(res$getP(),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975)))))
       }
