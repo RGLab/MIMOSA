@@ -67,6 +67,8 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	outfilep.append("P");
 
 	Rprintf("Creating %s\n",outfile.data());
+  
+  
 	FILE* file = fopen(outfile.data(),"w");
 	FILE* fileP = fopen(outfilep.data(),"w");
 	if(file==NULL|fileP==NULL){

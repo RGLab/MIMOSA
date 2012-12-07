@@ -138,10 +138,32 @@ icsdata2mvicsdata<-function(x){
 	result$getmcmc<-function(x=outfile){
 		mcmc(read.table(x,sep="\t",header=T));
 	}
-	result$getP<-function(x=paste(outfile,"P",sep="")){
-		d<-mcmc(read.table(x,sep="\t",header=T));
-		nc<-ncol(d)
-		d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+  #TODO rewrite this to be more robust with large files
+  #   result$getP<-function(x=paste(outfile,"P",sep="")){
+  #     nc<-length(strsplit(readLines(x,n=1),"\t")[[1]])
+  #     which.cols<-nc/3+1:nc
+  #     #awk each co  lumn and read it
+  #     quantiles<-sapply(which.cols[1:10],function(i){
+  #       system(sprintf("awk '{print $%s}' %s > column",i,x))
+  #       quantile(read.table("column",header=TRUE)[,1],c(0.025,0.5,0.975))
+  #     })
+  #     #return the quantiles 
+  #   }
+	result$getP<-function(x=paste(outfile,"P",sep=""),thin=1){
+    if(thin>1){
+      nc<-length(strsplit(readLines(outfile,1),"\t")[[1]])
+      thins<-paste("p",paste(rep(";n",thin-1),collapse=""),sep="")
+      s<-sprintf("sed -n '%s' %s|cut -f %s-%s",thins,outfile,(nc/3+1),nc)
+      con<-pipe(s)
+      d<-do.call(rbind,lapply(strsplit(readLines(con),"\t")[-1L],as.numeric))
+      colnames(d)<-strsplit(readLines(outfile,1),"\t")[[1]][(nc/3+1):nc]
+      d<-split(as.list(data.frame(d)),gl(nc/3,2))
+      close(con)
+    }else{
+		  d<-mcmc(read.table(x,sep="\t",header=T));
+		  nc<-ncol(d)
+		  d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+    }
 		d
 	}
 	attr(result,"class")<-c(attr(result,"class"),"MDMixResult")
