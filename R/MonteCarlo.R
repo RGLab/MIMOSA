@@ -156,7 +156,7 @@ icsdata2mvicsdata<-function(x){
       s<-sprintf("sed -n '%s' %s|cut -f %s-%s",thins,x,(nc/3+1),nc)
       con<-pipe(s)
       d<-do.call(rbind,lapply(strsplit(readLines(con),"\t")[-1L],as.numeric))
-      colnames(d)<-strsplit(readLines(outfile,1),"\t")[[1]][(nc/3+1):nc]
+      colnames(d)<-strsplit(readLines(x,1),"\t")[[1]][(nc/3+1):nc]
       d<-split(as.list(data.frame(d)),gl(nc/3,2))
       close(con)
     }else{
