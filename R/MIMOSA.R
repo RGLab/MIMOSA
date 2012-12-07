@@ -108,6 +108,8 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
       res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
       if(ncol(fitme[[1]])==2&getP){
         res$p<-lapply(res$getP(thin=2),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+      }else{
+        res$p<-list()
       }
       attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
       res<-MCMCResult(object=res)
