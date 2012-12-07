@@ -151,7 +151,7 @@ icsdata2mvicsdata<-function(x){
   #   }
 	result$getP<-function(x=paste(outfile,"P",sep=""),thin=1){
     if(thin>1){
-      nc<-length(strsplit(readLines(outfile,1),"\t")[[1]])
+      nc<-length(strsplit(readLines(x,1),"\t")[[1]])
       thins<-paste("p",paste(rep(";n",thin-1),collapse=""),sep="")
       s<-sprintf("sed -n '%s' %s|cut -f %s-%s",thins,outfile,(nc/3+1),nc)
       con<-pipe(s)
