@@ -62,7 +62,7 @@ setGeneric("MIMOSA",def=function(formula,data,...){
 })
 
 
-setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,...){
+setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,...){
   if(!exists("ref")){
     stop("ref must contain expressions that define subsets to be compared")
   }
@@ -106,7 +106,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     if(method%in%"mcmc"){
       res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
       res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
-      if(ncol(fitme[[1]])==2){
+      if(ncol(fitme[[1]])==2&getP){
         res$p<-lapply(res$getP(thin=2),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
       }
       attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
