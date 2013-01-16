@@ -140,6 +140,7 @@ gibbsPsPu <-
 #' Given the z's from a MIMOSA model, calculates the q-values for each observation.
 #' 
 #' @param z matrix of posterior probabilties
+#' @export
 fdr<-function(z){
 	fdr<-rep(0,nrow(z)); o<-order(z[,2],decreasing=T); 
 	fdr[o]<-(cumsum(z[o,1])/1:nrow(z))

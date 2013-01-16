@@ -71,8 +71,15 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     formula<-Formula(formula)
   }   
   
-  mf.ref<-model.frame(formula,data)[eval(substitute(ref),pData(data)),,drop=FALSE]
-  mf.test<-model.frame(formula,data)[eval(substitute(subset),pData(data)),,drop=FALSE]
+  mf.ref<-model.frame(formula,data,na.action=NULL)
+  mf.test<-model.frame(formula,data,na.action=NULL)
+  
+  if(!missing(ref)){
+    mf.ref<-mf.ref[eval(substitute(ref),pData(data)),,drop=FALSE]
+  }
+  if(!missing(subset)){
+    mf.test<-mf.test[eval(substitute(subset),pData(data)),,drop=FALSE]
+  }
   
   if(length(formula)[2]>1){
     spl.ref<-model.part(formula,mf.ref,rhs=2)
@@ -103,6 +110,13 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     #recycle the reference
     j<-data.frame(1:length(test),1:length(ref))[i,2]
     fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
+    #remove NAs
+    nas<-unique(rbind(which(is.na(fitme[[1]]),T),which(is.na(fitme[[2]]),T))[,1])
+    if(length(nas)>0){
+      fitme[[1]]<-fitme[[1]][-nas,]
+      fitme[[2]]<-fitme[[2]][-nas,]
+      pd[[i]]<-pd[[i]][-nas,]
+    }
     if(method%in%"mcmc"){
       res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
       res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
@@ -123,3 +137,57 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   }
   return(result)
 })
+
+
+#'pData extract the phenoData table from a MIMOSA result
+#'@details Extracts the phenoData data.frame from a MIMOSAResult object
+#'
+#'@param object is the MIMOSAResult returned from a call to MIMOSA
+#'@return an object of type \code{data.frame}
+#'@importMethodsFrom Biobase pData
+#'@aliases pData,MIMOSAResult-methods
+#'@rdname pData-methods
+#'@exportMethod pData 
+setMethod("pData","MIMOSAResult",function(object){
+      pData(object@result)
+})
+
+#'@rdname pData-methods
+#'@aliases pData,MDMixResult-methods
+#'@export
+setMethod("pData","MDMixResult",function(object){
+  pData(object@pd)
+})
+
+#'@rdname pData-methods
+#'@aliases pData,MCMCResult-methods
+#'@export
+setMethod("pData","MCMCResult",function(object){
+  pData(object@phenoData)
+})
+
+
+#'roc computes an ROC curve
+#'
+#'@param p is the probability of a positive result
+#'@param truth is a logical with the true positive and negative results
+#'@export
+roc<-function(p,truth){
+  s<-seq(0,1,l=1000)
+  table<-t(sapply(s,function(th){
+    prop.table(table(test=factor(p<=th,levels=c("FALSE","TRUE")),truth=truth),margin=2)["TRUE",]
+  }))
+  colnames(table)<-c("FPR","TPR")
+  table
+}
+
+#'fdrComparison calculates the observed vs expected false discovery rate
+#'@param fdr is the expected false discovery rate
+#'@param truth is a logical with the true positive and negative results
+#'@export
+fdrComparison<-function(fdr,truth){
+  truth<-truth[order(fdr)]
+  true.fdr<-cumsum(1-truth)/1:length(truth)
+  fdr<-sort(fdr)
+  cbind(fdr,true.fdr)
+}
