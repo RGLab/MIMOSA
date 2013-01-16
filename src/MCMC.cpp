@@ -1,4 +1,4 @@
-#include <Rcpp.h>
+//#include <Rcpp.h>
 //#include <armadillo>
 #include <RcppArmadillo.h>
 #include <assert.h>

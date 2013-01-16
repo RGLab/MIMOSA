@@ -75,5 +75,11 @@ Model fitting returns an object of class "MIMOSAResult", which contains a slot f
 
 We are typically interested in the computed z's from the model, i.e. the posterior probabilities of response for each subject. These can be accessed directly via the @z slot of the MIMOSAResult object.
 
+The fdr function computes the false discovery rate from the posterior probabilities, useful for selecting observations which show a significant difference at some threshold value.
+
+<<showz>>=
+table(fdr(result[[1]]@z)<0.01)
+result[[1]]@w
+@
 
 \end{document}
