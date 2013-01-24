@@ -191,3 +191,68 @@ fdrComparison<-function(fdr,truth){
   fdr<-sort(fdr)
   cbind(fdr,true.fdr)
 }
+
+
+#' Construct an ExpressionSet for MIMOSA
+#' 
+#' Starting from a reshaped data frame in the correct format, construct
+#' an ExpressionSet object that can be used with MIMOSA.
+#' 
+#' @details The featureCols will be used to construct feature names, and these
+#'  columns will be dropped from the exprs matrix. The column names are assumed
+#'  to have names that contain "_" characters separating phenotypic
+#'  characteristics. These would be generated automatically
+#'  if the data frame was constrcuted with "reshape". They
+#'  are used to construct the phenoData for the expression set
+#' @param df a data.frame that is in the correct form
+#' @featureCols the indices of the columns that identify features.
+#' @export
+MIMOSAExpressionSet<-function(df,featureCols){
+  feature<-df[,featureCols,drop=FALSE] 
+  
+  datanames<-colnames(melt(df)) #slow
+  pnames<-datanames[(which(datanames%in%"value")+1):length(datanames)]
+  
+  df<-df[,-featureCols,drop=FALSE] #adata
+  
+  pdata<-data.frame(do.call(rbind,strsplit(colnames(df),"_")))
+  
+  fnames<-apply(feature,1,function(x)paste(x,collapse="_"))
+  
+  colnames(pdata)<-pnames
+  rownames(feature)<-fnames
+  rownames(df)<-fnames
+  rownames(pdata)<-colnames(df)
+  
+  E<-ExpressionSet(as.matrix(as.data.frame(df)),featureData=AnnotatedDataFrame(as.data.frame(feature)),phenoData=AnnotatedDataFrame(pdata))
+  return(E)
+}
+
+
+#'Replicate the reference observations across all treatment groups using ddply
+#'
+#'@details Should be passed to .fun argument of ddply.
+#'
+#'@usage ddply(data, .(VAR1,VAR2,VAR3),.fun=setReference,ref=VAR4%in%"Reference",cols=c("VAR5","VAR6"))
+#'@param dat the piece we will work on
+#'@param ref an expression evaluating to a logical vector that identifies the reference class within the piece.
+#'@param cols A character vector of the names of the columns that hold our measurements
+#'@param annotations a characte vector of additional annotations to return for the data
+#'@export
+setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL){
+  REFERENCE<-eval(substitute(ref),dat)
+  MEASUREMENTS<-do.call(cbind,with(dat,mget(cols)))
+  #MEASUREMENTS<-model.frame(as.formula(paste("~",paste(cols,collapse="+"))),dat)
+  NEWNAMES<-paste(cols,"REF",sep="_")
+  REF.MEAS<-MEASUREMENTS[REFERENCE,,drop=FALSE]
+  TREAT.MEAS<-MEASUREMENTS[!REFERENCE,,drop=FALSE]
+  REF.MEAS<-matrix(REF.MEAS,nrow=dim(TREAT.MEAS)[1],ncol=dim(TREAT.MEAS)[2],byrow=TRUE)
+  colnames(REF.MEAS)<-NEWNAMES
+  retme<-cbind(TREAT.MEAS,REF.MEAS)
+  if(!is.null(annotations)){
+    ANNOTATIONS<-do.call(cbind,with(dat,mget(annotations)))[!REFERENCE,,drop=FALSE]
+    #ANNOTATIONS<-model.frame(as.formula(paste("~",paste(annotations,collapse="+"))),dat)[!REFERENCE,,drop=FALSE]
+  }
+  #get additional annotation columns
+  cbind(ANNOTATIONS,retme)
+}
