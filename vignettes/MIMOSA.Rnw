@@ -16,7 +16,7 @@ The two components represent two competing hypotheses for the data. Under the nu
 Cell counts in ICS assays are typically small, as are the proportions. Our Bayesian modelling approach borrows strength across individuals to improve the sensitivity of the model in identifying responders and non--responders.
 
 \section{Preparing the Data}
-The data must have already been extracted from processed and gated flow cytometry (FCS) files. \textit{MIMOSA} is bundled with some ICS data from an HIV vaccine safety trial (ICS).
+MIMOSA works on counts (for example, cell counts extracted from flow cytometry data). Data is generally in tabular form and has been extracted from processed and gated flow cytometry (FCS) files. \textit{MIMOSA} is bundled with some example ICS data from a vaccine safety trial.
 
 <<loaddata>>=
 require(MIMOSA)
@@ -24,14 +24,20 @@ require(Biobase)
 head(ICS)
 @
 
-We have updated the MIMOSA package to make use of \textit{ExpressionSet} objects from \textit{Biobase}.
+MIMOSA now makes use of \textit{ExpressionSet} objects from \textit{Biobase}. So, the user will have to take their tabular data and wrap it in an \textit{ExpressionSet} object.
 
-We can construct an \textit{ExpressionSet} from the ICS data that will be used by MIMOSA as follows:
+ExpressionSets are tables of features (rows) by samples (columns). In our case, we have two observations per feature (positive and negative cell counts per feature), which is a little different than a regular ExpressionSet since these measurements must remain paired. We can construct an \textit{ExpressionSet} from our data as follows:
+
+First we melt the data with the \textit{reshape} package, identifying the measurements of interest (pos and neg columns).Then we recast to put it in the right format for our ExpressionSet. In this case, our features are  positive and negative cell counts for each cytokine. Samples are combinations of sample ID, T-cell parent population, and antigen stimulations.
 
 <<construct_eset>>=
 #recast the data so that samples are on the columns and features are on the rows
 dat<-rename(recast(melt(ICS,measure=c("pos","neg")),fname+variable~ID+parent+antigen),c("fname"="cytokine","parent"="tcellsubset","antigen"="antigen.stim","variable"="PN"))
+@
 
+Next we'll need to construct our featureData, and phenoData AnnotatedDataFrames. These describe the columns and rows in our ExpressionSet.
+We pull out the first two columns to build our feature names, and then take the rest of the columns to build our sample metadata.
+<<construct_pdata>>=
 #extract feature names and rename the assaydata
 #features<-apply(dat[,1:2],1,function(x)paste(x,collapse="_"))
 features<-dat[,1:2]
@@ -41,11 +47,13 @@ rownames(dat)<-apply(features,1,function(x)paste(x,collapse="_"))
 pdata<-do.call(rbind,lapply(strsplit(colnames(dat)[-c(1:2)],"_"),function(x)data.frame(t(x))))
 pdata<-rename(pdata,c("X1"="ID","X2"="tcellsubset","X3"="antigen","X4"="cytokine"))
 rownames(pdata)<-colnames(dat)[-c(1:2)]
+@
 
+Finally we make sure the number of columns in our assaydata matches the number of rows in our pdata, and that the number of features matches the number of rows in our featuredata. Then we construct our featureData and phenoData AnnotatedDataFrames and finally build our ExpressionSet. Note we also annotate the columns of our AnnotatedDataFrames for completeness.
+
+<<construct_Eset>>=
 #assay data needs to be a matrix
 dat<-as.matrix(as.data.frame(dat[,-c(1:2)]))
-
-
   
 rownames(features)<-rownames(dat)
 
@@ -66,20 +74,84 @@ Now that our data is in a form we can work with, we can fit a MIMOSA model to th
 <<fit,keep.source=FALSE>>=
 result<-MIMOSA(IFNg_neg+IFNg_pos~ID|antigen,ICS.eset,subset=antigen%in%c("ENV-1-PTEG")&tcellsubset%in%"cd4",ref=antigen%in%"negctrl1"&tcellsubset%in%"cd4",method="EM")
 @
+Note that features go on the lhs, and we need to explicitly include both the negative and positive counts for a feature. Also, MIMOSA assumes that the negative counts come first. 
 
 MIMOSA supports the extended formula interface, thus we can condition on phenoData variables using "|". Above, if we select more than one antigen, for example, the code would condition on antigen and fit a MIMOSA model to each antigen, returning a list of fitted models.
 
-The `method` argument allows us to fit the model either via MCMC (as above) or via EM. Beware, however, the EM routine can be unstable. 
+The `method` argument allows us to fit the model either via MCMC (as above) or via EM. Beware, however, the EM routine will not always converge, particularly if there are few observations or very small counts. 
 
+Two additional important arguments, subset, and ref, specify which subset of samples we are fitting, and what the reference subset is for the contrast. Above, we are comparing ENV-1-PTEG stimulated CD4+ T-cell counts against unstimulated (negctrl1) CD4+ T-cell counts. The contrast is made per subject, i.e. the observations are paired.
+
+Note that the subset and the ref arguments evaluate to logical vectors. These must be of the same length. So, if you wish to group multiple antigen stimulations together and compare all of them simultaneously against an unstimulated set of samples, you should define a new categorical variable for this purpose, and replicate your negative control observations so that they are paired to each observation in the test group. We will provide a few further examples below. 
+
+\subsection{Results of IFNg Fit}
 Model fitting returns an object of class "MIMOSAResult", which contains a slot for the Z's, W's and a "result" slot whose content varies based on the method used to fit the model. 
 
-We are typically interested in the computed z's from the model, i.e. the posterior probabilities of response for each subject. These can be accessed directly via the @z slot of the MIMOSAResult object.
+Since here we are talking about ICS data, we are typically interested in the computed z's from the model, i.e. the posterior probabilities of response for each subject. These can be accessed directly via the @z slot of the MIMOSAResult object.
 
 The fdr function computes the false discovery rate from the posterior probabilities, useful for selecting observations which show a significant difference at some threshold value.
+
+The w's can be inerpreted as the fraction of subjects that respond, or not, to the stimulation.  
 
 <<showz>>=
 table(fdr(result[[1]]@z)<0.01)
 result[[1]]@w
 @
+
+
+\subsection{Testing all Atigens Simultaneously}
+Here we want to test all antigens simultaneously against the negative control. 
+
+<<allantigens>>=
+#Add a variable that tells us which are stimulated and which are controls
+ICS$CONTROL<-ICS$antigen%in%c("negctrl1","negctrl2")
+ICS$CONTROL<-factor(ICS$CONTROL,labels=c("STIM","CONTROL"))
+#Focus on CD8 and CD4 subsets
+ICS<-subset(ICS,parent%in%c("cd4","cd8"))
+#collapse the negative controls into one observation, taking the median.
+dat<-melt(within(ICS,antigen[antigen%in%c("negctrl1","negctrl2")]<-"negctrl1"))
+dat<-recast(dat,ID+parent+fname+CONTROL+antigen~variable,fun.aggregate=function(x)round(median(x)))
+
+#Then replicate the negtive control observations for each stimulated sample
+dat<-ddply(dat,.(ID,parent,fname),summarize,antigen=antigen[CONTROL%in%"STIM"],pos_s=pos[CONTROL%in%"STIM"],neg_s=neg[CONTROL%in%"STIM"],pos_c=rep(pos[CONTROL%in%"CONTROL"],sum(CONTROL%in%"STIM")),neg_c=rep(neg[CONTROL%in%"CONTROL"],sum(CONTROL%in%"STIM")))
+
+#Finally reshape the data appropriately and construct an ExpressionSet
+dat<-melt(dat,measure=c("pos_s","neg_s","pos_c","neg_c"))
+dat$CONTROL<-factor(dat$variable%in%c("pos_s","neg_s"),labels=c("CONTROL","STIM"))
+dat$PN<-factor(dat$variable%in%c("pos_s","pos_c"),labels=c("neg","pos"))
+dat$variable<-NULL
+dat<-rename(dat,c(value="count"))
+DAT<-recast(dat,measure="count",fname+PN~parent+ID+antigen+CONTROL)
+
+feature.names<-apply(DAT[,1:2],1,function(x)paste(x,collapse="_"))
+sample.names<-colnames(DAT[,-c(1:2)])
+features<-DAT[,1:2]
+rownames(features)<-feature.names
+pheno<-data.frame(do.call(rbind,strsplit(colnames(DAT[,-c(1:2)]),"_")))
+colnames(pheno)<-c("Tcellsubset","ID","Antigen","Treatment")
+DAT<-as.matrix(data.frame(DAT[,-c(1:2)]))
+colnames(DAT)<-sample.names
+rownames(pheno)<-sample.names
+rownames(DAT)<-feature.names
+
+E<-ExpressionSet(assayData=DAT,featureData=AnnotatedDataFrame(data=data.frame(features)),phenoData=AnnotatedDataFrame(data=pheno))
+@
+
+The lions' share of the work is just formatting the data. Fitting the model is then trivial. Here, our treatment group is "STIM", and our control group is "CONTROL". We fit our model separately for each T cell subset. 
+
+<<fitallantigens>>=
+result<-MIMOSA(IFNg_neg+IFNg_pos~ID+Antigen+Treatment|Tcellsubset,E,subset=Treatment%in%c("STIM"),ref=Treatment%in%"CONTROL",method="EM")
+@
+
+Looking at the results we see all of the response in in ENV stimulated CD4+ T-cells.
+
+<<summarize>>=
+lapply(result,function(x)x@w)
+#about 50% responders within the CD4+ subset and almost no response in the CD8+ subset.
+lapply(result,function(x)table(fdr(x@z)<0.01,pData(x)$Antigen,factor(pData(x)$Tcellsubset)))
+@
+
+\section{Summary}
+MIMOSA can be applied to paired count data, and is not limited to ICS assays. It has been successfully used with EliSpot assays for epitope mapping as well as Fluidigm single-cell gene expression,and is applicable to any single-cell data where where cells can be thresholded as positive or negative for one or more markers and counted. Multivariate vectors are allowed (i.e. multiple positive categories), although MIMOSA will only test two-sided hypotheses in that case.
 
 \end{document}
