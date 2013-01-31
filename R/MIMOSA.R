@@ -217,7 +217,7 @@ MIMOSAExpressionSet<-function(df,featureCols){
   
   pdata<-data.frame(do.call(rbind,strsplit(colnames(df),"_")))
   
-  fnames<-apply(feature,1,function(x)paste(x,collapse="_"))
+  fnames<-apply(as.data.frame(feature),1,function(x)paste(x,collapse="_"))
   
   colnames(pdata)<-pnames
   rownames(feature)<-fnames
