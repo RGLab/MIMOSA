@@ -250,7 +250,7 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL){
   colnames(REF.MEAS)<-NEWNAMES
   retme<-cbind(TREAT.MEAS,REF.MEAS)
   if(!is.null(annotations)){
-    ANNOTATIONS<-do.call(data.frame,with(dat,mget(annotations)))[!REFERENCE,,drop=FALSE]
+    ANNOTATIONS<-do.call(data.frame,with(dat,mget(annotations,envir=as.environment(-1L))))[!REFERENCE,,drop=FALSE]
     #ANNOTATIONS<-model.frame(as.formula(paste("~",paste(annotations,collapse="+"))),dat)[!REFERENCE,,drop=FALSE]
   }
   #get additional annotation columns
