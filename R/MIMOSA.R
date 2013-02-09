@@ -241,7 +241,7 @@ MIMOSAExpressionSet<-function(df,featureCols){
 #'@export
 setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL){
   REFERENCE<-eval(substitute(ref),dat)
-  MEASUREMENTS<-do.call(cbind,with(dat,mget(cols)))
+  MEASUREMENTS<-do.call(cbind,with(dat,mget(cols,envir=as.environment(-1L))))
   #MEASUREMENTS<-model.frame(as.formula(paste("~",paste(cols,collapse="+"))),dat)
   NEWNAMES<-paste(cols,"REF",sep="_")
   REF.MEAS<-MEASUREMENTS[REFERENCE,,drop=FALSE]
