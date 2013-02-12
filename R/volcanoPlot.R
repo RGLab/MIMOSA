@@ -52,3 +52,4 @@ setMethod("volcanoPlot",signature("BetaMixResult"),function(bmr,plot.post=FALSE,
 
 #TODO fix the volcano plot when fdr=0. -log10(0) = Inf and is not plotted.
 #TODO also adjust the visible range so that all the data is visible, not just the ML or posterior estimates
+

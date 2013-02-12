@@ -215,3 +215,4 @@ else return(list(optim=optres,Newton.Estimates=guess.numerical))
 #guess<-c(150,150,1,1,prop.table(colMeans(dat[[1]])),prop.table(colMeans(dat[[2]]))) 
 #llr(guess)
 #guess<-guess-0.1*solve(hessian(LL,guess))%*%grad(LL,guess)
+

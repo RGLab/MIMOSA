@@ -181,21 +181,18 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'@importMethodsFrom Biobase pData
 #'@aliases pData,MIMOSAResult-methods
 #'@rdname pData-methods
-#'@exportMethod pData 
 setMethod("pData","MIMOSAResult",function(object){
   pData(object@result)
 })
 
 #'@rdname pData-methods
 #'@aliases pData,MDMixResult-methods
-#'@export
 setMethod("pData","MDMixResult",function(object){
   pData(object@pd)
 })
 
 #'@rdname pData-methods
 #'@aliases pData,MCMCResult-methods
-#'@export
 setMethod("pData","MCMCResult",function(object){
   pData(object@phenoData)
 })
@@ -205,7 +202,6 @@ setMethod("pData","MCMCResult",function(object){
 #'
 #'@param p is the probability of a positive result
 #'@param truth is a logical with the true positive and negative results
-#'@export
 roc<-function(p,truth){
   s<-seq(0,1,l=1000)
   table<-t(sapply(s,function(th){
@@ -239,7 +235,7 @@ fdrComparison<-function(fdr,truth){
 #'  if the data frame was constrcuted with "reshape". They
 #'  are used to construct the phenoData for the expression set
 #' @param df a data.frame that is in the correct form
-#' @featureCols the indices of the columns that identify features.
+#' @param featureCols the indices of the columns that identify features.
 #' @export
 MIMOSAExpressionSet<-function(df,featureCols){
   feature<-df[,featureCols,drop=FALSE] 

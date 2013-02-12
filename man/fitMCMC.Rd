@@ -3,7 +3,8 @@
 \title{Fit the MIMOSA model via MCMC}
 \usage{
   .fitMCMC(data, inits = NULL, iter = 250000, burn = 50000,
-    thin = 1, tune = 100, outfile = "mcmc.dat",
+    thin = 1, tune = 100,
+    outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")),
     alternative = "greater", UPPER = 0.5, LOWER = 0.15,
     FAST = TRUE, EXPRATE = 1e-04)
 }
