@@ -62,7 +62,7 @@ setGeneric("MIMOSA",def=function(formula,data,...){
 })
 
 
-setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,p.thin=1,...){
+setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,p.thin=1,run.parallel=FALSE,...){
   if(!exists("ref")){
     stop("ref must contain expressions that define subsets to be compared")
   }
@@ -106,34 +106,68 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     pd<-list(model.part(formula,mf.test,rhs=1))
     result<-vector("list",1)
   }
-  for(i in 1:length(test)){
-    #recycle the reference
-    j<-data.frame(1:length(test),1:length(ref))[i,2]
-    fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
-    #remove NAs
-    nas<-unique(rbind(which(is.na(fitme[[1]]),T),which(is.na(fitme[[2]]),T))[,1])
-    if(length(nas)>0){
-      fitme[[1]]<-fitme[[1]][-nas,]
-      fitme[[2]]<-fitme[[2]][-nas,]
-      pd[[i]]<-pd[[i]][-nas,]
-    }
-    if(method%in%"mcmc"){
-      res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
-      res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
-      if(ncol(fitme[[1]])==2&getP){
-        res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-      }else{
-        res$p<-list()
+  if(!run.parallel){
+    for(i in 1:length(test)){
+      #recycle the reference
+      j<-data.frame(1:length(test),1:length(ref))[i,2]
+      fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
+      #remove NAs
+      nas<-unique(rbind(which(is.na(fitme[[1]]),T),which(is.na(fitme[[2]]),T))[,1])
+      if(length(nas)>0){
+        fitme[[1]]<-fitme[[1]][-nas,]
+        fitme[[2]]<-fitme[[2]][-nas,]
+        pd[[i]]<-pd[[i]][-nas,]
       }
-      attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
-      res<-MCMCResult(object=res)
+      if(method%in%"mcmc"){
+        res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+        res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+        if(ncol(fitme[[1]])==2&getP){
+          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+        }else{
+          res$p<-list()
+        }
+        attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+        res<-MCMCResult(object=res)
+      }
+      else if (method%in%"EM"){
+        res<-MDMix(fitme)
+        res@pd<-new("AnnotatedDataFrame",pd[[i]])
+      }
+      res<-new("MIMOSAResult",result=res)
+      result[[i]]<-res
     }
-    else if (method%in%"EM"){
-      res<-MDMix(fitme)
-      res@pd<-new("AnnotatedDataFrame",pd[[i]])
-    }
-    res<-new("MIMOSAResult",result=res)
-    result[[i]]<-res
+  }else if(run.parallel&any(grepl("multicore",loadedNamespaces()))){
+    result<-mclapply(1:length(test),function(i){
+      #recycle the reference
+      j<-data.frame(1:length(test),1:length(ref))[i,2]
+      fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
+      #remove NAs
+      nas<-unique(rbind(which(is.na(fitme[[1]]),T),which(is.na(fitme[[2]]),T))[,1])
+      if(length(nas)>0){
+        fitme[[1]]<-fitme[[1]][-nas,]
+        fitme[[2]]<-fitme[[2]][-nas,]
+        pd[[i]]<-pd[[i]][-nas,]
+      }
+      if(method%in%"mcmc"){
+        res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+        res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+        if(ncol(fitme[[1]])==2&getP){
+          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+        }else{
+          res$p<-list()
+        }
+        attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+        res<-MCMCResult(object=res)
+      }
+      else if (method%in%"EM"){
+        res<-MDMix(fitme)
+        res@pd<-new("AnnotatedDataFrame",pd[[i]])
+      }
+      res<-new("MIMOSAResult",result=res)
+      res
+    })
+  }else{
+    stop("Can't run parallel MIMOSA. Must load multicore package.")
   }
   return(result)
 })
@@ -149,7 +183,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'@rdname pData-methods
 #'@exportMethod pData 
 setMethod("pData","MIMOSAResult",function(object){
-      pData(object@result)
+  pData(object@result)
 })
 
 #'@rdname pData-methods
