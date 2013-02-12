@@ -164,6 +164,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res@pd<-new("AnnotatedDataFrame",pd[[i]])
       }
       res<-new("MIMOSAResult",result=res)
+      unlink(outfile)
       res
     })
   }else{
