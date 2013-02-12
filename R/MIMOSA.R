@@ -157,6 +157,9 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
           res$p<-list()
         }
         attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+        outfile<-get("outfile",environment(res$getmcmc))
+        unlink(outfile)
+        unlink(paste(outfile,"P",sep=""))
         res<-MCMCResult(object=res)
       }
       else if (method%in%"EM"){
@@ -164,8 +167,6 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res@pd<-new("AnnotatedDataFrame",pd[[i]])
       }
       res<-new("MIMOSAResult",result=res)
-      unlink(outfile)
-      unlink(paste("outfile","P",sep=""))
       res
     })
   }else{
