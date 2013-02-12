@@ -165,6 +165,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
       }
       res<-new("MIMOSAResult",result=res)
       unlink(outfile)
+      unlink(paste("outfile","P",sep=""))
       res
     })
   }else{
