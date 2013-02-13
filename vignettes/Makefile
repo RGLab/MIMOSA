@@ -9,5 +9,5 @@ clean:
 	rm -f *.tex *.bbl *.blg *.aux *.out *.log *.spl *tikzDictionary
 
 %.pdf: %.Rnw
-	$(R_HOME)/bin/Rscript --arch=x86_64 -e "library(knitr); knit2pdf('$*.Rnw')"
+	$(R_HOME)/bin/Rscript "library(knitr); knit2pdf('$*.Rnw')"
 
