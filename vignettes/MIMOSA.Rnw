@@ -26,6 +26,7 @@ MIMOSA works on counts (for example, cell counts extracted from flow cytometry d
 <<loaddata,message=FALSE,warning=FALSE,error=FALSE>>=
 require(MIMOSA)
 require(Biobase)
+data(ICS)
 head(ICS)
 @
 
