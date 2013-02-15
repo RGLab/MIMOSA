@@ -1,0 +1,58 @@
+\name{ConstructMIMOSAExpressionSet}
+\alias{ConstructMIMOSAExpressionSet}
+\title{A wrapper for constructing an Expression Set for MIMOSA}
+\usage{
+  ConstructMIMOSAExpressionSet(thisdata,
+    reference = STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells",
+    measure.columns = c("Neg", "Pos"),
+    other.annotations = setdiff(colnames(thisdata), measure.columns),
+    default.cast.formula = component ~ ...,
+    .variables = .(PTID, TESTDT, ASSAYID, PLATEID),
+    featureCols = 1)
+}
+\arguments{
+  \item{\code{thisdata}}{is the input data frame}
+
+  \item{\code{reference}}{is an \code{expression} that
+  evaluates to a \code{logical} vector which specifices the
+  observations in the data frame that are to be used for
+  the negative control or reference set}
+
+  \item{\code{measure.columns}}{is a \code{chracter} vector
+  that specifies which columns hold the observed counts}
+
+  \item{\code{other.annotations}}{is a \code{character}
+  vector that specifies which additional columns in the
+  data frame should be included in the returned data. By
+  default we take everything, but you could specify only
+  relevant phenotypic information.}
+
+  \item{\code{default.cast.formula}}{is a \code{formula}
+  that tells reshape how to recast the data frame so that
+  rows corresponde to different measured components and
+  columns correspond to samples. By default
+  \code{component~...} will put the components as the rows
+  (i.e. positive and negative cell counts) and all measured
+  phenotypic information on the columns.}
+
+  \item{\code{.variable}}{is a dotted list that specifies
+  the variable names (columns of the data frame) by which
+  to group the data when organzing stimulated and
+  unstimulated observations. i.e. PTID x ANTIGEN x
+  TCELLSUBSET x TESTDT, or something else for your own
+  data.}
+
+  \item{\code{featureCols}}{is a \code{numeric} vector that
+  specifies the indices of the columns to be used to name
+  the features. If the casting formula is
+  \code{component~...} then there is only one feature
+  column (and it is the first one), so \code{featureCols =
+  1}, by default.}
+}
+\description{
+  Calls a series of other functions that will reshape and
+  refactor the data frame into the right format for use by
+  MIMOSA We provide some default arguments as examples.
+  Currently slow, and very much prototype code.
+}
+
