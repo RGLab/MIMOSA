@@ -241,23 +241,27 @@ fdrComparison<-function(fdr,truth){
 #' @param featureCols the indices of the columns that identify features.
 #' @export
 MIMOSAExpressionSet<-function(df,featureCols){
-  feature<-df[,featureCols,drop=FALSE] 
+  #feature<-df[,featureCols,drop=FALSE] 
   
-  datanames<-colnames(melt(df)) #slow
-  pnames<-datanames[(which(datanames%in%"value")+1):length(datanames)]
+  featuredata<-attributes(df)$rdimnames[[1]]
+  pdata<-attributes(df)$rdimnames[[2]]
+  #datanames<-colnames(melt(df)) #slow
+  #datanames<-colnames(df)[-featureCols]
+  #browser()
+  #pnames<-datanames[(which(datanames%in%"value")+1):length(datanames)]
   
   df<-df[,-featureCols,drop=FALSE] #adata
   
-  pdata<-data.frame(do.call(rbind,strsplit(colnames(df),"_")))
+  #pdata<-data.frame(do.call(rbind,strsplit(colnames(df),"_")))
   
-  fnames<-apply(as.data.frame(feature),1,function(x)paste(x,collapse="_"))
+  #fnames<-apply(as.data.frame(feature),1,function(x)paste(x,collapse="_"))
   
-  colnames(pdata)<-pnames
-  rownames(feature)<-fnames
-  rownames(df)<-fnames
-  rownames(pdata)<-colnames(df)
+  #colnames(pdata)<-pnames
+  #rownames(feature)<-fnames
+  rownames(df)<-rownames(featuredata)
+  #rownames(pdata)<-colnames(df)
   
-  E<-ExpressionSet(as.matrix(as.data.frame(df)),featureData=AnnotatedDataFrame(as.data.frame(feature)),phenoData=AnnotatedDataFrame(pdata))
+  E<-ExpressionSet(as.matrix(as.data.frame(df)),featureData=AnnotatedDataFrame(as.data.frame(featuredata)),phenoData=AnnotatedDataFrame(pdata))
   return(E)
 }
 
@@ -272,8 +276,14 @@ MIMOSAExpressionSet<-function(df,featureCols){
 #'@param cols A character vector of the names of the columns that hold our measurements
 #'@param annotations a characte vector of additional annotations to return for the data
 #'@export
-setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL){
-  REFERENCE<-eval(substitute(ref),dat)
+setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=component~...){
+  REFERENCE<-try(eval(ref,dat))
+  if(inherits(REFERENCE,"try-error")){
+    REFERENCE<-eval(substitute(ref),dat)
+  }
+  if(inherits(REFERENCE,"try-error")){
+    stop("Cannot evaluate ref argument")
+  }
   MEASUREMENTS<-do.call(cbind,with(dat,mget(cols,envir=as.environment(-1L))))
   #MEASUREMENTS<-model.frame(as.formula(paste("~",paste(cols,collapse="+"))),dat)
   NEWNAMES<-paste(cols,"REF",sep="_")
@@ -285,7 +295,69 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL){
   if(!is.null(annotations)){
     ANNOTATIONS<-do.call(data.frame,with(dat,mget(annotations,envir=as.environment(-1L))))[!REFERENCE,,drop=FALSE]
     #ANNOTATIONS<-model.frame(as.formula(paste("~",paste(annotations,collapse="+"))),dat)[!REFERENCE,,drop=FALSE]
+    retme<-cbind(ANNOTATIONS,retme)
   }
-  #get additional annotation columns
-  cbind(ANNOTATIONS,retme)
+  retme
+}
+
+##'A wrapper for constructing an Expression Set for MIMOSA
+##'
+##'Calls a series of other functions that will reshape and refactor the data frame into the right format for use by MIMOSA
+##'We provide some default arguments as examples. Currently slow, and very much prototype code.
+##'@param \code{thisdata} is the input data frame
+##'@param \code{reference} is an \code{expression} that evaluates to a \code{logical} vector which specifices the observations in the data frame that are to be used for the negative control or reference set
+##'@param \code{measure.columns} is a \code{chracter} vector that specifies which columns hold the observed counts
+##'@param \code{other.annotations} is a \code{character} vector that specifies which additional columns in the data frame should be included in the returned data. By default we take everything, but you could specify only relevant phenotypic information.
+##'@param \code{default.cast.formula} is a \code{formula} that tells reshape how to recast the data frame so that rows corresponde to different measured components and columns correspond to samples. By default \code{component~...} will put the components as the rows (i.e. positive and negative cell counts) and all measured phenotypic information on the columns.
+##'@param \code{.variable} is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
+##'@param \code{featureCols} is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
+##'@export
+ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1){
+  #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
+  thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
+  #transform the data so that features are on the rows and samples are on the columns
+  #build a function to reshape the returned data and assign it to the calling environment
+  MIMOSAReshape<-function(mydata=NULL,default.formula=NULL,cols=measure.columns){
+    NEWNAMES<-paste(cols,"REF",sep="_")
+    mydata<-melt(mydata,measure.var=c(cols,NEWNAMES))
+    mydata$RefTreat<-factor(grepl("_REF$",mydata$variable),labels=c("Treatment","Reference"))
+    mydata<-rename(mydata,c("variable"="component","value"="count"))
+    mydata$component<-factor(gsub("_REF$","",mydata$component))
+    mydata<-recast(mydata,measure="count",default.formula)
+    mydata
+  }
+  thisdata<-MIMOSAReshape(mydata=thisdata,default.formula=default.cast.formula,cols=measure.columns)
+  MIMOSAExpressionSet(thisdata,featureCols=featureCols)
+}
+#'Sumarize the replicates in an elispot epitope mapping data set from SCHARP
+#'
+#' Thus function will summarize the replicate observations for the negative controls and stimulations in an epitope mapping data set from SCHARP. The user provides information on grouping structure, cells per well, replicate observation columns and so forth. The function is meant to be passed to ddply
+#'@param x is the piece of data currently being worked on. It is a unique combination of the grouping variables passed to ddply
+#'@param CONTROL is an expression that evaluates to a logical vector specifying which rows of the data frame are control observations.
+#'@param WELLMULTIPLIER is a numeric argument that specifies the factor by which to multiply the denominator (in the \code{cells.per.well} argument). i.e., if there are 100K cells per well, but the cells.per.well column has 100, the WELLMULTIPLIER would be 1000
+#'@param replicates is a character vector identifying the column names that contain the replicated observations. These will be summed.
+#'@param cells.per.well is a character vector that identifies the column containing the number of cells per well.
+#'@param SAMPLE is an expression evaluating to a logical vector that identifies the rows of the data frame which are antigen or peptide stimualtions rather than control samples.
+#'@export
+match.elispot.antigens<-function(x,CONTROL=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",WELLMULTIPLIER=1000,replicates=c("REP1","REP2","REP3","REP4","REP5","REP6"),cells.per.well="CELLWELL",SAMPLE=!STAGE%in%"CTRL"){
+  control.sub<-eval(substitute(CONTROL),x)
+  ctrl<-subset(x,control.sub)
+  CPOS<-sum(ctrl[,replicates],na.rm=TRUE)
+  l<-length(na.omit(t(ctrl[,replicates,drop=FALSE])))
+  CNEG<-WELLMULTIPLIER*l*ctrl[,cells.per.well]
+  
+  samples<-eval(substitute(SAMPLE),x)
+  samps<-subset(x,samples)
+  
+  PNEG<-NULL
+  PPOS<-NULL
+  for(i in 1:nrow(samps)){
+    ppos<-na.omit(t(samps[i,replicates,drop=FALSE]))
+    l<-length(ppos)
+    pneg<-samps[i,cells.per.well]*l*WELLMULTIPLIER
+    ppos<-sum(ppos)
+    PNEG<-c(PNEG,pneg)
+    PPOS<-c(PPOS,ppos)
+  }
+  ret<-rbind(data.frame(samps,Neg=PNEG,Pos=PPOS),data.frame(ctrl,Neg=CNEG,Pos=CPOS))
 }

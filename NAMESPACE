@@ -1,6 +1,8 @@
 export(.fitMCMC)
+export(ConstructMIMOSAExpressionSet)
 export(fdr)
 export(fdrComparison)
+export(match.elispot.antigens)
 export(MIMOSAExpressionSet)
 export(setReference)
 exportMethods(MIMOSA)
