@@ -315,9 +315,14 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
 ##'@param \code{.variable} is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
 ##'@param \code{featureCols} is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
 ##'@export
-ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1){
+ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="NEG"){
+  #if reference is null, then we already have the data in a form we need
+  if(!is.null(reference)){
   #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
-  thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
+    thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
+  }else{
+    colnames(thisdata)<-gsub("NEG","REF",colnames(thisdata))
+  }
   #transform the data so that features are on the rows and samples are on the columns
   #build a function to reshape the returned data and assign it to the calling environment
   MIMOSAReshape<-function(mydata=NULL,default.formula=NULL,cols=measure.columns){
@@ -326,7 +331,7 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
     mydata$RefTreat<-factor(grepl("_REF$",mydata$variable),labels=c("Treatment","Reference"))
     mydata<-rename(mydata,c("variable"="component","value"="count"))
     mydata$component<-factor(gsub("_REF$","",mydata$component))
-    mydata<-recast(mydata,measure="count",default.formula)
+    mydata<-cast(melt(mydata,measure="count"),default.formula)
     mydata
   }
   thisdata<-MIMOSAReshape(mydata=thisdata,default.formula=default.cast.formula,cols=measure.columns)
