@@ -8,7 +8,7 @@
     other.annotations = setdiff(colnames(thisdata), measure.columns),
     default.cast.formula = component ~ ...,
     .variables = .(PTID, TESTDT, ASSAYID, PLATEID),
-    featureCols = 1)
+    featureCols = 1, ref.append.replace = "NEG")
 }
 \arguments{
   \item{\code{thisdata}}{is the input data frame}

@@ -277,7 +277,7 @@ MIMOSAExpressionSet<-function(df,featureCols){
 #'@param dat the piece we will work on
 #'@param ref an expression evaluating to a logical vector that identifies the reference class within the piece.
 #'@param cols A character vector of the names of the columns that hold our measurements
-#'@param annotations a characte vector of additional annotations to return for the data
+#@param annotations a characte vector of additional annotations to return for the data
 #'@export
 setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=component~...){
   REFERENCE<-try(eval(ref,dat))
@@ -286,6 +286,9 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
   }
   if(inherits(REFERENCE,"try-error")){
     stop("Cannot evaluate ref argument")
+  }
+  if((nrow(dat)!=2)|nlevels(factor(REFERENCE))==1){
+	return(NULL)
   }
   MEASUREMENTS<-do.call(cbind,with(dat,mget(cols,envir=as.environment(-1L))))
   #MEASUREMENTS<-model.frame(as.formula(paste("~",paste(cols,collapse="+"))),dat)
@@ -317,7 +320,7 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
 ##'@export
 ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="NEG"){
   #if reference is null, then we already have the data in a form we need
-  if(!is.null(reference)){
+  if(!is.null(substitute(reference))){
   #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
     thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
   }else{
@@ -326,7 +329,10 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
   #transform the data so that features are on the rows and samples are on the columns
   #build a function to reshape the returned data and assign it to the calling environment
   MIMOSAReshape<-function(mydata=NULL,default.formula=NULL,cols=measure.columns){
-    NEWNAMES<-paste(cols,"REF",sep="_")
+    if(!grepl("RefTreat",paste(deparse(default.formula),collapse=""))){
+	default.formula<-as.formula(paste(paste(deparse(default.formula),collapse=""),"RefTreat",sep="+"))
+    }
+	NEWNAMES<-paste(cols,"REF",sep="_")
     mydata<-melt(mydata,measure.var=c(cols,NEWNAMES))
     mydata$RefTreat<-factor(grepl("_REF$",mydata$variable),labels=c("Treatment","Reference"))
     mydata<-rename(mydata,c("variable"="component","value"="count"))
