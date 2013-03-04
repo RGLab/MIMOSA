@@ -287,7 +287,10 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
   if(inherits(REFERENCE,"try-error")){
     stop("Cannot evaluate ref argument")
   }
-  if((nrow(dat)!=2)|nlevels(factor(REFERENCE))==1){
+  #if((nrow(dat)!=2)|nlevels(factor(REFERENCE))==1){
+#	return(NULL)
+ # }
+  if(sum(REFERENCE)!=1){
 	return(NULL)
   }
   MEASUREMENTS<-do.call(cbind,with(dat,mget(cols,envir=as.environment(-1L))))
@@ -295,6 +298,9 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
   NEWNAMES<-paste(cols,"REF",sep="_")
   REF.MEAS<-MEASUREMENTS[REFERENCE,,drop=FALSE]
   TREAT.MEAS<-MEASUREMENTS[!REFERENCE,,drop=FALSE]
+  if(nrow(TREAT.MEAS)==0){
+	return(NULL)
+  }
   REF.MEAS<-matrix(REF.MEAS,nrow=dim(TREAT.MEAS)[1],ncol=dim(TREAT.MEAS)[2],byrow=TRUE)
   colnames(REF.MEAS)<-NEWNAMES
   retme<-cbind(TREAT.MEAS,REF.MEAS)
