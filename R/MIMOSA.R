@@ -272,10 +272,11 @@ MIMOSAExpressionSet<-function(df,featureCols){
 #'
 #'@details Should be passed to .fun argument of ddply.
 #'
-#'@usage ddply(data, .(VAR1,VAR2,VAR3),.fun=setReference,ref=VAR4%in%"Reference",cols=c("VAR5","VAR6"))
 #'@param dat the piece we will work on
 #'@param ref an expression evaluating to a logical vector that identifies the reference class within the piece.
 #'@param cols A character vector of the names of the columns that hold our measurements
+#'@param annotations A character vector of additional annotation columns
+#'@param default.formula a default formula to be used for casting the data.
 #@param annotations a characte vector of additional annotations to return for the data
 #'@export
 setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=component~...){
@@ -314,16 +315,18 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
 ##'A wrapper for constructing an Expression Set for MIMOSA
 ##'
 ##'Calls a series of other functions that will reshape and refactor the data frame into the right format for use by MIMOSA
+##'Standardized for use with internal SCHARP data sets.
 ##'We provide some default arguments as examples. Currently slow, and very much prototype code.
-##'@param \code{thisdata} is the input data frame
-##'@param \code{reference} is an \code{expression} that evaluates to a \code{logical} vector which specifices the observations in the data frame that are to be used for the negative control or reference set
-##'@param \code{measure.columns} is a \code{chracter} vector that specifies which columns hold the observed counts
-##'@param \code{other.annotations} is a \code{character} vector that specifies which additional columns in the data frame should be included in the returned data. By default we take everything, but you could specify only relevant phenotypic information.
-##'@param \code{default.cast.formula} is a \code{formula} that tells reshape how to recast the data frame so that rows corresponde to different measured components and columns correspond to samples. By default \code{component~...} will put the components as the rows (i.e. positive and negative cell counts) and all measured phenotypic information on the columns.
-##'@param \code{.variable} is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
-##'@param \code{featureCols} is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
+##'@param thisdata is the input data frame
+##'@param reference is an \code{expression} that evaluates to a \code{logical} vector which specifices the observations in the data frame that are to be used for the negative control or reference set
+##'@param measure.columns is a \code{chracter} vector that specifies which columns hold the observed counts
+##'@param other.annotations is a \code{character} vector that specifies which additional columns in the data frame should be included in the returned data. By default we take everything, but you could specify only relevant phenotypic information.
+##'@param default.cast.formula is a \code{formula} that tells reshape how to recast the data frame so that rows corresponde to different measured components and columns correspond to samples. By default \code{component~...} will put the components as the rows (i.e. positive and negative cell counts) and all measured phenotypic information on the columns.
+##'@param .variables is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
+##'@param featureCols is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
+##'@param ref.append.replace the terminating character string in the column names of the negative controls. It will be replaces with _REF for "reference"
 ##'@export
-ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="NEG"){
+ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="_NEG"){
   #if reference is null, then we already have the data in a form we need
   if(!is.null(substitute(reference))){
   #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate

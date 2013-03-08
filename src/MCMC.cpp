@@ -1,7 +1,6 @@
 //#include <Rcpp.h>
 //#include <armadillo>
 #include <RcppArmadillo.h>
-#include <assert.h>
 #include <omp.h>
 #include <Rmath.h>
 #include <math.h>
@@ -86,10 +85,18 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	/*
 	 * Assert that dimensions match
 	 */
-	assert(alphas.size()==stim.ncol());
-	assert(stim.nrow()==unstim.nrow());
-	assert(stim.ncol()==unstim.ncol());
-	assert(alphas.size()==alphau.size());
+	if(alphas.size()!=stim.ncol()){
+     ::Rf_error( "dimensions don't match");
+	}
+	if(stim.nrow()!=unstim.nrow()){
+     ::Rf_error( "dimensions don't match");
+	}
+	if(stim.ncol()!=unstim.ncol()){
+     ::Rf_error( "dimensions don't match");
+	}
+	if(alphas.size()!=alphau.size()){
+     ::Rf_error( "dimensions don't match"); 
+	}
 	/*
 	 * Dimensions of the problem
 	 */
@@ -224,7 +231,9 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//compute z1*lnull+z2*lresp+prior
 			completeLL(z,llnull,llresp,cll,filter,P,k);
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
-			assert(isfinite(oldll)==1);
+			if(isfinite(oldll)!=1){
+         ::Rf_error( "oldll != 1");
+			}
 
 
 			//simulate alphas_j
@@ -277,8 +286,9 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				REJECT=false;
 #endif
 			}
-			assert(isfinite(oldll)==1);
-
+			if(isfinite(oldll)!=1){
+         ::Rf_error( "oldll != 1");
+			}
 
 
 			/*
@@ -305,7 +315,9 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 
 
-			assert(isfinite(oldll)==1);
+			if(isfinite(oldll)!=1){
+         ::Rf_error( "dimensions don't match");
+			}
 			//copy the alphau vector to the proposal vector.
 			std::copy(alphau.begin(),alphau.end(),newalphau.begin());//copy the current alpha vector to the new alpha vector prior to drawing a sample
 
@@ -543,7 +555,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 	}
 	if(!fixed){
-		cout<<"Failed to set step size. Run a longer chain.\n";
+		Rprintf("Failed to set step size. Run a longer chain.\n");
 	}
 
 	/*
@@ -640,7 +652,9 @@ double alphaProposal(const std::vector<double> &alpha, double sigma, int i){
 double alphaDiscreteProposal(const std::vector<double> &alpha, double d, int i){
 	double na;
 	d=round(abs(d));
-	assert(d>=1);
+	if(d<1){
+    ::Rf_error( "d is < 1");
+	}
 	na = ::Rf_runif(-d,d);
 	na=alpha[i]+na;
 	return na;
@@ -689,7 +703,9 @@ inline double simQ(std::vector<double> &z, int P,int k){
 	return q;
 }
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){
-	assert(k==2);
+	if(k!=2){
+     ::Rf_error( "k!=2");
+	}
 	double numerator=0,denominator=0,nummc,denommc;
 	double C=1,CC=1;
 	//If any alphas are <= 0 fill with nan;
@@ -880,8 +896,12 @@ double nc(double as, double bs, double au,double bu,double B){
 }
 
 double dgeom(int k,double p){
-	assert(k>=1);
-	assert(p>=0&&p<=1);
+	if(k<1){
+   ::Rf_error( "k<1");
+	}
+	if(p<0||p>1){
+   ::Rf_error( "p is not between 0 and 1");
+	}
 	double olp=log(1-p);
 	double lp=log(p);
 	double res=olp*(k-1)+lp;
