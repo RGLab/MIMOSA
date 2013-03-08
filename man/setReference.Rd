@@ -13,9 +13,6 @@
 
   \item{cols}{A character vector of the names of the
   columns that hold our measurements}
-
-  \item{annotations}{a characte vector of additional
-  annotations to return for the data}
 }
 \description{
   Replicate the reference observations across all treatment

@@ -10,7 +10,7 @@
 #'@docType package
 #'@useDynLib MIMOSA
 #'@rdname MIMOSA-package
-#'@import Formula Biobase
+#'@import Formula
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
 #'@name MIMOSA-package
@@ -184,7 +184,6 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'
 #'@param object is the MIMOSAResult returned from a call to MIMOSA
 #'@return an object of type \code{data.frame}
-#'@importMethodsFrom Biobase pData
 #'@aliases pData,MIMOSAResult-methods
 #'@rdname pData-methods
 setMethod("pData","MIMOSAResult",function(object){

@@ -269,11 +269,10 @@ huberFilter<-function(object,sd=2){
 # 	data.frame(cytokine=x@fname,parent=x@parent,antigen=x@antigen,ID=x@ID,x@rest)
 # }
 
-#' @importMethodsFrom Biobase
 setMethod("pData","BetaMixResult",function(object){
 			pData(object@pd)
 		})
-#' @importMethodsFrom Biobase
+
 setMethod("pData<-",c("BetaMixResult","data.frame"),function(object,value){
 			pData(object@pd)<-value
 			object
