@@ -330,7 +330,7 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
   #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
     thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
   }else{
-    colnames(thisdata)<-gsub("NEG","REF",colnames(thisdata))
+    colnames(thisdata)<-gsub(ref.append.replace,"_REF",colnames(thisdata))
   }
   #transform the data so that features are on the rows and samples are on the columns
   #build a function to reshape the returned data and assign it to the calling environment
