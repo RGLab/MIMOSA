@@ -92,7 +92,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     if(length(x)==2){
       interaction(x[[1]],x[[2]],drop=TRUE,...)
     }else{
-      interaction(x[[1]],Recall(x[[-1L]],drop=TRUE),...)
+      interaction(x[[1]],Recall(x[-1L]),...)
     }
   }
   if(length(formula)[2]>1){
@@ -113,11 +113,14 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
       fitme<-list(n.stim=test[[i]],n.unstim=ref[[j]])
       #remove NAs
       nas<-unique(rbind(which(is.na(fitme[[1]]),T),which(is.na(fitme[[2]]),T))[,1])
+      #also remove zeros
       if(length(nas)>0){
         fitme[[1]]<-fitme[[1]][-nas,]
         fitme[[2]]<-fitme[[2]][-nas,]
         pd[[i]]<-pd[[i]][-nas,]
       }
+      #don't fit empty data!
+      if(nrow(pd[[i]])>0){
       if(method%in%"mcmc"){
         res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
         res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
@@ -133,11 +136,30 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res<-MCMCResult(object=res)
       }
       else if (method%in%"EM"){
-        res<-MDMix(fitme)
-        res@pd<-new("AnnotatedDataFrame",pd[[i]])
+        res<-try(MDMix(fitme))
+        if(inherits(res,"try-error")){
+          message("Failed to fit subset ",i," with EM. Trying mcmc")
+          res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+          res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+          if(ncol(fitme[[1]])==2&getP){
+            res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+          }else{
+            res$p<-list()
+          }
+          attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+          outfile<-get("outfile",environment(res$getmcmc))
+          unlink(outfile)
+          unlink(paste(outfile,"P",sep="")) 
+          res<-MCMCResult(object=res)
+        }else{
+          res@pd<-new("AnnotatedDataFrame",pd[[i]])
+        }
       }
       res<-new("MIMOSAResult",result=res)
       result[[i]]<-res
+      }else{
+        result[[i]]<-NA
+      }
     }
   }else if(run.parallel&any(grepl("multicore",loadedNamespaces()))){
     result<-mclapply(1:length(test),function(i){
@@ -151,6 +173,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         fitme[[2]]<-fitme[[2]][-nas,]
         pd[[i]]<-pd[[i]][-nas,]
       }
+      if(nrow(pd[[i]])>0){
       if(method%in%"mcmc"){
         res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
         res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
@@ -166,11 +189,31 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res<-MCMCResult(object=res)
       }
       else if (method%in%"EM"){
-        res<-MDMix(fitme)
-        res@pd<-new("AnnotatedDataFrame",pd[[i]])
+        res<-try(MDMix(fitme))
+        res<-try(MDMix(fitme))
+        if(inherits(res,"try-error")){
+          message("Failed to fit subset ",i," with EM. Trying mcmc")
+          res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+          res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+          if(ncol(fitme[[1]])==2&getP){
+            res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+          }else{
+            res$p<-list()
+          }
+          attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+          outfile<-get("outfile",environment(res$getmcmc))
+          unlink(outfile)
+          unlink(paste(outfile,"P",sep="")) 
+          res<-MCMCResult(object=res)
+        }else{
+          res@pd<-new("AnnotatedDataFrame",pd[[i]])
+        }
       }
       res<-new("MIMOSAResult",result=res)
-      res
+      return(res)
+      }else{
+        return(NA)
+      }
     })
   }else{
     stop("Can't run parallel MIMOSA. Must load multicore package.")
