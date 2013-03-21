@@ -160,9 +160,14 @@ icsdata2mvicsdata<-function(x){
       d<-split(as.list(data.frame(d)),gl(nc/3,2))
       close(con)
     }else{
-		  d<-mcmc(read.table(x,sep="\t",header=T));
-		  nc<-ncol(d)
-		  d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+      if(any(grepl("data.table",loadedNamespaces()))){
+        d<-fread(x)
+        nc<-ncol(d)
+      }else{
+		    d<-mcmc(read.table(x,sep="\t",header=T));
+		    nc<-ncol(d)
+		    d<-split(as.list(data.frame(d[,(nc/3+1):nc])),gl(nc/3,2))
+      }
     }
 		d
 	}
