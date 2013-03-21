@@ -230,7 +230,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 			//compute z1*lnull+z2*lresp+prior
 			completeLL(z,llnull,llresp,cll,filter,P,k);
-			oldll=std::accumulate(cll.begin(),cll.end(),0.0)-prior;
+			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 			if(isfinite(oldll)!=1){
          ::Rf_error( "oldll != 1");
 			}
@@ -261,7 +261,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				}
 				//compute z1*lnull+z2*lresp+prior
 				completeLL(z,llnullNew,llrespNew,cll,filter,P,k);
-				newll=std::accumulate(cll.begin(),cll.end(),0.0)-newprior;
+				newll=std::accumulate(cll.begin(),cll.end(),0.0)+newprior;
 			}else{
 				REJECT=true;
 				newll=nan(0);
@@ -276,11 +276,11 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 				accepts[j]=accepts[j]+1;//increment acceptance count
 				alphas[j]=newalphas[j]; //new alphas_j is accepted
-				oldll=newll+newprior; //save the new complete data log likelihood (minus the prior for alphas_j) so we don't recompute it for the next step
+				oldll=newll-newprior; //save the new complete data log likelihood (minus the prior for alphas_j) so we don't recompute it for the next step
 				std::copy(llnullNew.begin(),llnullNew.end(),llnull.begin()); //ditto for the null and alternative marginal log likelihood
 				std::copy(llrespNew.begin(),llrespNew.end(),llresp.begin());
 			}else{
-				oldll=oldll+prior; //reject so just subtract the alpha-specific prior
+				oldll=oldll-prior; //reject so just subtract the alpha-specific prior
 #ifdef NDEBUG
 				Rprintf("REJECTED alphas_%d %f, deltall: %f newll %f oldll %f\n",j,newalphas[j],(newll-oldll),newll, oldll);
 				REJECT=false;
@@ -300,7 +300,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 //			}else{
 				prior=Rf_dexp(alphau[j],1.0/EXPRATE,true);
 //			}
-			oldll=oldll-prior;
+			oldll=oldll+prior;
 
 			//recompute to see if we still have problems with alpha u beta u estimates
 //			loglikenull(stdsum_stim_unstim,stdalphau,stdllnullRes,stdsum_data_alphau,P,k); //new null marginal likelihood.
@@ -311,7 +311,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 //				loglikeresp(stdstim,stdalphas,stdunstim,stdalphau,stdllrespRes,stdsum_data_alpha,stdsum_data_alphau,P,k);
 //			}
 //			completeLL(z,stdllnullRes,stdllrespRes,cll,filter,P,k);
-//			oldll=std::accumulate(cll.begin(),cll.end(),0.0)-prior;
+//			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 
 
 
@@ -345,7 +345,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				}
 				//compute z1*lnull+z2*lresp+prior
 				completeLL(z,llnullNew,llrespNew,cll,filter,P,k);
-				newll=std::accumulate(cll.begin(),cll.end(),0.0)-newprior;
+				newll=std::accumulate(cll.begin(),cll.end(),0.0)+newprior;
 			}else{
 				REJECT=true;
 				newll=nan(0);
@@ -359,12 +359,12 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 				acceptu[j]=acceptu[j]+1;
 				alphau[j]=newalphau[j];//new alphau_j is accepted
-				oldll=newll+newprior; //complete data log likelihood (minus the prior)
+				oldll=newll-newprior; //complete data log likelihood (minus the prior)
 				//marginal null and alternative log likelihoods for the accepted parameter are saved so we don't have to recompute them
 				std::copy(llnullNew.begin(),llnullNew.end(),llnull.begin());
 				std::copy(llrespNew.begin(),llrespNew.end(),llresp.begin());
 			}else{
-				oldll=oldll+prior;
+				oldll=oldll-prior;
 				REJECT=false;
 #ifdef NDEBUG
 				Rprintf("REJECTED alphau_%d %f, deltall: %f newll %f oldll %f\n",j,newalphau[j],(newll-oldll),newll, oldll);

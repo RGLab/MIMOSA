@@ -125,17 +125,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
         res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
         if(ncol(fitme[[1]])==2&getP){
-          d<-res$getP(thin=p.thin)
-          if(!inherits(d,"data.table")){
-            res$p<-lapply(d,function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-          }else{
-            #d<-res$getP(thin=p.thin)
-            nc<-ncol(d)
-            funs<-unlist(lapply(split(colnames(d)[(nc/3+1):nc],gl(nc/3,2)),function(x)unlist(sapply(x,function(y)as.call(c(quantile,as.name(y),list(c(0.025,0.5,0.975))))),recursive=FALSE,use.names=FALSE)),recursive=FALSE)
-            res$p<-matrix(NA,nrow=length(funs),ncol=3)
-            for(i in 1:length(funs)){res$p[i,]<-d[,eval(funs[[i]])]}
-            #res$p<-do.call(rbind,lapply(funs,function(x)d[,eval(x),]))
-          }
+          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
         }else{
           res$p<-list()
         }
@@ -152,17 +142,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
           res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
           res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
           if(ncol(fitme[[1]])==2&getP){
-            d<-res$getP(thin=p.thin)
-            if(!inherits(d,"data.table")){
-              res$p<-lapply(d,function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-            }else{
-              #d<-res$getP(thin=p.thin)
-              nc<-ncol(d)
-              funs<-unlist(lapply(split(colnames(d)[(nc/3+1):nc],gl(nc/3,2)),function(x)unlist(sapply(x,function(y)as.call(c(quantile,as.name(y),list(c(0.025,0.5,0.975))))),recursive=FALSE,use.names=FALSE)),recursive=FALSE)
-              res$p<-matrix(NA,nrow=length(funs),ncol=3)
-              for(i in 1:length(funs)){res$p[i,]<-d[,eval(funs[[i]])]}
-              #res$p<-do.call(rbind,lapply(funs,function(x)d[,eval(x),]))
-            }
+            res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
           }else{
             res$p<-list()
           }
@@ -198,17 +178,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
         res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
         if(ncol(fitme[[1]])==2&getP){
-          d<-res$getP(thin=p.thin)
-          if(!inherits(d,"data.table")){
-            res$p<-lapply(d,function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-          }else{
-            #d<-res$getP(thin=p.thin)
-            nc<-ncol(d)
-            funs<-unlist(lapply(split(colnames(d)[(nc/3+1):nc],gl(nc/3,2)),function(x)unlist(sapply(x,function(y)as.call(c(quantile,as.name(y),list(c(0.025,0.5,0.975))))),recursive=FALSE,use.names=FALSE)),recursive=FALSE)
-            res$p<-matrix(NA,nrow=length(funs),ncol=3)
-            for(i in 1:length(funs)){res$p[i,]<-d[,eval(funs[[i]])]}
-            #res$p<-do.call(rbind,lapply(funs,function(x)d[,eval(x),]))
-          }
+          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
         }else{
           res$p<-list()
         }
@@ -226,17 +196,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
           res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
           res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
           if(ncol(fitme[[1]])==2&getP){
-            d<-res$getP(thin=p.thin)
-            if(!inherits(d,"data.table")){
-              res$p<-lapply(d,function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-            }else{
-              #d<-res$getP(thin=p.thin)
-              nc<-ncol(d)
-              funs<-unlist(lapply(split(colnames(d)[(nc/3+1):nc],gl(nc/3,2)),function(x)unlist(sapply(x,function(y)as.call(c(quantile,as.name(y),list(c(0.025,0.5,0.975))))),recursive=FALSE,use.names=FALSE)),recursive=FALSE)
-              res$p<-matrix(NA,nrow=length(funs),ncol=3)
-              for(i in 1:length(funs)){res$p[i,]<-d[,eval(funs[[i]])]}
-              #res$p<-do.call(rbind,lapply(funs,function(x)d[,eval(x),]))
-            }
+            res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
           }else{
             res$p<-list()
           }
