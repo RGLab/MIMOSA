@@ -249,8 +249,10 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	if(any(is.nan(alpha.u)))
 		alpha.u[is.nan(alpha.u)]<-1
 	
-	alpha.s[alpha.s==0]<-1e-6
-	alpha.u[alpha.u==0]<-1e-6
+# 	alpha.s[alpha.s==0]<-1e-6
+# 	alpha.u[alpha.u==0]<-1e-6
+	  alpha.s[alpha.s==0]<-1
+		alpha.u[alpha.u==0]<-1
 	
 	guess<-c(ps,pu)
 	

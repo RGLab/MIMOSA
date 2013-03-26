@@ -111,7 +111,7 @@ icsdata2mvicsdata<-function(x){
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
 #'  @export
-.fitMCMC<-function(data,inits=NULL,iter=250000, burn=50000, thin=1,tune=100,outfile=basename(tempfile(tmpdir=".",fileext=".dat")),alternative="greater",UPPER=0.5,LOWER=0.15,FAST=TRUE,EXPRATE=1e-4){
+.fitMCMC<-function(data,inits=NULL,iter=250000, burn=50000, thin=1,tune=100,outfile=basename(tempfile(tmpdir=".",fileext=".dat")),alternative="greater",UPPER=0.5,LOWER=0.15,FAST=TRUE,EXPRATE=1e-4,pXi=1){
 	alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
 	if(is.null(inits)){
@@ -130,7 +130,7 @@ icsdata2mvicsdata<-function(x){
 		filter<-rep(FALSE,nrow(data$n.stim))
 		FILTER<-FALSE
 	}
-	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,FAST,as.numeric(EXPRATE), package="MIMOSA")
+	result<-.Call("fitMCMC",as.matrix(data$n.stim),as.matrix(data$n.unstim),as.vector(inits$alpha.s),as.vector(inits$alpha.u),as.vector(inits$q),as.matrix(inits$z),as.vector(iter),as.vector(burn),as.vector(thin),as.numeric(tune),as.character(outfile),as.vector(filter),as.numeric(UPPER),as.numeric(LOWER),FILTER,FAST,as.numeric(EXPRATE),as.numeric(pXi), package="MIMOSA")
 	if(inherits(result,"character")){
 		return(result)
 	}

@@ -13,7 +13,7 @@
 /*
  * 16 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST,SEXP _EXPRATE){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST,SEXP _EXPRATE,SEXP _pXi){
 	BEGIN_RCPP
 	ntune=0;
 	//TODO add argument to pass the complete list of unstimulated samples.
@@ -48,7 +48,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	std::vector< double > z = Rcpp::as<vector <double> >(_z);
 	std::vector< double > stdstim = Rcpp::as < vector < double > > (_stim);
 	std::vector< double > stdunstim = Rcpp::as < vector < double > > (_unstim);
-
+  double pXi = Rcpp::as<double>(_pXi);
 
 	/*
 	 * Wrap R variables in Rcpp objects
@@ -371,7 +371,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 #endif
 			}
 			//simulate q (w)
-			q=simQ(z,P,k);
+			q=simQ(z,P,k,pXi);
 			//simulate z
 			simZ(q,llnull,llresp,z,p,filter,P,k); //overwrites the current z. A running average is stored in cz
 
@@ -691,7 +691,7 @@ void simZ(double &q,std::vector<double> &lnull, std::vector<double> &lresp,std::
 		}
 	}
 }
-inline double simQ(std::vector<double> &z, int P,int k){
+inline double simQ(std::vector<double> &z, int P,int k,double pXi){
 	std::vector<double> ab(2,0);
 	double q;
 	for(int j=0;j<2;j++){
@@ -699,7 +699,7 @@ inline double simQ(std::vector<double> &z, int P,int k){
 			ab[j]=ab[j]+z[j*P+i];
 		}
 	}
-	q = 1.0-::Rf_rbeta(ab[1]+1,ab[0]+1);
+	q = 1.0-::Rf_rbeta(ab[1]+pXi,ab[0]+pXi);
 	return q;
 }
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){

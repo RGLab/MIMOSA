@@ -62,7 +62,7 @@ setGeneric("MIMOSA",def=function(formula,data,...){
 })
 
 
-setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,p.thin=1,run.parallel=FALSE,...){
+setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,p.thin=1,run.parallel=FALSE,cleanup=TRUE,...){
   if(!exists("ref")){
     stop("ref must contain expressions that define subsets to be compared")
   }
@@ -121,24 +121,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
       }
       #don't fit empty data!
       if(nrow(pd[[i]])>0){
-      if(method%in%"mcmc"){
-        res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
-        res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
-        if(ncol(fitme[[1]])==2&getP){
-          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-        }else{
-          res$p<-list()
-        }
-        attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
-        outfile<-get("outfile",environment(res$getmcmc))
-        unlink(outfile)
-        unlink(paste(outfile,"P",sep="")) 
-        res<-MCMCResult(object=res)
-      }
-      else if (method%in%"EM"){
-        res<-try(MDMix(fitme))
-        if(inherits(res,"try-error")){
-          message("Failed to fit subset ",i," with EM. Trying mcmc")
+        if(method%in%"mcmc"){
           res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
           res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
           if(ncol(fitme[[1]])==2&getP){
@@ -148,15 +131,36 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
           }
           attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
           outfile<-get("outfile",environment(res$getmcmc))
-          unlink(outfile)
-          unlink(paste(outfile,"P",sep="")) 
+          if(cleanup){
+            unlink(outfile)
+            unlink(paste(outfile,"P",sep="")) 
+          }
           res<-MCMCResult(object=res)
-        }else{
-          res@pd<-new("AnnotatedDataFrame",pd[[i]])
         }
-      }
-      res<-new("MIMOSAResult",result=res)
-      result[[i]]<-res
+        else if (method%in%"EM"){
+          res<-try(MDMix(fitme))
+          if(inherits(res,"try-error")){
+            message("Failed to fit subset ",i," with EM. Trying mcmc")
+            res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+            res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+            if(ncol(fitme[[1]])==2&getP){
+              res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+            }else{
+              res$p<-list()
+            }
+            attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+            outfile<-get("outfile",environment(res$getmcmc))
+            if(cleanup){
+              unlink(outfile)
+              unlink(paste(outfile,"P",sep="")) 
+            }
+            res<-MCMCResult(object=res)
+          }else{
+            res@pd<-new("AnnotatedDataFrame",pd[[i]])
+          }
+        }
+        res<-new("MIMOSAResult",result=res)
+        result[[i]]<-res
       }else{
         result[[i]]<-NA
       }
@@ -174,25 +178,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         pd[[i]]<-pd[[i]][-nas,]
       }
       if(nrow(pd[[i]])>0){
-      if(method%in%"mcmc"){
-        res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
-        res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
-        if(ncol(fitme[[1]])==2&getP){
-          res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
-        }else{
-          res$p<-list()
-        }
-        attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
-        outfile<-get("outfile",environment(res$getmcmc))
-        unlink(outfile)
-        unlink(paste(outfile,"P",sep=""))
-        res<-MCMCResult(object=res)
-      }
-      else if (method%in%"EM"){
-        res<-try(MDMix(fitme))
-        res<-try(MDMix(fitme))
-        if(inherits(res,"try-error")){
-          message("Failed to fit subset ",i," with EM. Trying mcmc")
+        if(method%in%"mcmc"){
           res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
           res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
           if(ncol(fitme[[1]])==2&getP){
@@ -203,14 +189,32 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
           attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
           outfile<-get("outfile",environment(res$getmcmc))
           unlink(outfile)
-          unlink(paste(outfile,"P",sep="")) 
+          unlink(paste(outfile,"P",sep=""))
           res<-MCMCResult(object=res)
-        }else{
-          res@pd<-new("AnnotatedDataFrame",pd[[i]])
         }
-      }
-      res<-new("MIMOSAResult",result=res)
-      return(res)
+        else if (method%in%"EM"){
+          res<-try(MDMix(fitme))
+          res<-try(MDMix(fitme))
+          if(inherits(res,"try-error")){
+            message("Failed to fit subset ",i," with EM. Trying mcmc")
+            res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
+            res$params<-res$params<-apply(res$getmcmc(),2,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))
+            if(ncol(fitme[[1]])==2&getP){
+              res$p<-lapply(res$getP(thin=p.thin),function(x)do.call(rbind,lapply(x,function(x)quantile(x,c(0.025,0.5,0.975),na.rm=TRUE))))
+            }else{
+              res$p<-list()
+            }
+            attr(res,"pData")<-new("AnnotatedDataFrame",pd[[i]])
+            outfile<-get("outfile",environment(res$getmcmc))
+            unlink(outfile)
+            unlink(paste(outfile,"P",sep="")) 
+            res<-MCMCResult(object=res)
+          }else{
+            res@pd<-new("AnnotatedDataFrame",pd[[i]])
+          }
+        }
+        res<-new("MIMOSAResult",result=res)
+        return(res)
       }else{
         return(NA)
       }
@@ -331,10 +335,10 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
     stop("Cannot evaluate ref argument")
   }
   #if((nrow(dat)!=2)|nlevels(factor(REFERENCE))==1){
-#	return(NULL)
- # }
+  #	return(NULL)
+  # }
   if(sum(REFERENCE)!=1){
-	return(NULL)
+    return(NULL)
   }
   MEASUREMENTS<-do.call(cbind,with(dat,mget(cols,envir=as.environment(-1L))))
   #MEASUREMENTS<-model.frame(as.formula(paste("~",paste(cols,collapse="+"))),dat)
@@ -342,7 +346,7 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
   REF.MEAS<-MEASUREMENTS[REFERENCE,,drop=FALSE]
   TREAT.MEAS<-MEASUREMENTS[!REFERENCE,,drop=FALSE]
   if(nrow(TREAT.MEAS)==0){
-	return(NULL)
+    return(NULL)
   }
   REF.MEAS<-matrix(REF.MEAS,nrow=dim(TREAT.MEAS)[1],ncol=dim(TREAT.MEAS)[2],byrow=TRUE)
   colnames(REF.MEAS)<-NEWNAMES
@@ -372,7 +376,7 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
 ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="_NEG"){
   #if reference is null, then we already have the data in a form we need
   if(!is.null(substitute(reference))){
-  #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
+    #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
     thisdata<-ddply(thisdata,.variables=.variables,setReference,ref=substitute(reference),cols=measure.columns,annotations=other.annotations,default.formula=default.cast.formula)
   }else{
     colnames(thisdata)<-gsub(ref.append.replace,"_REF",colnames(thisdata))
@@ -381,9 +385,9 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
   #build a function to reshape the returned data and assign it to the calling environment
   MIMOSAReshape<-function(mydata=NULL,default.formula=NULL,cols=measure.columns){
     if(!grepl("RefTreat",paste(deparse(default.formula),collapse=""))){
-	default.formula<-as.formula(paste(paste(deparse(default.formula),collapse=""),"RefTreat",sep="+"))
+      default.formula<-as.formula(paste(paste(deparse(default.formula),collapse=""),"RefTreat",sep="+"))
     }
-	NEWNAMES<-paste(cols,"REF",sep="_")
+    NEWNAMES<-paste(cols,"REF",sep="_")
     mydata<-melt(mydata,measure.var=c(cols,NEWNAMES))
     mydata$RefTreat<-factor(grepl("_REF$",mydata$variable),labels=c("Treatment","Reference"))
     mydata<-rename(mydata,c("variable"="component","value"="count"))
