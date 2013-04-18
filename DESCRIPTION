@@ -8,6 +8,7 @@ Maintainer: Greg Finak <gfinak@fhcrc.org>
 Description: Modeling count data using Dirichlet-multinomial and beta-binomial
     mixtures with applications to single-cell assays.
 License: Artistic-2.0
+VignetteBuilder: knitr
 Imports:
     graphics,
     lattice,
@@ -18,9 +19,10 @@ Imports:
     Formula
 Enhances: compiler
 Suggests:
-    multicore
+    multicore,
+    knitr
 Depends:
-    R (>= 2.10),
+    R (>= 3.0.0),
     methods,
     Rcpp (>= 0.9.0),
     BiocGenerics,

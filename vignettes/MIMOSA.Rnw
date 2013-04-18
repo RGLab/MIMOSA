@@ -1,4 +1,5 @@
 %\VignetteIndexEntry{MIMOSA: Mixture Models For Single Cell Assays}
+%\VignetteEngine{knitr}
 \documentclass{article}
 
 \begin{document}

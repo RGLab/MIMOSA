@@ -6,7 +6,7 @@
     thin = 1, tune = 100,
     outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")),
     alternative = "greater", UPPER = 0.5, LOWER = 0.15,
-    FAST = TRUE, EXPRATE = 1e-04)
+    FAST = TRUE, EXPRATE = 1e-04, pXi = 1)
 }
 \arguments{
   \item{data}{a \code{list} with elements names "n.stim"
