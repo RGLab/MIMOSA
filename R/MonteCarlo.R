@@ -108,6 +108,7 @@ icsdata2mvicsdata<-function(x){
 #'  one-sided model rather than recomputing the normalization constant via MCMC
 #'  for each step.
 #'@param EXPRATE the mean of the prior distribution for the model hyperparameters.
+#'@param pXi is the prior on the w. 1 by default (as in beta(1,1) i.e. uniform).
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
 #'  @export

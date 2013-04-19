@@ -11,5 +11,5 @@ clean:
 cleanall: clean
 	rm *.pdf
 %.pdf: %.Rnw
-	Rscript -e "library(knitr); knit2pdf('$*.Rnw')"
+	$(R_HOME)/bin/Rscript -e "library(knitr); knit2pdf('$*.Rnw')"
 

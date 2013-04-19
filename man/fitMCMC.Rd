@@ -45,6 +45,9 @@
 
   \item{EXPRATE}{the mean of the prior distribution for the
   model hyperparameters.}
+
+  \item{pXi}{is the prior on the w. 1 by default (as in
+  beta(1,1) i.e. uniform).}
 }
 \description{
   This is an internal function that fits the MIMOSA model
