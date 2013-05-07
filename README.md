@@ -23,8 +23,14 @@ library(MIMOSA) #load MIMOSA
 ```r
 library(MIMOSA)
 data<-read.csv("mydata.csv")
-E<-ConstructMIMOSAExpressionSet(data,reference=STIMULATION%in%"Unstimulated",measure.columns=c("NSUB","CYTNUM"),.variables=.(SUBJECTID,VISIT,CYTOKINE,TCELL)) #There's a lot of options here. See the documentation and vignette.
-MIMOSA(NSUB+CYTNUM~SUBJECTID|TCELL+VISIT,subset=RefTreat%in%"Treatment"&CYTOKINE%in%"IL2",ref=RefTreat%in%"Reference"&CYTOKINE%in%"IL2")
+E<-ConstructMIMOSAExpressionSet(data,
+  reference=STIMULATION%in%"Unstimulated",
+  measure.columns=c("NSUB","CYTNUM"),
+  .variables=.(SUBJECTID,VISIT,CYTOKINE,TCELL)) #There's a lot of options here. See the documentation and vignette.
+MIMOSA(NSUB+CYTNUM~SUBJECTID|TCELL+VISIT,
+  E,
+  subset=RefTreat%in%"Treatment"&CYTOKINE%in%"IL2",
+  ref=RefTreat%in%"Reference"&CYTOKINE%in%"IL2")
 ```
 
 A few things are worth explaining in the code above.  
