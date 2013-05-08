@@ -11,9 +11,9 @@
 //#define DEBUG2
 //#define NDEBUG
 /*
- * 16 parameters
+ * 18 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER,SEXP _FILTER, SEXP _FAST,SEXP _EXPRATE,SEXP _pXi){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER, SEXP _FILTER, SEXP _FAST, SEXP _EXPRATE, SEXP _pXi){
 	BEGIN_RCPP
 	ntune=0;
 	//TODO add argument to pass the complete list of unstimulated samples.
