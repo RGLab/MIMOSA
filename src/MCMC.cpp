@@ -13,7 +13,7 @@
 /*
  * 18 parameters
  */
-RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _UPPER, SEXP _LOWER, SEXP _FILTER, SEXP _FAST, SEXP _EXPRATE, SEXP _pXi){
+RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _upper, SEXP _lower, SEXP _bfilter, SEXP _fast, SEXP _exprate, SEXP _pXi){
 	BEGIN_RCPP
 	ntune=0;
 	//TODO add argument to pass the complete list of unstimulated samples.
@@ -33,12 +33,12 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	filter.resize(rfilter.length());
 	copy(rfilter.begin(),rfilter.end(),filter.begin());
 
-	FILTER = Rcpp::as<bool> (_FILTER);
-	FAST = Rcpp::as<bool> (_FAST);
-	double UPPER = Rcpp::as<double>(_UPPER);
-	double LOWER = Rcpp::as<double>(_LOWER);
+	FILTER = Rcpp::as<bool> (_bfilter);
+	FAST = Rcpp::as<bool> (_fast);
+	double UPPER = Rcpp::as<double>(_upper);
+	double LOWER = Rcpp::as<double>(_lower);
 	bool REJECT = false;
-	EXPRATE = Rcpp::as<double>(_EXPRATE);
+	EXPRATE = Rcpp::as<double>(_exprate);
 	//printf("exponential prior rate = %f\n",EXPRATE);
 
 	std::vector< double > alphas = Rcpp::as<std::vector<double> >(_alphas);
