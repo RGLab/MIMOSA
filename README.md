@@ -8,6 +8,8 @@ I've cleaned up the package significantly. Old code has been rewritten, hidden, 
 
 MIMOSA shares information across subjects by means of priors on the proportions of stimulated and unstimulated cells, respectively.
 
+### NEWS
+- 05/08/2013 - Compilation bugs fixed for Windows systems. 
 
 ### INSTALLATION
 
