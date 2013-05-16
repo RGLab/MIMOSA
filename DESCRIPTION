@@ -1,7 +1,7 @@
 Package: MIMOSA
 Type: Package
 Title: Mixture Models for Single-Cell Assays
-Version: 0.9.7
+Version: 0.9.8
 Date: 2011-10-26
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
@@ -22,7 +22,7 @@ Suggests:
     multicore,
     knitr
 Depends:
-    R (>= 3.0.0),
+    R (>= 2.15.1),
     methods,
     Rcpp (>= 0.9.0),
     BiocGenerics,
