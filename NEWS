@@ -1,3 +1,12 @@
+MIMOSA 0.9.9
+============
+* Bug Fixes
+** Filtered out empty categories on the conditioning variables.
+** Support for parallel as well as multicore
+
+* News
+** multicore support (via the multicore package) will be phased out in favor of the parallel package.
+
 MIMOSA 0.8.0
 ============
 * Model fitting via the 'MIMOSA' function

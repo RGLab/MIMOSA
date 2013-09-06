@@ -100,11 +100,20 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     test<-split(model.part(formula,mf.test,lhs=1),interact(spl.test))
     pd<-split(model.part(formula,mf.test,rhs=1:2),interact(spl.test))
     result<-vector("list",length(test))
+    #Here should filter stuff that has empty categories.
+    filter_empty<-do.call(c,lapply(ref,function(x)dim(x)[1]!=0))
+    ref<-ref[filter_empty]
+    test<-test[filter_empty]
+    pd<-pd[filter_empty]
   }else{
     ref<-list(model.part(formula,mf.ref,lhs=1))
     test<-list(model.part(formula,mf.test,lhs=1))
     pd<-list(model.part(formula,mf.test,rhs=1))
     result<-vector("list",1)
+    filter_empty<-do.call(c,lapply(ref,function(x)dim(x)[1]!=0))
+    ref<-ref[filter_empty]
+    test<-test[filter_empty]
+    pd<-pd[filter_empty]
   }
   if(!run.parallel){
     for(i in 1:length(test)){
@@ -120,6 +129,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         pd[[i]]<-pd[[i]][-nas,]
       }
       #don't fit empty data!
+      #These are now filtered out earlier..
       if(nrow(pd[[i]])>0){
         if(method%in%"mcmc"){
           res<-.fitMCMC(fitme,inits=MDMix(fitme,initonly=TRUE),...)
@@ -165,7 +175,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         result[[i]]<-NA
       }
     }
-  }else if(run.parallel&any(grepl("multicore",loadedNamespaces()))){
+  }else if(run.parallel&any(grepl("parallel",loadedNamespaces())|grepl("multicore",loadedNamespaces()))){
     result<-mclapply(1:length(test),function(i){
       #recycle the reference
       j<-data.frame(1:length(test),1:length(ref))[i,2]
