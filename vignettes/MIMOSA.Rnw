@@ -1,10 +1,10 @@
 %\VignetteIndexEntry{MIMOSA: Mixture Models For Single Cell Assays}
-%\VignetteEngine{knitr}
+%\VignetteEngine{knitr::knitr}
 \documentclass{article}
 
 \begin{document}
 \title{The MIMOSA Package}
-\author{Greg Finak <gfinak at fhcrc.org>}
+\author{Greg Finak $<$gfinak@fhcrc.org$>$}
 \maketitle
 \section{Background on ICS Assays}
 In a vaccine trial setting, intracellular cytokine staining assays measure whether individuals respond to a vaccine. They do so by measuring how immune cells respond (usually CD4 or CD8 T--cell sub--populations) to antigen stimulation. T--cells that respond to antigen express one or multiple cytokines (IFNg, IL2, TNFa, IL4). The strength of response is measured as the fraction of immune cells expressing the cytokine, usually relative to an unstimulated control sample.
@@ -17,8 +17,8 @@ The two components represent two competing hypotheses for the data. Under the nu
 
 Cell counts in ICS assays are typically small, as are the proportions. Our Bayesian modelling approach borrows strength across individuals to improve the sensitivity of the model in identifying responders and non--responders.
 
-<<sims,eval=TRUE,echo=FALSE,fig.keep='high'>>=
-require(MIMOSA)
+<<sims,eval=TRUE,echo=FALSE,fig.keep='high',message=FALSE,fig.width=7,fig.height=4>>=
+suppressPackageStartupMessages(require(MIMOSA))
 set.seed(100)
 effect.sizes.fold<-c(3,3,3)
 NN<-c(50000,40000,20000)
@@ -49,12 +49,12 @@ df<-rbind(stim,unstim)
 data.frame(df,ANTIGEN=gl(2,obs,labels=c(ANTIGEN.STIM[i],ANTIGEN.UNSTIM[i])),CYTOKINE=CYTOKINE[i],TCELLSUBSET=TCELLSUB[1],UID=rep(gl(obs,1),2))
 }))
 ICS<-cbind(ICS,Ntot=factor(ICS$NSUB+ICS$CYTNUM))
-ggplot(ICS)+geom_histogram(aes(x=CYTNUM,fill=(ANTIGEN%in%"negctrl")),alpha=0.5,position="identity")+facet_wrap(~Ntot)
+ggplot(ICS)+geom_histogram(aes(x=CYTNUM,fill=(ANTIGEN%in%"negctrl")),alpha=0.5,position="identity")+facet_wrap(~Ntot)+scale_fill_discrete("negative control")
 @
 
 
 \section{Preparing the Data}
-MIMOSA fits a model to count data (for example, cell counts extracted from flow cytometry data). Data is generally in tabular form and has been extracted from processed and gated flow cytometry (FCS) files. \textit{MIMOSA} is bundled with some simulated intracellular cytokine staining (ICS) data with three antigens. Magnitude of response is constant, as is the response rate, but the number of cells collected varies for the three antigens (ENV>GAG>POL). There are \Sexpr{obs} subjects total (25 responders and 25 non-responders) in the simulated data sets. 
+MIMOSA fits a model to count data (for example, cell counts extracted from flow cytometry data). Data is generally in tabular form and has been extracted from processed and gated flow cytometry (FCS) files. \textit{MIMOSA} is bundled with some simulated intracellular cytokine staining (ICS) data with three antigens. Magnitude of response is constant, as is the response rate, but the number of cells collected varies for the three antigens (ENV$>$GAG$>$POL). There are \Sexpr{obs} subjects total (25 responders and 25 non-responders) in the simulated data sets. 
 
 We load the data and have a look:
 
