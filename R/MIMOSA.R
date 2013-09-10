@@ -62,23 +62,37 @@ setGeneric("MIMOSA",def=function(formula,data,...){
 })
 
 
-setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref,method="mcmc",subset,getP=FALSE,p.thin=1,run.parallel=FALSE,cleanup=TRUE,...){
+setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data,ref=RefTreat%in%"Reference",RT=TRUE,method="mcmc",subset=RefTreat%in%"Treatment",getP=FALSE,p.thin=1,run.parallel=FALSE,cleanup=TRUE,...){
   if(!exists("ref")){
     stop("ref must contain expressions that define subsets to be compared")
   }
+  #Does the formula contain RefTreat?
+  if(!any(attr(terms(formula),"term.labels")%in%"RefTreat")&RT){
+    warning("Formula does not contain the RefTreat variable. It will be added automatically. Set RT=FALSE to disable this.")
+    formula<-Formula(formula(gsub("\\|","+ RefTreat |",deparse(formula))))
+  }
+  
   method<-match.arg(method,c("mcmc","EM"))
   if(!inherits(formula,"Formula")){
     formula<-Formula(formula)
   }   
-  
   mf.ref<-model.frame(formula,data,na.action=NULL)
   mf.test<-model.frame(formula,data,na.action=NULL)
-  
-  if(!missing(ref)){
+
+  if(!missing(ref)){    
     mf.ref<-mf.ref[eval(substitute(ref),pData(data)),,drop=FALSE]
   }
   if(!missing(subset)){
     mf.test<-mf.test[eval(substitute(subset),pData(data)),,drop=FALSE]
+  }
+  
+  if (RT){
+    if(nlevels(factor(mf.ref$RefTreat))!=1){
+      mf.ref<-mf.ref[mf.ref$RefTreat%in%"Reference",]
+    }
+    if(nlevels(factor(mf.test$RefTreat))!=1){
+      mf.test<-mf.test[mf.test$RefTreat%in%"Treatment",]
+    }
   }
   
   if(length(formula)[2]>1){
