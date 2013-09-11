@@ -16,7 +16,7 @@ install:
   - R --version
   - R -e '.libPaths(); sessionInfo()'
   - Rscript -e 'install.packages("devtools", dep = TRUE, repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87); install_github("MIMOSA", "RGLab");'
+  - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87);source("http://www.bioconductor.org/biocLite.R");biocLite("Biobase",ask=FALSE); install_github("MIMOSA", "RGLab");'
 
 # run tests
 script:
