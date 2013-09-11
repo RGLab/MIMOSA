@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/RGLab/MIMOSA.png?branch=master)](https://travis-ci.org/RGLab/MIMOSA)
+
 # MIMOSA: Mixture Models for Single Cell Assays
 
 MIMOSA is a package for fitting mixtures of beta-binomial or dirichlet-multinomial models to paired count data from single-cell assays, as typically appear in immunological studies (i.e. ICS, intracellular cytokine staining assay, or Fluidigm Biomark single-cell gene expression assays). 
