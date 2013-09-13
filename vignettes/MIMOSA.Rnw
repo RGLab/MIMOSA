@@ -103,8 +103,8 @@ While the above is a little more complex than usual, in one call we get our Expr
 set.seed(100)
 result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE+Ntot|ANTIGEN,
                data=E,
-               subset=RefTreat%in%"Treatment",
-               ref=RefTreat%in%"Reference",
+#                subset=RefTreat%in%"Treatment",
+#                ref=RefTreat%in%"Reference",
                method="EM",iter=150000,burn=50000,pXi=1,EXPRATE=1e-7)
 @
 

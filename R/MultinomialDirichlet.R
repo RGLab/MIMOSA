@@ -264,7 +264,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	LL<-NULL
 	repeat{
 		if(is.null(LL)){
-			last<--.Machine$double.xmax
+			last<-.Machine$double.xmax
 		}
 		#update parameters
 		llnull<-makeLogLikeNULLComponent(stim,unstim)
@@ -282,9 +282,9 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 #		}
 		
 		iter<-2
-		#ll<-rep(0,1000)
+		ll<-rep(0,1000)
 		#make negative
-		#ll[1]<- -.Machine$double.xmax
+		ll[1]<- .Machine$double.xmax
 		lastguess<-guess;
 		repeat{
 			t<-try(solve(hessresp(guess)+hessnull(guess),gnull(guess)+gresp(guess)),silent=TRUE)
@@ -294,7 +294,14 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
         stop("Error in svd(X) : infinite or missing values in 'x'. Try fitting the model via MCMC")
       }
 			new<-guess-t
-#			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+      step<-0.5
+      while((ll[iter-1]-ll[iter]) < -1e-4){
+        step<-step/2
+        new<-0.5*(guess-t)
+        ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+      }
+      #print(ll[iter])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
 				guess<-new
 				if(any(guess<0)){
