@@ -296,10 +296,13 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 			new<-guess-t
 			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
       step<-0.5
-      while((ll[iter-1]-ll[iter]) < -1e-4){
+      #put a limit on the number of iterations here
+      piter<-1
+      while(((ll[iter-1]-ll[iter]) < -1e-4)&piter<10){
         step<-step/2
         new<-0.5*(guess-t)
         ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
+        piter<-piter+1
       }
       #print(ll[iter])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
