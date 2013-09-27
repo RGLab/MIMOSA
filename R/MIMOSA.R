@@ -66,6 +66,10 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   if(!exists("ref")){
     stop("ref must contain expressions that define subsets to be compared")
   }
+  if(!inherits(formula,"Formula")){
+    formula<-Formula(formula)
+  }   
+
   #Does the formula contain RefTreat?
   if(!any(attr(terms(formula),"term.labels")%in%"RefTreat")&RT){
     warning("Formula does not contain the RefTreat variable. It will be added automatically. Set RT=FALSE to disable this.")
@@ -73,9 +77,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   }
   
   method<-match.arg(method,c("mcmc","EM"))
-  if(!inherits(formula,"Formula")){
-    formula<-Formula(formula)
-  }   
+
   mf.ref<-model.frame(formula,data,na.action=NULL)
   mf.test<-model.frame(formula,data,na.action=NULL)
 
