@@ -1,8 +1,8 @@
 Package: MIMOSA
 Type: Package
 Title: Mixture Models for Single-Cell Assays
-Version: 0.9.10
-Date: 2013-09-10
+Version: 0.9.11
+Date: 2013-10-02
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
 Description: Modeling count data using Dirichlet-multinomial and beta-binomial

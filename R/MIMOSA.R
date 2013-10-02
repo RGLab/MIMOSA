@@ -77,7 +77,10 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   }
   
   method<-match.arg(method,c("mcmc","EM"))
-
+  if(Sys.info()['sysname']=="Darwin"){
+    run.parallel<-FALSE
+    warning("Parallel is disabled on the Mac due to a bug that is yet to be tracked down.\n Your analysis will run in serial.\n Grab a coffee and wait..\n")
+  }
   mf.ref<-model.frame(formula,data,na.action=NULL)
   mf.test<-model.frame(formula,data,na.action=NULL)
 
@@ -191,7 +194,8 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
         result[[i]]<-NA
       }
     }
-  }else if(run.parallel&any(grepl("parallel",loadedNamespaces())|grepl("multicore",loadedNamespaces()))){
+  }
+  else if(run.parallel&any(grepl("parallel",loadedNamespaces())|grepl("multicore",loadedNamespaces()))){
     result<-mclapply(1:length(test),function(i){
       #recycle the reference
       j<-data.frame(1:length(test),1:length(ref))[i,2]
