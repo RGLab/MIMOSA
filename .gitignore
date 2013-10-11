@@ -1,11 +1,11 @@
+*.so
+*.Rproj
 .DS_Store
 .project
-src/betaintegral.o
-src/betaintegralRcpp.o
-src/BetaMix.o
-src/MIMOSA.so
+src/*.o
 vignettes/MIMOSA.log
 vignettes/MIMOSA.pdf
 vignettes/MIMOSA.tex
 inst/.DS_Store
 .Rproj.user
+data/*.rds

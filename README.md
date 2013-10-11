@@ -11,7 +11,6 @@ I've cleaned up the package significantly. Old code has been rewritten, hidden, 
 MIMOSA shares information across subjects by means of priors on the proportions of stimulated and unstimulated cells, respectively.
 
 ### NEWS
-- 10/02/2013 - There is a bug in parallel computation on the Mac. I have not had a chance to track this down yet. Do not use run.parallel=TRUE on a mac, as you will get incorrect results.
 - 09/10/2013 - MIMOSA() now takes default values ref=RefTreat%in%"Reference", subset=RefTreat%in%"Treatment". You no longer need to specify it explicitly. If it is missing from your own call, MIMOSA will warn you and add the additional factors. To disable the warning, set RT=FALSE.
 - 09/06/2013 - Empty combinations of levels of conditioning variables are now dropped.
 - Support for mclapply via parallel package in favor of older multicore package. Works with R 3.0.0 and 3.0.1

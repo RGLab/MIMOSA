@@ -1,27 +1,15 @@
 Package: MIMOSA
 Type: Package
-Title: Mixture Models for Single-Cell Assays
-Version: 0.9.11
-Date: 2013-10-02
-Author: Greg Finak <gfinak@fhcrc.org>
-Maintainer: Greg Finak <gfinak@fhcrc.org>
-Description: Modeling count data using Dirichlet-multinomial and beta-binomial
-    mixtures with applications to single-cell assays.
-License: Artistic-2.0
+Title: Mixture Models for Single Cell Assays
+Version: 2.0
+Date: 2013-09-28
+Author: Greg Finak <gfinak@fhcrc.org>, Lynn Lin <llin@fhcrc.org>
+Maintainer: Greg Finak <gfinak@fhcrc.org>, Kevin Ushey <kushey@fhcrc.org>
+Description: Implements univariate and multivariate MIMOSA models for analysis
+    of marginal and polyfunctional single-cell immunological reponses
+    (COMPASS).
+License: GPL (>3)
 VignetteBuilder: knitr
-Imports:
-    graphics,
-    lattice,
-    methods,
-    reshape,
-    stats,
-    utils,
-    Formula
-Enhances: compiler
-Suggests:
-    multicore,
-    parallel,
-    knitr
 Depends:
     R (>= 2.15.1),
     methods,
@@ -35,6 +23,19 @@ Depends:
     ggplot2,
     modeest
 LinkingTo: Rcpp, RcppArmadillo
+Imports:
+    graphics,
+    lattice,
+    methods,
+    reshape,
+    stats,
+    utils,
+    Formula
+Enhances: compiler
+Suggests:
+    multicore,
+    parallel,
+    knitr
 Collate:
     'Classes.R'
     'BetaMix.R'
@@ -55,5 +56,7 @@ Collate:
     'posteriorSample.R'
     'volcanoPlot.R'
     'MIMOSA.R'
+    'repmat.R'
+    'polyMIMOSA.R'
 LazyLoad: yes
 LazyData: yes
