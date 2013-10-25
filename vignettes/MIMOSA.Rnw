@@ -19,6 +19,7 @@ Cell counts in ICS assays are typically small, as are the proportions. MIMOSA us
 
 <<sims,eval=TRUE,echo=FALSE,fig.keep='high',message=FALSE,fig.width=7,fig.height=4>>=
 suppressPackageStartupMessages(require(MIMOSA))
+require(data.table)
 set.seed(100)
 effect.sizes.fold<-c(3,3,3)
 NN<-c(50000,40000,20000)
