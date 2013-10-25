@@ -4,6 +4,11 @@ src/betaintegral.o
 src/betaintegralRcpp.o
 src/BetaMix.o
 src/MIMOSA.so
+src/MCMC.o
+.Rbuildignore
+.Rhistory
+*.Rproj
+README.html
 vignettes/MIMOSA.log
 vignettes/MIMOSA.pdf
 vignettes/MIMOSA.tex
