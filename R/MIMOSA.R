@@ -263,20 +263,23 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'@param object is the MIMOSAResult returned from a call to MIMOSA
 #'@return an object of type \code{data.frame}
 #'@importMethodsFrom Biobase pData
-#'@aliases pData,MIMOSAResult-methods
-#'@rdname pData-methods
+#'@aliases pData,MIMOSAResult-method
+#'@method pData MIMOSAResult
+#'@rdname MIMOSA-methods
 setMethod("pData","MIMOSAResult",function(object){
   pData(object@result)
 })
 
-#'@rdname pData-methods
+#'@rdname MIMOSA-methods
+#'@method pData MDMixResult
 #'@aliases pData,MDMixResult-methods
 setMethod("pData","MDMixResult",function(object){
   pData(object@pd)
 })
 
-#'@rdname pData-methods
+#'@rdname MIMOSA-methods
 #'@aliases pData,MCMCResult-methods
+#'@method pData MCMCResult
 setMethod("pData","MCMCResult",function(object){
   pData(object@phenoData)
 })
@@ -468,14 +471,16 @@ setOldClass("MIMOSAResultList")
 #'Print a MIMOSAResultList
 #'
 #'Print a summary of the list of results returned by a call to \code{MIMOSA}
-#'@rdname print
+#'@rdname MIMOSA-methods
+#'@method print MIMOSAResultList
 #'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x,...){
   cat(sprintf("A MIMOSAResultList with %s models",length(x)))
 }
 
 
-#'@rdname MIMOSAResult
+#'@rdname MIMOSA-methods
+#'@method show MIMOSAResult
 #'@aliases show,MIMOSAResult-method
 setMethod("show","MIMOSAResult", function(object){
   cat("A MIMOSA Model with ")
@@ -484,7 +489,7 @@ setMethod("show","MIMOSAResult", function(object){
 })
 
 
-
+#'@rdname MIMOSA-accessors
 #'@importFrom data.table rbindlist
 #'@S3method pData MIMOSAResultList
 pData.MIMOSAResultList <- function(object){
@@ -492,7 +497,8 @@ pData.MIMOSAResultList <- function(object){
 }
 
 
-#'@rdname pData-methods
+#'@rdname MIMOSA-accessors
+#'@method pData MIMOSAResultList
 #'@aliases pData,MIMOSAResultList-methods
 setMethod("pData","MIMOSAResultList",pData.MIMOSAResultList)
 
@@ -559,12 +565,14 @@ countsTable<-function(object,proportion=FALSE){}
 setGeneric("countsTable")
 
 #'@rdname countsTable
+#'@method countsTable MIMOSAResult
 #'@aliases countsTable,MIMOSAResult-method
 setMethod("countsTable","MIMOSAResult",definition=function(object,proportion=FALSE){
     countsTable(object@result,proportion=proportion)
 })
 
 #'@rdname countsTable
+#'@method countsTable MCMCResult
 #'@aliases countsTable,MCMCResult-method
 setMethod("countsTable","MCMCResult",definition=function(object,proportion=FALSE){
   if(proportion){
@@ -578,6 +586,7 @@ setMethod("countsTable","MCMCResult",definition=function(object,proportion=FALSE
 })
 
 #'@rdname countsTable
+#'@method countsTable MDMixResult
 #'@aliases countsTable,MDMixResult-method
 setMethod("countsTable","MDMixResult",definition=function(object,proportion=FALSE){
   if(proportion==TRUE){
@@ -591,12 +600,14 @@ setMethod("countsTable","MDMixResult",definition=function(object,proportion=FALS
 })
 
 #'@rdname countsTable
+#'@method countsTable MIMOSAResultList
 #'@S3method countsTable MIMOSAResultList
 countsTable.MIMOSAResultList<-function(object,proportion=FALSE){
   as.matrix(do.call(rbind,lapply(object,function(x)countsTable(x,proportion=proportion))))
 }
 
 #'@rdname countsTable
+#'@method countsTable MIMOSAResultList
 #'@aliases countsTable,MIMOSAResultList-method
 setMethod("countsTable","MIMOSAResultList",countsTable.MIMOSAResultList)
 

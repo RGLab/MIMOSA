@@ -8,7 +8,8 @@
 \alias{countsTable.MIMOSAResultList}
 \title{Extract the table of counts from a MIMOSA model}
 \usage{
-  countsTable.MIMOSAResultList(object, proportion = FALSE)
+  \method{countsTable}{MIMOSAResultList} (object,
+    proportion = FALSE)
 }
 \arguments{
   \item{object}{a \code{MIMOSAResult}}

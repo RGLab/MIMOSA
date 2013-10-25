@@ -48,7 +48,6 @@ Collate:
     'constrained.R'
     'MonteCarlo.R'
     'contourPlot.R'
-    'densityplot.R'
     'gibbsPsPu.R'
     'helperMethods.R'
     'initBetaMix.R'
