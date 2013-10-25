@@ -474,7 +474,8 @@ setOldClass("MIMOSAResultList")
 #'@param ... additional arguments passed down
 #'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x,...){
-  cat(sprintf("A MIMOSAResultList with %s models for %s",length(x),names(x)))
+  cat(sprintf("A MIMOSAResultList with %s models for\n",length(x)))
+  cat(sprintf("%s ",names(x)))
 }
 
 
@@ -607,4 +608,43 @@ countsTable.MIMOSAResultList<-function(object,proportion=FALSE){
 #'@method countsTable MIMOSAResultList
 #'@aliases countsTable,MIMOSAResultList-method
 setMethod("countsTable","MIMOSAResultList",countsTable.MIMOSAResultList)
+
+#'Volcano plot for a MIMOSA model
+#'
+#'Plots effect size vs posterior probablilty of response from a MIMOSAResultList, faceting by the conditioning variables.
+#'
+#'@rdname volcanoPlot
+#'@param x A \code{MIMOSAResultList}
+#'@param effect_expression an \code{expression} that defines the effect size. Usually a function of the stimulated and unstimulated proportions from \code{countsTable(x,proportion=TRUE)}
+#'@param facet_var an \code{expression} defining the faceting in ggplot parlance. i.e. \code{~ faceting + variables}
+#'@param threshold a \code{numeric} value between [0,1] for coloring significant observations (based on the q-value)
+#'@method volcanoPlot MIMOSAResultList
+#'@export volcanoPlot
+#'@S3method volcanoPlot MIMOSAResultList
+volcanoPlot  <- function(x,effect_expression=NA,facet_var=NA,threshold=0.01){
+  UseMethod("volcanoPlot")
+}
+
+volcanoPlot.MIMOSAResultList<-function(x,effect_expression=NA,facet_var=NA,threshold=0.01){
+  err<-FALSE
+    effect_expression<-deparse(substitute(effect_expression))
+  if(effect_expression%in%"NA")
+    err<-TRUE
+  if(err){
+    stop("Must provide an expression for the effect size (i.e. CYTNUM-CYTNUM_REF)")
+  }
+  
+  q<- -log10(unlist(fdr(x),use.names=FALSE))
+  pspu<-countsTable(x,proportion=TRUE)
+  p.stim<-getZ(x)
+  pd<-pData(x)
+  df<-data.table(q,pspu,p.stim,pd,signif=q>-log10(threshold))
+  if(!is.na(effect_expression)){
+   p <- ggplot(df)+aes_string(x=effect_expression,y="Pr.response",col="signif")+geom_point()+theme_bw()+scale_y_continuous("Probability of Stimulation")
+  }
+  if(is.formula(facet_var)){
+    p<-p+facet_wrap(facet_var)
+  }
+  p
+}
 
