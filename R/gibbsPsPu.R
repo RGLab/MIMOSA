@@ -142,7 +142,7 @@ gibbsPsPu <-
 #' @param z matrix of posterior probabilties, or a \code{MIMOSAResult}, or \code{MIMOSAResultList}
 #' @return a vector of q-values or a list of vectors of q-values.
 #' @export fdr
-fdr<-function(x){
+fdr<-function(z){
   UseMethod("fdr")
 }
 
@@ -158,15 +158,15 @@ fdr.matrix<-function(z){
 #'@rdname fdr
 #'@method fdr MIMOSAResult
 #'@S3method fdr MIMOSAResult
-fdr.MIMOSAResult <- function(x){
-  fdr(x@z)
+fdr.MIMOSAResult <- function(z){
+  fdr(z@z)
 }
 
 #'@rdname fdr
 #'@method fdr MIMOSAResultList
 #'@S3method fdr MIMOSAResultList
-fdr.MIMOSAResultList <- function(x){
-  r<-lapply(x,function(y)fdr(y))
-  names(r)<-names(x)
+fdr.MIMOSAResultList <- function(z){
+  r<-lapply(z,function(y)fdr(y))
+  names(r)<-names(z)
   return(data.frame(r))
 }

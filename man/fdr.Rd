@@ -5,13 +5,13 @@
 \alias{fdr.matrix}
 \title{Compute the fdr (q-value) from posterior probabilities}
 \usage{
-  fdr(x)
+  fdr(z)
 
   \method{fdr}{matrix} (z)
 
-  \method{fdr}{MIMOSAResult} (x)
+  \method{fdr}{MIMOSAResult} (z)
 
-  \method{fdr}{MIMOSAResultList} (x)
+  \method{fdr}{MIMOSAResultList} (z)
 }
 \arguments{
   \item{z}{matrix of posterior probabilties, or a

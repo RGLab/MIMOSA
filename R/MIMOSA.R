@@ -590,7 +590,6 @@ setMethod("countsTable","MDMixResult",definition=function(object,proportion=FALS
   return(m)
 })
 
-
 #'@rdname countsTable
 #'@S3method countsTable MIMOSAResultList
 countsTable.MIMOSAResultList<-function(object,proportion=FALSE){
