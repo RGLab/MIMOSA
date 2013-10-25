@@ -53,7 +53,6 @@ Collate:
     'initBetaMix.R'
     'likelihoodsurface.R'
     'posteriorSample.R'
-    'volcanoPlot.R'
     'MIMOSA.R'
 LazyLoad: yes
 LazyData: yes

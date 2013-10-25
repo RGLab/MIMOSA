@@ -69,7 +69,6 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   if(!inherits(formula,"Formula")){
     formula<-Formula(formula)
   }   
-
   #Does the formula contain RefTreat?
   if(!any(attr(terms(formula),"term.labels")%in%"RefTreat")&RT){
     warning("Formula does not contain the RefTreat variable. It will be added automatically. Set RT=FALSE to disable this.")
@@ -251,8 +250,14 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     })
   }else{
     stop("Can't run parallel MIMOSA. Must load multicore package.")
-  }
+  }  
   class(result)<-c("MIMOSAResultList","list")
+  if(length(result)>1){
+    depf <- gsub(" ","",strsplit(deparse(formula[[3]]),"|",fixed=TRUE)[[1]][[2]])
+    n_vars<-length(depf)
+    names(result)<-
+      levels(interaction(pData(result)[,depf,with=FALSE]))
+  }
   return(result)
 })
 
@@ -329,19 +334,8 @@ MIMOSAExpressionSet<-function(df,featureCols){
   
   featuredata<-attributes(df)$rdimnames[[1]]
   pdata<-attributes(df)$rdimnames[[2]]
-  #datanames<-colnames(melt(df)) #slow
-  #datanames<-colnames(df)[-featureCols]
-  #browser()
-  #pnames<-datanames[(which(datanames%in%"value")+1):length(datanames)]
-  
   df<-df[,-featureCols,drop=FALSE] #adata
   
-  #pdata<-data.frame(do.call(rbind,strsplit(colnames(df),"_")))
-  
-  #fnames<-apply(as.data.frame(feature),1,function(x)paste(x,collapse="_"))
-  
-  #colnames(pdata)<-pnames
-  #rownames(feature)<-fnames
   rownames(df)<-rownames(featuredata)
   #rownames(pdata)<-colnames(df)
   
@@ -415,6 +409,9 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
   }else{
     colnames(thisdata)<-gsub(ref.append.replace,"_REF",colnames(thisdata))
   }
+  if(nrow(thisdata)==0)
+    stop("All your data was filtered when reshaping due to non-unique pairs of samples. Perhaps you need to aggregate negative controls")
+  
   #transform the data so that features are on the rows and samples are on the columns
   #build a function to reshape the returned data and assign it to the calling environment
   MIMOSAReshape<-function(mydata=NULL,default.formula=NULL,cols=measure.columns){
@@ -477,7 +474,7 @@ setOldClass("MIMOSAResultList")
 #'@param ... additional arguments passed down
 #'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x,...){
-  cat(sprintf("A MIMOSAResultList with %s models",length(x)))
+  cat(sprintf("A MIMOSAResultList with %s models for %s",length(x),names(x)))
 }
 
 
@@ -540,7 +537,7 @@ getW<-function(x){
 #'@S3method getW MIMOSAResultList
 getW.MIMOSAResultList<-function(x){
   w<-data.frame(lapply(x,getW))
-  colnames(w)<-c("w.nonresp","w.resp")
+  colnames(w)<-names(x)
   w
 }
 

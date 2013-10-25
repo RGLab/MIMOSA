@@ -22,10 +22,10 @@ suppressPackageStartupMessages(require(MIMOSA))
 require(data.table)
 set.seed(100)
 effect.sizes.fold<-c(3,3,3)
-NN<-c(50000,40000,20000)
-#Nobs<-rep(NN,3)
-Nobs<-200000
-pu<-rep(2e-4,3)
+NN<-c(80000,50000,40000)
+Nobs<-rep(NN,3)
+Nobs<-100000
+pu<-rep(1e-4,3)
 ps<-pu*effect.sizes.fold
 As<-ps*Nobs
 Bs<-(Nobs-As)
@@ -50,7 +50,8 @@ df<-rbind(stim,unstim)
 data.frame(df,ANTIGEN=gl(2,obs,labels=c(ANTIGEN.STIM[i],ANTIGEN.UNSTIM[i])),CYTOKINE=CYTOKINE[i],TCELLSUBSET=TCELLSUB[1],UID=rep(gl(obs,1),2))
 }))
 ICS<-cbind(ICS,Ntot=factor(ICS$NSUB+ICS$CYTNUM))
-ggplot(ICS)+geom_histogram(aes(x=CYTNUM,fill=(ANTIGEN%in%"negctrl")),alpha=0.5,position="identity")+facet_wrap(~Ntot)+scale_fill_discrete("negative control")
+ICS$Stim<-factor(ICS$Ntot,labels=c("ENV","GAG","POL"))
+ggplot(ICS)+geom_histogram(aes(x=CYTNUM,fill=(ANTIGEN%in%"negctrl")),alpha=0.5,position="identity")+facet_wrap(~Stim)+scale_fill_discrete("stimulation",labels=c("negctrl","Stim"))
 @
 
 
@@ -103,10 +104,7 @@ While the above is a little more complex than usual, in one call we get our Expr
 <<fit,tidy=FALSE,message=FALSE,results='hide',warning=FALSE>>=
 set.seed(100)
 result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE+Ntot|ANTIGEN,
-               data=E,
-#                subset=RefTreat%in%"Treatment",
-#                ref=RefTreat%in%"Reference",
-               method="EM",iter=150000,burn=50000,pXi=1,EXPRATE=1e-7)
+               data=E, method="EM")
 @
 
 There's two things to note about the above function call. The formula NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN will fit a separate model for each  ANTIGEN to the cell counts of all subjects. CYTOKINE and TCELLSUBSET are not included in the conditioning because there is only one level of each of these factors. The left hand side contains NSUB+CYTNUM, which are our negative and positive cell counts. The model expects, specifically, that the first component represents the negative cell counts, so NSUB (or whatever you call your negative cell counts) should always come first. The ref and subset arguments are expressions that evaluate to a logical vector and specify which subset of observations represent the referece for the contrast, and which represent the treatment. These have been automatically recoded as ``Reference'' and ``Treatment'' by the previous call that created the ExpressionSet, such that the reference are the ``negctrl1'' samples, and the treatment is any other antigen stimulation. Together, the ref and subset arguments allow you to fit the model to whichever subset of data you may be interested in analyzing. 
@@ -122,9 +120,6 @@ The fdr function computes the false discovery rate from the posterior probabilit
 
 The w's can be inerpreted as the fraction of subjects that respond, or not, to the stimulation.  
 
-<<namecols,results='hide',echo=FALSE>>=
-names(result)<-levels(pData(result)[,Ntot])
-@
 
 <<showz>>=
 lapply(fdr(result),function(x)table(x<0.1))
@@ -136,12 +131,7 @@ getW(result)
 Volcano plots tend to be useful to visualize the results.
 
 <<volcanoplot>>=
-q<- -log10(unlist(fdr(result),use.names=FALSE))
-pspu<-countsTable(result,proportion=TRUE)
-p.stim<-getZ(result)
-pd<-pData(result)
-df<-data.table(q,pspu,p.stim,pd)
-ggplot(df)+geom_point(aes(x=CYTNUM-CYTNUM_REF,y=Pr.response))+theme_bw()+scale_y_continuous("Probability of Stimulation")+facet_wrap(~Ntot)
+volcanoPlot(result,effect_expression=CYTNUM-CYTNUM_REF,facet_var=~ANTIGEN)
 @
 
 Above, you see that as the effect size increases, the model can better discriminate between responders and non-responders. If we look at ROC curves, we observe the same effect.
@@ -164,7 +154,7 @@ ROC<-do.call(rbind,lapply(seq_along(result),function(i){
 ggplot(ROC)+geom_line(aes(x=FPR,y=TPR,color=Ntot),lwd=1.5)+theme_bw()
 @
 
-We can compare MIMOSA to something like Fisher's exact test:
+We can compare MIMOSA to Fisher's exact test:
 
 <<fisher,echo=FALSE>>=
 ROC.fisher<-do.call(rbind,lapply(seq_along(result),function(j){

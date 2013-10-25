@@ -3,7 +3,9 @@ MIMOSA 0.9.12
 * MIMOSA now returns a MIMOSAResultList S3 class.
   A lightweight wrapper for a list, with methods defined to extract the `fdr` and `pData`, `getW`, and `getZ` to extract the component weights and posterior probabilities, respectively.
 * `print` for `MIMOSAResult` and `MIMOSAResultList`
-* extractors for `countsTable`, the table of counts used to fit the model.
+* extractors for `countsTable`, the table of counts used to fit the model. Takes an argument to return the proportions or the counts.
+* MIMOSA checks throws a more informative warning if the data is filtered into oblivion when not properly paired (e.g. when the user doesn't aggregate over replicate negative controls, for example. )
+* `volcanoPlot` implemented for MIMOSAResultList 
 
 MIMOSA 0.9.9
 ============
