@@ -14,9 +14,9 @@
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
 #'@name MIMOSA-package
-#'@references Finak, Greg; McDavid, Andrew; Chattopadhyay, Pratip; Dominguez, Maria; De Rosa, Steve; Roederer, Mario; Gottardo, Raphael
+#'@references Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo
 #'  Mixture Models for Single Cell Assays with Applications to Vaccine Studies
-#'  eprint arXiv:1208.5809 \url{http://arxiv.org/abs/1208.5809}
+#'  Biostatistics, 2013, \url{http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.abstract}
 NULL
 
 
@@ -265,19 +265,19 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'@importMethodsFrom Biobase pData
 #'@aliases pData,MIMOSAResult-method
 #'@method pData MIMOSAResult
-#'@rdname MIMOSA-methods
+#'@rdname pData
 setMethod("pData","MIMOSAResult",function(object){
   pData(object@result)
 })
 
-#'@rdname MIMOSA-methods
+#'@rdname pData
 #'@method pData MDMixResult
 #'@aliases pData,MDMixResult-methods
 setMethod("pData","MDMixResult",function(object){
   pData(object@pd)
 })
 
-#'@rdname MIMOSA-methods
+#'@rdname pData
 #'@aliases pData,MCMCResult-methods
 #'@method pData MCMCResult
 setMethod("pData","MCMCResult",function(object){
@@ -471,16 +471,17 @@ setOldClass("MIMOSAResultList")
 #'Print a MIMOSAResultList
 #'
 #'Print a summary of the list of results returned by a call to \code{MIMOSA}
-#'@rdname MIMOSA-methods
+#'@rdname print
 #'@method print MIMOSAResultList
+#'@param x a \code{MIMOSAResultList}
+#'@param ... additional arguments passed down
 #'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x,...){
   cat(sprintf("A MIMOSAResultList with %s models",length(x)))
 }
 
 
-#'@rdname MIMOSA-methods
-#'@method show MIMOSAResult
+#'@rdname print
 #'@aliases show,MIMOSAResult-method
 setMethod("show","MIMOSAResult", function(object){
   cat("A MIMOSA Model with ")
@@ -489,7 +490,7 @@ setMethod("show","MIMOSAResult", function(object){
 })
 
 
-#'@rdname MIMOSA-accessors
+#'@rdname pData
 #'@importFrom data.table rbindlist
 #'@S3method pData MIMOSAResultList
 pData.MIMOSAResultList <- function(object){
@@ -497,7 +498,7 @@ pData.MIMOSAResultList <- function(object){
 }
 
 
-#'@rdname MIMOSA-accessors
+#'@rdname pData
 #'@method pData MIMOSAResultList
 #'@aliases pData,MIMOSAResultList-methods
 setMethod("pData","MIMOSAResultList",pData.MIMOSAResultList)
@@ -529,7 +530,6 @@ getZ.MIMOSAResult<-function(x){
 #'Extract the component weights from a MIMOSA model
 #'
 #'@rdname MIMOSA-accessors
-#'@param x output from a MIMOSA model
 #'@return a \code{vector} of component weights
 #'@export
 getW<-function(x){

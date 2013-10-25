@@ -13,10 +13,10 @@
   Single--cell gene expression.
 }
 \references{
-  Finak, Greg; McDavid, Andrew; Chattopadhyay, Pratip;
-  Dominguez, Maria; De Rosa, Steve; Roederer, Mario;
-  Gottardo, Raphael Mixture Models for Single Cell Assays
-  with Applications to Vaccine Studies eprint
-  arXiv:1208.5809 \url{http://arxiv.org/abs/1208.5809}
+  Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria
+  Dominguez, Stephen C De Rosa, Mario Roederer, Raphael
+  Gottardo Mixture Models for Single Cell Assays with
+  Applications to Vaccine Studies Biostatistics, 2013,
+  \url{http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.abstract}
 }
 

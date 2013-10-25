@@ -21,8 +21,6 @@
 }
 \arguments{
   \item{x}{output from a MIMOSA model}
-
-  \item{x}{output from a MIMOSA model}
 }
 \value{
   a \code{matrix} of posterior probabilities
