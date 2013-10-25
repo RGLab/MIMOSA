@@ -3,11 +3,11 @@
 \title{A wrapper for constructing an Expression Set for MIMOSA}
 \usage{
   ConstructMIMOSAExpressionSet(thisdata,
-    reference = STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells",
+    reference = quote(STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells"),
     measure.columns = c("Neg", "Pos"),
     other.annotations = setdiff(colnames(thisdata), measure.columns),
     default.cast.formula = component ~ ...,
-    .variables = .(PTID, TESTDT, ASSAYID, PLATEID),
+    .variables = quote(.(PTID, TESTDT, ASSAYID, PLATEID)),
     featureCols = 1, ref.append.replace = "_NEG")
 }
 \arguments{

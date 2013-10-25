@@ -10,31 +10,25 @@ Description: Modeling count data using Dirichlet-multinomial and beta-binomial
 License: Artistic-2.0
 VignetteBuilder: knitr
 Imports:
-    graphics,
-    lattice,
     methods,
-    reshape,
-    stats,
-    utils,
     Formula,
-    data.table
+    data.table,
+    pracma,
+    MCMCpack,
+    coda,
+    modeest
 Enhances: compiler
 Suggests:
     multicore,
     parallel,
     knitr
 Depends:
-    R (>= 2.15.1),
-    methods,
-    Rcpp (>= 0.9.0),
-    BiocGenerics,
+    R (>= 3.0.2),
     Biobase,
-    MCMCpack,
-    reshape,
     MASS,
-    pracma,
     ggplot2,
-    modeest
+    plyr,
+    reshape
 LinkingTo: Rcpp, RcppArmadillo
 Collate:
     'Classes.R'

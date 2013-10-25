@@ -6,6 +6,7 @@
 
 #The constrained log likelihood for the non responder component
 #pars is the vector of parameters (n, lambda, w1, w2, ...)
+#'@importFrom pracma hessian grad
 constrainedNRLL<-function(data.stim,data.unstim,z=NULL){
 	data<-t(data.stim+data.unstim)
 	if(is.null(z)){

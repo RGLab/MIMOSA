@@ -107,6 +107,7 @@ icsdata2mvicsdata<-function(x){
 #'@param FAST \code{TRUE,FALSE}. Use the heuristic (FAST=TRUE) for fitting a
 #'  one-sided model rather than recomputing the normalization constant via MCMC
 #'  for each step.
+#'  @importFrom coda mcmc
 #'@param EXPRATE the mean of the prior distribution for the model hyperparameters.
 #'@param pXi is the prior on the w. 1 by default (as in beta(1,1) i.e. uniform).
 #'  @rdname fitMCMC

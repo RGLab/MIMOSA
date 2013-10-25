@@ -9,15 +9,15 @@
 \usage{
   getZ(x)
 
-  getZ.MIMOSAResultList(x)
+  \method{getZ}{MIMOSAResultList} (x)
 
-  getZ.MIMOSAResult(x)
+  \method{getZ}{MIMOSAResult} (x)
 
   getW(x)
 
-  getW.MIMOSAResultList(x)
+  \method{getW}{MIMOSAResultList} (x)
 
-  getW.MIMOSAResult(x)
+  \method{getW}{MIMOSAResult} (x)
 }
 \arguments{
   \item{x}{output from a MIMOSA model}

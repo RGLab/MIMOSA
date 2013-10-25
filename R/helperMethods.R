@@ -18,6 +18,7 @@ estimateProportions2<-function(x,method="mode"){
 	UseMethod("estimateProportions2");
 }
 
+#'@importFrom modeest mlv
 estimateProportions2.MDMixResult<-function(x,method="mode"){
 	match.arg(method,c("mode","mean"))
 	posterior<-x$getP()

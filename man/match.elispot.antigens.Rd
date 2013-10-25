@@ -3,11 +3,11 @@
 \title{Sumarize the replicates in an elispot epitope mapping data set from SCHARP}
 \usage{
   match.elispot.antigens(x,
-    CONTROL = STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells",
+    CONTROL = quote(STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells"),
     WELLMULTIPLIER = 1000,
     replicates = c("REP1", "REP2", "REP3", "REP4", "REP5", "REP6"),
     cells.per.well = "CELLWELL",
-    SAMPLE = !STAGE \%in\% "CTRL")
+    SAMPLE = quote(!STAGE \%in\% "CTRL"))
 }
 \arguments{
   \item{x}{is the piece of data currently being worked on.

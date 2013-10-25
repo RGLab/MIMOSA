@@ -13,6 +13,8 @@
 #'@import Formula
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
+#'@import plyr
+#'@import reshape
 #'@name MIMOSA-package
 #'@references Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo
 #'  Mixture Models for Single Cell Assays with Applications to Vaccine Studies
@@ -401,7 +403,7 @@ setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=c
 ##'@param featureCols is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
 ##'@param ref.append.replace the terminating character string in the column names of the negative controls. It will be replaces with _REF for "reference"
 ##'@export
-ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=.(PTID,TESTDT,ASSAYID,PLATEID),featureCols=1,ref.append.replace="_NEG"){
+ConstructMIMOSAExpressionSet<-function(thisdata,reference=quote(STAGE%in%"CTRL"&PROTEIN%in%"Media+cells"),measure.columns=c("Neg","Pos"),other.annotations=setdiff(colnames(thisdata),measure.columns),default.cast.formula=component~...,.variables=quote(.(PTID,TESTDT,ASSAYID,PLATEID)),featureCols=1,ref.append.replace="_NEG"){
   #if reference is null, then we already have the data in a form we need
   if(!is.null(substitute(reference))){
     #Set the Reference Class to be the negative control Media+cells for each ptid/date/assayid/plate
@@ -440,7 +442,7 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
 #'@param replicates is a character vector identifying the column names that contain the replicated observations. These will be summed.
 #'@param cells.per.well is a character vector that identifies the column containing the number of cells per well.
 #'@param SAMPLE is an expression evaluating to a logical vector that identifies the rows of the data frame which are antigen or peptide stimualtions rather than control samples.
-match.elispot.antigens<-function(x,CONTROL=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",WELLMULTIPLIER=1000,replicates=c("REP1","REP2","REP3","REP4","REP5","REP6"),cells.per.well="CELLWELL",SAMPLE=!STAGE%in%"CTRL"){
+match.elispot.antigens<-function(x,CONTROL=quote(STAGE%in%"CTRL"&PROTEIN%in%"Media+cells"),WELLMULTIPLIER=1000,replicates=c("REP1","REP2","REP3","REP4","REP5","REP6"),cells.per.well="CELLWELL",SAMPLE=quote(!STAGE%in%"CTRL")){
   control.sub<-eval(substitute(CONTROL),x)
   ctrl<-subset(x,control.sub)
   CPOS<-sum(ctrl[,replicates],na.rm=TRUE)
@@ -474,7 +476,8 @@ setOldClass("MIMOSAResultList")
 #'@param ... additional arguments passed down
 #'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x,...){
-  cat(sprintf("A MIMOSAResultList with %s models for %s",length(x),names(x)))
+  cat(sprintf("A MIMOSAResultList with %s models for\n",length(x)))
+  cat(sprintf("%s ",names(x)))
 }
 
 
@@ -511,12 +514,14 @@ getZ<-function(x){
 }
 
 #'@rdname MIMOSA-accessors
+#'@method getZ MIMOSAResultList
 #'@S3method getZ MIMOSAResultList
 getZ.MIMOSAResultList<-function(x){
   as.matrix(do.call(rbind,lapply(x,getZ)))
 }
 
 #'@rdname MIMOSA-accessors
+#'@method getZ MIMOSAResult
 #'@S3method getZ MIMOSAResult
 getZ.MIMOSAResult<-function(x){
   z<-x@z  
@@ -534,6 +539,7 @@ getW<-function(x){
 }
 
 #'@rdname MIMOSA-accessors
+#'@method getW MIMOSAResultList
 #'@S3method getW MIMOSAResultList
 getW.MIMOSAResultList<-function(x){
   w<-data.frame(lapply(x,getW))
@@ -542,6 +548,7 @@ getW.MIMOSAResultList<-function(x){
 }
 
 #'@rdname MIMOSA-accessors
+#'@method getW MIMOSAResult
 #'@S3method getW MIMOSAResult
 getW.MIMOSAResult<-function(x){
   w<-x@w
@@ -607,4 +614,45 @@ countsTable.MIMOSAResultList<-function(object,proportion=FALSE){
 #'@method countsTable MIMOSAResultList
 #'@aliases countsTable,MIMOSAResultList-method
 setMethod("countsTable","MIMOSAResultList",countsTable.MIMOSAResultList)
+
+#'Volcano plot for a MIMOSA model
+#'
+#'Plots effect size vs posterior probablilty of response from a MIMOSAResultList, faceting by the conditioning variables.
+#'
+#'@rdname volcanoPlot
+#'@param x A \code{MIMOSAResultList}
+#'@param effect_expression an \code{expression} that defines the effect size. Usually a function of the stimulated and unstimulated proportions from \code{countsTable(x,proportion=TRUE)}
+#'@param facet_var an \code{expression} defining the faceting in ggplot parlance. i.e. \code{~ faceting + variables}
+#'@param threshold a \code{numeric} value between [0,1] for coloring significant observations (based on the q-value)
+#'@importFrom ggplot2 ggplot geom_point theme_bw aes_string scale_y_continuous
+#'@export 
+volcanoPlot  <- function(x,effect_expression=NA,facet_var=NA,threshold=0.01){
+  UseMethod("volcanoPlot")
+}
+
+#'@method volcanoPlot MIMOSAResultList
+#'@importFrom data.table data.table
+#'@S3method volcanoPlot MIMOSAResultList
+volcanoPlot.MIMOSAResultList<-function(x,effect_expression=NA,facet_var=NA,threshold=0.01){
+  err<-FALSE
+    effect_expression<-deparse(substitute(effect_expression))
+  if(effect_expression%in%"NA")
+    err<-TRUE
+  if(err){
+    stop("Must provide an expression for the effect size (i.e. CYTNUM-CYTNUM_REF)")
+  }
+  
+  q<- -log10(unlist(fdr(x),use.names=FALSE))
+  pspu<-countsTable(x,proportion=TRUE)
+  p.stim<-getZ(x)
+  pd<-pData(x)
+  df<-data.table(q,pspu,p.stim,pd,signif=q>-log10(threshold))
+  if(!is.na(effect_expression)){
+   p <- ggplot(df)+aes_string(x=effect_expression,y="Pr.response",col="signif")+geom_point()+theme_bw()+scale_y_continuous("Probability of Stimulation")
+  }
+  if(is.formula(facet_var)){
+    p<-p+facet_wrap(facet_var)
+  }
+  p
+}
 

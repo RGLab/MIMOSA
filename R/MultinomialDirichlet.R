@@ -34,27 +34,6 @@ makeLogLikeRespComponent<-function(data.stim,data.unstim){
 	}
 }
 
-#makeLogLikeNULLComponent<-function(data.stim,data.unstim){
-#	N.s<-rowSums(data.stim)
-#	N.u<-rowSums(data.unstim)
-#	data<-data.stim+data.unstim
-#	loglike<-function(x){
-#		x<-x[(ncol(data.stim)+1):(ncol(data.stim)*2)]
-#		lgamma(sum(x))-lgamma(colSums(t(data)+x))+colSums(lgamma(t(data)+x)-lgamma(x))+lgamma(N.s+1)+lgamma(N.u+1)-colSums(t(lgamma(data.stim+1)+lgamma(data.unstim+1)))
-#	}
-#	return(loglike)
-#}
-#makeLogLikeRespComponent<-function(data.stim,data.unstim){
-#	N.s<-rowSums(data.stim)
-#	N.u<-rowSums(data.unstim)
-#	stim.ind<-1:ncol(data.stim)
-#	unstim.ind<-(ncol(data.stim)+1):((ncol(data.stim)*2))
-#	loglike<-function(x){
-#		colSums(lgamma(x[unstim.ind]+t(data.unstim))+lgamma(x[stim.ind]+t(data.stim))-lgamma(x[stim.ind])-lgamma(x[unstim.ind])-lgamma(t(data.stim)+1)-lgamma(t(data.unstim)+1))+lgamma(sum(x[stim.ind]))+lgamma(sum(x[unstim.ind]))-lgamma(colSums(t(data.unstim)+x[unstim.ind]))-lgamma(colSums(t(data.stim)+x[stim.ind]))+lgamma(N.s+1)+lgamma(N.u+1)
-#	}
-#	return(loglike)
-#}
-
 
 
 makeGradientNULLComponent<-function(data.stim,data.unstim,z=NULL){
@@ -99,12 +78,6 @@ makeHessianNULLComponent<-function(data.stim,data.unstim,z=NULL){
 	}
 	hess<-function(x){
 		x<-x[(ncol(data.stim)+1):(ncol(data.stim)*2)]
-#		H<-matrix(sum(z[,1]*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
-#		D<-(trigamma(x+t(data))-trigamma(x))%*%z[,1]
-#		diag(H)<-diag(H)+D
-#		HH<-matrix(0,ncol(data)*2,ncol(data)*2)
-#		HH[(ncol(data.stim)+1):(ncol(data.stim)*2),(ncol(data.stim)+1):(ncol(data.stim)*2)]<-H
-#		return(HH)
 		H<- (trigamma(sum(x)) - trigamma(colSums(t(data) +x)))
 		D<-(trigamma(x + t(data)) - trigamma(x))
 		HH<-matrix(0,ncol(data)*2,ncol(data)*2)
@@ -122,10 +95,7 @@ makeHessianHalfComponent<-function(data,z=NULL){
 		z<-matrix(1,nrow=nrow(data),ncol=1)
 	}
 	hess<-function(x){
-#		H<-matrix(sum(z*(trigamma(sum(x))-trigamma(colSums(t(data)+x)))),ncol=length(x),nrow=length(x))
-#		D<-(trigamma(x+t(data))-trigamma(x))%*%as.vector(z)
-#		diag(H)<-diag(H)+D
-#		return(H)
+
 		H<- (trigamma(sum(x)) - trigamma(colSums(t(data) +x)))
 		D<-(trigamma(x + t(data)) - trigamma(x))
 		HH<-matrix(0,ncol(data),ncol(data))
@@ -136,6 +106,7 @@ makeHessianHalfComponent<-function(data,z=NULL){
 		return(HH)
 	}
 }
+
 makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 	stim.ind<-1:ncol(data.stim)
 	unstim.ind<-(ncol(data.stim)+1):(ncol(data.stim)*2)
@@ -152,11 +123,11 @@ makeHessianRespComponent<-function(data.stim,data.unstim,z=NULL){
 	return(hess)
 }
 
+#'@importFrom MCMCpack rdirichlet
 simMD<-function(alpha.s=c(100,50,10,10),alpha.u=c(100,10,10,10),N=100,w=0.5,n=2,alternative="greater"){
 	nnull<-round((1-w)*N)
 	nresp<-N-round((1-w)*N)
 	pu<-rdirichlet(nnull,alpha.u)
-	#pu<-matrix(pu,nrow=N,ncol=length(pu),byrow=T)
 	if(nnull>0){
 		ps<-pu
 	}else{
@@ -208,7 +179,6 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	unstim<-data$n.unstim
 	stim<-data$n.stim
 	match.arg(alternative,c("greater","not equal"))
-	#TODO generalize so that this works for multivariate 
 	if(alternative=="greater"){
 		alternative<-"greater"
 		filt<-apply(stim,1,function(x)prop.table(x)[2])<apply(unstim,1,function(x)prop.table(x)[2])		
@@ -217,7 +187,6 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		filt<-rep(FALSE,nrow(stim))
 	}
 	#fisher's exact test of all the marginals
-	#TODO generalize for multivariate
 	if(ncol(unstim)>2){
 		#TODO double check that Fisher's gives the right result here for one sided test
 		mm<-do.call(cbind,lapply(2:ncol(unstim),function(i)apply(cbind(rowSums(unstim[,-i]),unstim[,i],rowSums(stim[,-i]),stim[,i]),1,function(x)fisher.test(matrix(x,2),alternative=alternative)$p.value)))
@@ -249,8 +218,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 	if(any(is.nan(alpha.u)))
 		alpha.u[is.nan(alpha.u)]<-1
 	
-# 	alpha.s[alpha.s==0]<-1e-6
-# 	alpha.u[alpha.u==0]<-1e-6
+
 	  alpha.s[alpha.s==0]<-1
 		alpha.u[alpha.u==0]<-1
 	
@@ -274,12 +242,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		hessnull<-makeHessianNULLComponent(stim,unstim,z)
 		hessresp<-makeHessianRespComponent(stim,unstim,z)
 		
-#		optFun<-function(x,z){
-#			ll<- -sum(llnull(x)*z[,1]+llresp(x)*z[,2])
-#			#grad<-gnull(x)+gresp(x)
-#			#hess<-hessnull(x)+hessresp(x)
-#			#list(value=ll,gradient=grad,hessian=hess)
-#		}
+
 		
 		iter<-2
 		ll<-rep(0,1000)
@@ -304,7 +267,6 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
         ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
         piter<-piter+1
       }
-      #print(ll[iter])
 			if((all(abs(new-guess)/abs(guess)<1e-4))|(iter>999)){
 				guess<-new
 				if(any(guess<0)){
@@ -315,10 +277,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 			guess<-new
 			iter<-iter+1
 		}
-#		t<-trust(optFun,parinit=guess,rinit=1,rmax=10^6,minimize=TRUE,z=z)
-#		guess<-new<-t$argument
-		
-		#compute z's and w's
+
 		
 		den<-apply(cbind(log(w[1])+llnull(new), log(w[2])+llresp(new)), 1, function(x)log(sum(exp(x-max(x))))+max(x))
 		z2<-exp((llresp(new)+log(w[2]))-(den))
@@ -330,19 +289,10 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 		z<-cbind(1-z2,z2)	
 		w<-colSums(z)/sum(z)
 		cll<--sum(sapply((llnull(new)+log(w[1]))*z[,1],function(x)ifelse(is.nan(x),0,x))+sapply((llresp(new)+log(w[2]))*z[,2],function(x)ifelse(is.nan(x),0,x)))
-		#cll<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])
-		#actually the - log likelihood...
-		#ll<- -sum(llnull(new)+log(w[1])+llresp(new)+log(w[2]))
-		#if((abs((last-cll)/last)<1e-3)&cll<=last){
-		#	break;
-		#}
 		if((abs((last-cll)) < 1e-2)&cll>=last){
 			break
 		}
-		#else if(cll>last){
-		#	new<-lastguess
-		#	break;
-		#}
+
 		LL<-c(LL,cll)
 		#cat(cll,"\n")
 		last<-cll

@@ -11,7 +11,7 @@ initBetaMix <-
 		for(i in attr(data,"cytokine")){
 			d<-d[[i]]
 		}
-		d<-subset(do.call(rbind,d),antigen==attr(data,"control"))
+		d<-subset(do.call(rbind,d),quote(antigen==attr(data,"control")))
 		
 		#Moment estimators 
 		mu0<-sum(d[,"pos"])/sum(d[,"pos"]+d[,"neg"])
