@@ -138,12 +138,35 @@ gibbsPsPu <-
 #' Compute the fdr (q-value) from posterior probabilities
 #' 
 #' Given the z's from a MIMOSA model, calculates the q-values for each observation.
-#' 
-#' @param z matrix of posterior probabilties
-#' @export
-fdr<-function(z){
+#' @rdname fdr
+#' @param z matrix of posterior probabilties, or a \code{MIMOSAResult}, or \code{MIMOSAResultList}
+#' @return a vector of q-values or a list of vectors of q-values.
+#' @export fdr
+fdr<-function(x){
+  UseMethod("fdr")
+}
+
+#'@rdname fdr
+#'@method fdr matrix
+#'@S3method fdr matrix
+fdr.matrix<-function(z){
 	fdr<-rep(0,nrow(z)); o<-order(z[,2],decreasing=T); 
 	fdr[o]<-(cumsum(z[o,1])/1:nrow(z))
 	return(fdr)
 }
 
+#'@rdname fdr
+#'@method fdr MIMOSAResult
+#'@S3method fdr MIMOSAResult
+fdr.MIMOSAResult <- function(x){
+  fdr(x@z)
+}
+
+#'@rdname fdr
+#'@method fdr MIMOSAResultList
+#'@S3method fdr MIMOSAResultList
+fdr.MIMOSAResultList <- function(x){
+  r<-lapply(x,function(y)fdr(y))
+  names(r)<-names(x)
+  return(data.frame(r))
+}

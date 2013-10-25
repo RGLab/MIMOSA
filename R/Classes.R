@@ -113,3 +113,6 @@ setMethod("initialize","MIMOSAResult",function(.Object,...){
   return(.Object)
 })
 
+
+
+

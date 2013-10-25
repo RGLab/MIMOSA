@@ -3,6 +3,7 @@
 \alias{pData,MCMCResult-methods}
 \alias{pData,MDMixResult-methods}
 \alias{pData,MIMOSAResult-methods}
+\alias{pData,MIMOSAResultList-methods}
 \title{pData extract the phenoData table from a MIMOSA result}
 \arguments{
   \item{object}{is the MIMOSAResult returned from a call to

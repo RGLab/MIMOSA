@@ -1,7 +1,7 @@
 Package: MIMOSA
 Type: Package
 Title: Mixture Models for Single-Cell Assays
-Version: 0.9.11
+Version: 0.9.12
 Date: 2013-10-02
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
@@ -16,7 +16,8 @@ Imports:
     reshape,
     stats,
     utils,
-    Formula
+    Formula,
+    data.table
 Enhances: compiler
 Suggests:
     multicore,

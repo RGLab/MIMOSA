@@ -252,6 +252,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   }else{
     stop("Can't run parallel MIMOSA. Must load multicore package.")
   }
+  class(result)<-c("MIMOSAResultList","list")
   return(result)
 })
 
@@ -261,6 +262,7 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
 #'
 #'@param object is the MIMOSAResult returned from a call to MIMOSA
 #'@return an object of type \code{data.frame}
+#'@importMethodsFrom Biobase pData
 #'@aliases pData,MIMOSAResult-methods
 #'@rdname pData-methods
 setMethod("pData","MIMOSAResult",function(object){
@@ -354,7 +356,6 @@ MIMOSAExpressionSet<-function(df,featureCols){
 #'@param cols A character vector of the names of the columns that hold our measurements
 #'@param annotations A character vector of additional annotation columns
 #'@param default.formula a default formula to be used for casting the data.
-#@param annotations a characte vector of additional annotations to return for the data
 #'@export
 setReference<-function(dat,ref=NULL,cols=NULL,annotations=NULL,default.formula=component~...){
   REFERENCE<-try(eval(ref,dat))
@@ -428,6 +429,8 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
   thisdata<-MIMOSAReshape(mydata=thisdata,default.formula=default.cast.formula,cols=measure.columns)
   MIMOSAExpressionSet(thisdata,featureCols=featureCols)
 }
+
+
 #'Sumarize the replicates in an elispot epitope mapping data set from SCHARP
 #'
 #' Thus function will summarize the replicate observations for the negative controls and stimulations in an epitope mapping data set from SCHARP. The user provides information on grouping structure, cells per well, replicate observation columns and so forth. The function is meant to be passed to ddply
@@ -437,7 +440,6 @@ ConstructMIMOSAExpressionSet<-function(thisdata,reference=STAGE%in%"CTRL"&PROTEI
 #'@param replicates is a character vector identifying the column names that contain the replicated observations. These will be summed.
 #'@param cells.per.well is a character vector that identifies the column containing the number of cells per well.
 #'@param SAMPLE is an expression evaluating to a logical vector that identifies the rows of the data frame which are antigen or peptide stimualtions rather than control samples.
-#'@export
 match.elispot.antigens<-function(x,CONTROL=STAGE%in%"CTRL"&PROTEIN%in%"Media+cells",WELLMULTIPLIER=1000,replicates=c("REP1","REP2","REP3","REP4","REP5","REP6"),cells.per.well="CELLWELL",SAMPLE=!STAGE%in%"CTRL"){
   control.sub<-eval(substitute(CONTROL),x)
   ctrl<-subset(x,control.sub)
@@ -460,3 +462,142 @@ match.elispot.antigens<-function(x,CONTROL=STAGE%in%"CTRL"&PROTEIN%in%"Media+cel
   }
   ret<-rbind(data.frame(samps,Neg=PNEG,Pos=PPOS),data.frame(ctrl,Neg=CNEG,Pos=CPOS))
 }
+
+setOldClass("MIMOSAResultList")
+
+#'Print a MIMOSAResultList
+#'
+#'Print a summary of the list of results returned by a call to \code{MIMOSA}
+#'@rdname print
+#'@S3method print MIMOSAResultList
+print.MIMOSAResultList <- function(x,...){
+  cat(sprintf("A MIMOSAResultList with %s models",length(x)))
+}
+
+
+#'@rdname MIMOSAResult
+#'@aliases show,MIMOSAResult-method
+setMethod("show","MIMOSAResult", function(object){
+  cat("A MIMOSA Model with ")
+  cat(sprintf("%s observations.\n",nrow(object@z)))
+  cat(sprintf("Response rate (w) of %.4g percent.\n",100*object@w[2]))
+})
+
+
+
+#'@importFrom data.table rbindlist
+#'@S3method pData MIMOSAResultList
+pData.MIMOSAResultList <- function(object){
+  rbindlist(lapply(object,pData))
+}
+
+
+#'@rdname pData-methods
+#'@aliases pData,MIMOSAResultList-methods
+setMethod("pData","MIMOSAResultList",pData.MIMOSAResultList)
+
+#'Extract the posterior probabilities of response from a MIMOSA model
+#'
+#'@rdname MIMOSA-accessors
+#'@param x output from a MIMOSA model
+#'@return a \code{matrix} of posterior probabilities
+#'@export
+getZ<-function(x){
+  UseMethod("getZ")
+}
+
+#'@rdname MIMOSA-accessors
+#'@S3method getZ MIMOSAResultList
+getZ.MIMOSAResultList<-function(x){
+  as.matrix(do.call(rbind,lapply(x,getZ)))
+}
+
+#'@rdname MIMOSA-accessors
+#'@S3method getZ MIMOSAResult
+getZ.MIMOSAResult<-function(x){
+  z<-x@z  
+  colnames(z)<-c("Pr.Nonresponse","Pr.response")
+  z
+}
+
+#'Extract the component weights from a MIMOSA model
+#'
+#'@rdname MIMOSA-accessors
+#'@param x output from a MIMOSA model
+#'@return a \code{vector} of component weights
+#'@export
+getW<-function(x){
+  UseMethod("getW")
+}
+
+#'@rdname MIMOSA-accessors
+#'@S3method getW MIMOSAResultList
+getW.MIMOSAResultList<-function(x){
+  w<-data.frame(lapply(x,getW))
+  colnames(w)<-c("w.nonresp","w.resp")
+  w
+}
+
+#'@rdname MIMOSA-accessors
+#'@S3method getW MIMOSAResult
+getW.MIMOSAResult<-function(x){
+  w<-x@w
+  names(w)<-c("w.nonresp","w.resp")
+  w
+}
+
+countsTable<-function(object,proportion=FALSE){}
+#'Extract the table of counts from a MIMOSA model
+#'
+#'@param object a \code{MIMOSAResult}
+#'@param proportion \code{logical} return the counts or the proportions
+#'@return a \code{data.frame} of counts to which the model was fit.
+#'@rdname countsTable
+#'@docType methods
+#'@return a \code{data.frame} of counts for the stimulated and unstimulated samples
+#'@export
+setGeneric("countsTable")
+
+#'@rdname countsTable
+#'@aliases countsTable,MIMOSAResult-method
+setMethod("countsTable","MIMOSAResult",definition=function(object,proportion=FALSE){
+    countsTable(object@result,proportion=proportion)
+})
+
+#'@rdname countsTable
+#'@aliases countsTable,MCMCResult-method
+setMethod("countsTable","MCMCResult",definition=function(object,proportion=FALSE){
+  if(proportion){
+    m<-(cbind(prop.table(as.matrix(object@n.stim),1),prop.table(as.matrix(object@n.unstim),1)))
+  }else{
+    m<-(as.matrix(cbind(object@n.stim,object@n.unstim)))
+  }
+  nc<-ncol(m)
+  colnames(m)<-paste0(colnames(m),rep(c("","_REF"),each=nc/2))
+  return(m)
+})
+
+#'@rdname countsTable
+#'@aliases countsTable,MDMixResult-method
+setMethod("countsTable","MDMixResult",definition=function(object,proportion=FALSE){
+  if(proportion==TRUE){
+    m<-(do.call(cbind,lapply(object@data,function(x)prop.table(as.matrix(x),1))))
+    } else{
+    m<-(as.matrix(do.call(cbind,object@data)))
+  } 
+  nc<-ncol(m)
+  colnames(m)<-paste0(colnames(m),rep(c("","_REF"),each=nc/2))
+  return(m)
+})
+
+
+#'@rdname countsTable
+#'@S3method countsTable MIMOSAResultList
+countsTable.MIMOSAResultList<-function(object,proportion=FALSE){
+  as.matrix(do.call(rbind,lapply(object,function(x)countsTable(x,proportion=proportion))))
+}
+
+#'@rdname countsTable
+#'@aliases countsTable,MIMOSAResultList-method
+setMethod("countsTable","MIMOSAResultList",countsTable.MIMOSAResultList)
+

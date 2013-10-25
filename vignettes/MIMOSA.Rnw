@@ -113,7 +113,7 @@ There's two things to note about the above function call. The formula NSUB+CYTNU
 Finally, the \textit{method} argument can be either ``EM'' (which is faster) or ``MCMC'', which is slower, but more stable. The call takes additional arguments that are passed on to the model fitting function. 
 
 \subsection{Results of IFNg Fit}
-Model fitting returns an list of "MIMOSAResult" objects, which contains a slot for the Z's, W's and a ``result'' slot whose content is either an MDMixResult or MCMCResult object, depending on the method used to fit the data.
+Model fitting returns an list of "MIMOSAResult" objects (MIMOSAResultList), each of which contains a slot for the Z's, W's and a ``result'' slot whose content is either an MDMixResult or MCMCResult object, depending on the method used to fit the data.
 
 Since here we are talking about ICS data, we are typically interested in the computed z's from the model, i.e. the posterior probabilities of response for each subject, as a function of the effect size. The z's can be accessed directly via the @z slot of the MIMOSAResult object. The effect size can be computed from the empirical proportions of cells, or from the sampled posterior p's when using MCMC.
 
@@ -122,33 +122,32 @@ The fdr function computes the false discovery rate from the posterior probabilit
 The w's can be inerpreted as the fraction of subjects that respond, or not, to the stimulation.  
 
 <<namecols,results='hide',echo=FALSE>>=
-names(result)<-unlist(lapply(result,function(x)unique(pData(x)$Ntot)))
+names(result)<-levels(pData(result)[,Ntot])
 @
 
 <<showz>>=
-lapply(result,function(x){
-  Tbl<-table(fdr(x@z)<0.01)
-})
-lapply(result,function(x)x@w)
+lapply(fdr(result),function(x)table(x<0.1))
+
+getW(result)
 @
 
 \subsection{Plotting the Results}
 Volcano plots tend to be useful to visualize the results.
 
 <<volcanoplot>>=
-q<- as.vector(sapply(1:3,function(i)-log10(fdr(result[[i]]@z))))
-ps<-as.vector(sapply(1:3,function(i)prop.table(as.matrix(result[[i]]@result@data$n.stim),1)[,2]))
-pu<-as.vector(sapply(1:3,function(i)prop.table(as.matrix(result[[i]]@result@data$n.unstim),1)[,2]))
-p.stim<-as.vector(sapply(1:3,function(i)result[[i]]@z[,2]))
-df<-data.frame(p.stim,q,ps,pu,Ntot=gl(3,100,labels=names(result)))
-ggplot(df)+geom_point(aes(x=ps-pu,y=p.stim))+theme_bw()+scale_y_continuous("Probability of Stimulation")+facet_wrap(~Ntot)
+q<- -log10(unlist(fdr(result),use.names=FALSE))
+pspu<-countsTable(result,proportion=TRUE)
+p.stim<-getZ(result)
+pd<-pData(result)
+df<-data.table(q,pspu,p.stim,pd)
+ggplot(df)+geom_point(aes(x=CYTNUM-CYTNUM_REF,y=Pr.response))+theme_bw()+scale_y_continuous("Probability of Stimulation")+facet_wrap(~Ntot)
 @
 
 Above, you see that as the effect size increases, the model can better discriminate between responders and non-responders. If we look at ROC curves, we observe the same effect.
 
 <<roccurves>>=
 ROC<-do.call(rbind,lapply(seq_along(result),function(i){
-  stat<-MIMOSA:::fdr(result[[i]]@z)
+  stat<-fdr(result[[i]])
   truth<-gl(2,50)%in%2
   th<-seq(0,1,l=1000)
   tpr<-sapply(th,function(x){
@@ -170,7 +169,8 @@ We can compare MIMOSA to something like Fisher's exact test:
 ROC.fisher<-do.call(rbind,lapply(seq_along(result),function(j){
   p<-vector('numeric',100)
   for(i in 1:100){
-    p[i]<-fisher.test(as.matrix(rbind(result[[j]]@result@data$n.unstim[i,],result[[j]]@result@data$n.stim[i,])),alternative="greater")$p
+    #Test that the unstimulated is less than the stimulated..
+    p[i]<-fisher.test(matrix(countsTable(result[[j]])[i,],nrow=2,byrow=FALSE),alternative="less")$p
   }
   p<-p.adjust(p,"fdr")
    truth<-gl(2,50)%in%2

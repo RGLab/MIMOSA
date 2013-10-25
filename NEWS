@@ -1,3 +1,10 @@
+MIMOSA 0.9.12
+=============
+* MIMOSA now returns a MIMOSAResultList S3 class.
+  A lightweight wrapper for a list, with methods defined to extract the `fdr` and `pData`, `getW`, and `getZ` to extract the component weights and posterior probabilities, respectively.
+* `print` for `MIMOSAResult` and `MIMOSAResultList`
+* extractors for `countsTable`, the table of counts used to fit the model.
+
 MIMOSA 0.9.9
 ============
 * Bug Fixes
