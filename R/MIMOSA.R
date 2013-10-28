@@ -116,9 +116,9 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     }
   }
   if(length(formula)[2]>1){
-    ref<-split(model.part(formula,mf.ref,lhs=1),interact(spl.ref))
-    test<-split(model.part(formula,mf.test,lhs=1),interact(spl.test))
-    pd<-split(model.part(formula,mf.test,rhs=1:2),interact(spl.test))
+    ref<-split(model.part(formula,mf.ref,lhs=1),factor(interact(spl.ref)))
+    test<-split(model.part(formula,mf.test,lhs=1),factor(interact(spl.test)))
+    pd<-split(model.part(formula,mf.test,rhs=1:2),factor(interact(spl.test)))
     result<-vector("list",length(test))
     #Here should filter stuff that has empty categories.
     filter_empty<-do.call(c,lapply(ref,function(x)dim(x)[1]!=0))
@@ -254,8 +254,8 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
     stop("Can't run parallel MIMOSA. Must load multicore package.")
   }  
   class(result)<-c("MIMOSAResultList","list")
-  if(length(result)>1){
-    depf <- gsub(" ","",strsplit(deparse(formula[[3]]),"|",fixed=TRUE)[[1]][[2]])
+  if(length(result)>0){
+    depf <- strsplit(gsub(" ","",strsplit(deparse(formula[[3]]),"|",fixed=TRUE)[[1]][[2]]),"+",fixed=TRUE)[[1]]
     n_vars<-length(depf)
     names(result)<-
       levels(interaction(pData(result)[,depf,with=FALSE]))
