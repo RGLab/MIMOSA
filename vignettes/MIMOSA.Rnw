@@ -122,8 +122,7 @@ The w's can be inerpreted as the fraction of subjects that respond, or not, to t
 
 
 <<showz>>=
-lapply(fdr(result),function(x)table(x<0.1))
-
+lapply(result,function(x)table(fdr(x)<0.01))
 getW(result)
 @
 

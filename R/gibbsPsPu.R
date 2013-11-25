@@ -168,5 +168,7 @@ fdr.MIMOSAResult <- function(z){
 fdr.MIMOSAResultList <- function(z){
   r<-lapply(z,function(y)fdr(y))
   names(r)<-names(z)
-  return(data.frame(r))
+  r<-as.matrix(unlist(r))
+  colnames(r)<-"fdr"
+  return(r)
 }

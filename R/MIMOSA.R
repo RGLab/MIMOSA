@@ -648,10 +648,10 @@ volcanoPlot.MIMOSAResultList<-function(x,effect_expression=NA,facet_var=NA,thres
   pd<-pData(x)
   df<-data.table(q,pspu,p.stim,pd,signif=q>-log10(threshold))
   if(!is.na(effect_expression)){
-   p <- ggplot(df)+aes_string(x=effect_expression,y="Pr.response",col="signif")+geom_point()+theme_bw()+scale_y_continuous("Probability of Stimulation")
+   p <- ggplot(df)+aes_string(x=effect_expression,y="Pr.response",col="signif.fdr")+geom_point()+theme_bw()+scale_y_continuous("Probability of Stimulation")
   }
   if(is.formula(facet_var)){
-    p<-p+facet_wrap(facet_var)
+    p<-p+facet_grid(facet_var)
   }
   p
 }
