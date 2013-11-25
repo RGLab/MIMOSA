@@ -257,8 +257,9 @@ setMethod("MIMOSA",c("formula","ExpressionSet"),definition=function(formula,data
   if(length(result)>0){
     depf <- strsplit(gsub(" ","",strsplit(deparse(formula[[3]]),"|",fixed=TRUE)[[1]][[2]]),"+",fixed=TRUE)[[1]]
     n_vars<-length(depf)
+    #NOTE this is probably wrong..
     names(result)<-
-      levels(interaction(pData(result)[,depf,with=FALSE]))
+      levels(interaction(as.data.frame(lapply(pData(result)[,depf,with=FALSE],factor))))
   }
   return(result)
 })
