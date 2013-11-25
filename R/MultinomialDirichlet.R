@@ -254,7 +254,7 @@ MDMix<-function(data=NULL,modelmatrix=NULL,alternative="greater",initonly=FALSE)
 			if(inherits(t,"try-error"))
 				t<-try(ginv(hessresp(guess)+hessnull(guess))%*%(gnull(guess)+gresp(guess))) #uses SVD
       if(inherits(t,"try-error")){
-        stop("Error in svd(X) : infinite or missing values in 'x'. Try fitting the model via MCMC")
+        stop("Hessian not positive definite. Trying MCMC")
       }
 			new<-guess-t
 			ll[iter]<- -sum(llnull(new)*z[,1]+llresp(new)*z[,2])

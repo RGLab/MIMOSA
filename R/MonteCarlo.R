@@ -58,7 +58,6 @@ simAlpha.u<-function(alpha.s,alpha.u,z,S,llnull,llresp,i,rate){
 }
 
 
-#TODO: prior on Q so that rbeta is positive
 simQ<-function(z){
 	rbeta(1,sum(z[,1])+1,sum(z[,2])+1)
 }
