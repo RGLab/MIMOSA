@@ -112,8 +112,9 @@ icsdata2mvicsdata<-function(x){
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
 #'  @export
-.fitMCMC<-function(data,inits=NULL,iter=250000, burn=50000, thin=1,tune=100,outfile=basename(tempfile(tmpdir=".",fileext=".dat")),alternative="greater",UPPER=0.5,LOWER=0.15,FAST=TRUE,EXPRATE=1e-4,pXi=1){
-	alternative<-match.arg(alternative,c("greater","not equal"))
+.fitMCMC<-function(data,inits=NULL,iter=250000, burn=50000, thin=1,tune=100,outfile=basename(tempfile(tmpdir=".",fileext=".dat")),alternative="greater",UPPER=0.5,LOWER=0.15,FAST=TRUE,EXPRATE=1e-4,pXi=1,seed=10){
+  set.seed(seed)
+  alternative<-match.arg(alternative,c("greater","not equal"))
 	data<-icsdata2mvicsdata(data)
 	if(is.null(inits)){
 		r<-MDMix(data);
