@@ -11,14 +11,14 @@
     pd = new("AnnotatedDataFrame"))
 }
 \arguments{
-  \item{alternative.model}{character, either "greater" or
-  "not equal"}
+  \item{alternative.model}{character, either 'greater' or
+  'not equal'}
 
-  \item{cytokine}{"character"}
+  \item{cytokine}{'character'}
 
-  \item{control}{"character"}
+  \item{control}{'character'}
 
-  \item{stimulation}{"character"}
+  \item{stimulation}{'character'}
 
   \item{ll}{log-likelihood}
 

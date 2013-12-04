@@ -11,7 +11,7 @@
   \item{modelmatrix}{a model matrix specifying which
   components should be computed}
 
-  \item{alternative}{either "greater" or "not equal" to fit
+  \item{alternative}{either 'greater' or 'not equal' to fit
   the one-sided or two-sided model.}
 
   \item{initonly}{\code{TRUE} or \code{FALSE} to return

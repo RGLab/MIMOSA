@@ -50,7 +50,7 @@
 
   \item{ref.append.replace}{the terminating character
   string in the column names of the negative controls. It
-  will be replaces with _REF for "reference"}
+  will be replaces with _REF for 'reference'}
 }
 \description{
   Calls a series of other functions that will reshape and

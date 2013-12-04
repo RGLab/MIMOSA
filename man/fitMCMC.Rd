@@ -6,11 +6,11 @@
     thin = 1, tune = 100,
     outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")),
     alternative = "greater", UPPER = 0.5, LOWER = 0.15,
-    FAST = TRUE, EXPRATE = 1e-04, pXi = 1)
+    FAST = TRUE, EXPRATE = 1e-04, pXi = 1, seed = 10)
 }
 \arguments{
-  \item{data}{a \code{list} with elements names "n.stim"
-  and "n.unstim", the stimulated and unstimulated counts.
+  \item{data}{a \code{list} with elements names 'n.stim'
+  and 'n.unstim', the stimulated and unstimulated counts.
   Must be at least of dimension 2.}
 
   \item{inits}{the initialization parameters for the MCMC
@@ -28,7 +28,7 @@
 
   \item{outfile}{the output file name}
 
-  \item{alternative}{either "greater" or "not equal" for
+  \item{alternative}{either 'greater' or 'not equal' for
   fitting the one-sided or two-sided MIMOSA model,
   respectively.}
 
@@ -48,6 +48,8 @@
 
   \item{pXi}{is the prior on the w. 1 by default (as in
   beta(1,1) i.e. uniform).}
+
+  \item{seed}{\code{numeric} random seed}
 }
 \description{
   This is an internal function that fits the MIMOSA model

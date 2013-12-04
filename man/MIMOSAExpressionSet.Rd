@@ -19,9 +19,9 @@
   The featureCols will be used to construct feature names,
   and these columns will be dropped from the exprs matrix.
   The column names are assumed to have names that contain
-  "_" characters separating phenotypic characteristics.
+  '_' characters separating phenotypic characteristics.
   These would be generated automatically if the data frame
-  was constrcuted with "reshape". They are used to
+  was constrcuted with 'reshape'. They are used to
   construct the phenoData for the expression set
 }
 
