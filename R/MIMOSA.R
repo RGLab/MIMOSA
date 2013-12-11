@@ -495,13 +495,13 @@ match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" &
                                                         PROTEIN %in% "Media+cells"), WELLMULTIPLIER = 1000, replicates = c("REP1", 
                                                                                                                            "REP2", "REP3", "REP4", "REP5", "REP6"), cells.per.well = "CELLWELL", 
                                    SAMPLE = quote(!STAGE %in% "CTRL")) {
-  control.sub <- eval(substitute(CONTROL), x)
+  control.sub <- eval(eval(substitute(CONTROL)),x)
   ctrl <- subset(x, control.sub)
   CPOS <- sum(ctrl[, replicates], na.rm = TRUE)
   l <- length(na.omit(t(ctrl[, replicates, drop = FALSE])))
-  CNEG <- WELLMULTIPLIER * l * ctrl[, cells.per.well]
+  CNEG <- WELLMULTIPLIER * l * ctrl[, cells.per.well,drop=TRUE]
   
-  samples <- eval(substitute(SAMPLE), x)
+  samples <- eval(eval(substitute(SAMPLE)), x)
   samps <- subset(x, samples)
   
   PNEG <- NULL
@@ -514,8 +514,11 @@ match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" &
     PNEG <- c(PNEG, pneg)
     PPOS <- c(PPOS, ppos)
   }
-  ret <- rbind(data.frame(samps, Neg = PNEG, Pos = PPOS), data.frame(ctrl, 
-                                                                     Neg = CNEG, Pos = CPOS))
+  if(any(c(nrow(samps),nrow(ctrl))%in%0))
+    return(NULL)
+  else
+    ret <- rbind(data.frame(samps, Neg = PNEG, Pos = PPOS), data.frame(ctrl,Neg = CNEG, Pos = CPOS))
+  ret
 }
 
 setOldClass("MIMOSAResultList")
