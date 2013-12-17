@@ -78,7 +78,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
   if (!any(attr(terms(formula), "term.labels") %in% "RefTreat") & 
         RT) {
     warning("Formula does not contain the RefTreat variable. It will be added automatically. Set RT=FALSE to disable this.")
-    formula <- Formula(formula(gsub("\\|", "+ RefTreat |", deparse(formula))))
+    formula <- Formula(formula(gsub("\\|", "+ RefTreat |", paste0(deparse(formula),collapse=""))))
   }
   
   method <- match.arg(method, c("mcmc", "EM"))
@@ -286,7 +286,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
   }
   class(result) <- c("MIMOSAResultList", "list")
   if (length(result) > 0) {
-    depf <- strsplit(gsub(" ", "", strsplit(deparse(formula[[3]]), 
+    depf <- strsplit(gsub(" ", "", strsplit(deparse(paste0(formula[[3]],collapse="")), 
                                             "|", fixed = TRUE)[[1]][[2]]), "+", fixed = TRUE)[[1]]
     n_vars <- length(depf)
     # NOTE this is probably wrong..
