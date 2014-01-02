@@ -15,7 +15,7 @@ install:
   - "[ ! -d ~/R ] && mkdir ~/R"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
-  - Rscript -e 'install.packages("devtools", dep = TRUE, repos = c("http://rforge.net", "http://cran.rstudio.org"))'
+  - Rscript -e 'install.packages("devtools", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87);source("http://www.bioconductor.org/biocLite.R");biocLite("Biobase",ask=FALSE); install.packages("data.table"); install_github("MIMOSA", "RGLab");'
 
 script:
