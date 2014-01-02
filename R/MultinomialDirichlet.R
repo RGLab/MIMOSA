@@ -279,7 +279,13 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater",
                        gresp(guess)), silent = TRUE)
       if (inherits(t, "try-error")) 
         t <- try(ginv(hessresp(guess) + hessnull(guess)) %*% 
-                   (gnull(guess) + gresp(guess)))  #uses SVD
+                   (gnull(guess) + gresp(guess)),silent=TRUE)  #uses SVD
+      if (inherits(t,"try-error")){
+          H<-hessresp(guess)+hessnull(guess)
+          G<-gresp(guess)+gnull(guess)
+          H<-H+G%*%t(G)
+          t<-try(solve(H)%*%G,silent=TRUE)
+      }
       if (inherits(t, "try-error")) {
         stop("Hessian not positive definite. Trying MCMC")
       }
