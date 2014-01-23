@@ -1,7 +1,6 @@
 //#include <Rcpp.h>
 //#include <armadillo>
 #include <RcppArmadillo.h>
-#include <omp.h>
 #include <Rmath.h>
 #include <math.h>
 #include <iostream>
