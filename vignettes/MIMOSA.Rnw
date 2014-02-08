@@ -135,7 +135,7 @@ volcanoPlot(result,effect_expression=CYTNUM-CYTNUM_REF,facet_var=~ANTIGEN)
 
 Above, you see that as the effect size increases, the model can better discriminate between responders and non-responders. If we look at ROC curves, we observe the same effect.
 
-<<roccurves>>=
+<<rocfun,echo=FALSE>>=
 ROC<-do.call(rbind,lapply(seq_along(result),function(i){
   stat<-fdr(result[[i]])
   truth<-gl(2,50)%in%2
@@ -150,6 +150,9 @@ ROC<-do.call(rbind,lapply(seq_along(result),function(i){
   fpr<-fpr/sum(!truth)
   data.frame(TPR=tpr,FPR=fpr,Ntot=names(result)[i])
 }))
+@
+
+<<roccurve>>=
 ggplot(ROC)+geom_line(aes(x=FPR,y=TPR,color=Ntot),lwd=1.5)+theme_bw()
 @
 
@@ -177,6 +180,6 @@ ROC<-cbind(rbind(ROC,ROC.fisher),Method=gl(2,3000,labels=c("MIMOSA","Fisher")))
 ggplot(ROC)+geom_line(aes(x=FPR,y=TPR,color=Method),lwd=1.5)+facet_wrap(~Ntot)+theme_bw()
 @
 
-MIMOSA can be applied to paired count data, and is not limited to ICS assays. It has been successfully used with EliSpot assays for epitope mapping as well as Fluidigm single-cell gene expression,and is applicable to any single-cell data where where cells can be thresholded as positive or negative for one or more markers and counted. Multivariate vectors are allowed (i.e. multiple positive categories), although MIMOSA will only test two-sided hypotheses in that case.
+MIMOSA can be applied to paired count data, and is not limited to ICS assays. It has been successfully used with EliSpot assays for epitope mapping as well as Fluidigm single-cell gene expression,and is applicable to any single-cell data where where cells can be thresholded as positive or negative for one or more markers and counted. Multivariate counts are supported (i.e. multiple positive categories), although MIMOSA will only test two-sided hypotheses in that case, and only globally, (i.e. you'll know there is a difference, but now which subset exhibits the difference).
 
 \end{document}

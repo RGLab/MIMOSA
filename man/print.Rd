@@ -1,18 +1,22 @@
+\docType{methods}
 \name{print.MIMOSAResultList}
 \alias{print.MIMOSAResultList}
-\alias{show}
 \alias{show,MIMOSAResult-method}
 \title{Print a MIMOSAResultList}
 \usage{
-  \method{print}{MIMOSAResultList} (x, ...)
+\method{print}{MIMOSAResultList}(x, ...)
+
+\S4method{show}{MIMOSAResult}(object)
 }
 \arguments{
   \item{x}{a \code{MIMOSAResultList}}
 
   \item{...}{additional arguments passed down}
+
+  \item{object}{Any R object}
 }
 \description{
-  Print a summary of the list of results returned by a call
-  to \code{MIMOSA}
+Print a summary of the list of results returned by a call
+to \code{MIMOSA}
 }
 

@@ -1,12 +1,4 @@
-# Methods.R Created on: Nov 30, 2011 Author: finak
-# extractANDOR<-function(ics,cell1,cell2,cell3,Control,visit,Stim,parent,...){
-# A<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell1),...)
-# B<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell2),...)
-# C<-extractData(ics,control=Control,stim=Stim,subset=c(visit,parent,cell3),...)
-# D<-A[,1:2]+B[,1:2]+C[,1:2] D<-cbind(D,A[,1:2]+A[,3:4]-D)
-# colnames(D)<-c('ns','nu','Ns','Nu')
-# attr(D,'pData')<-attributes(A)$pData
-# class(D)<-c(class(D),'icsdata') D }
+
 
 estimateProportions2 <- function(x, method = "mode") {
   UseMethod("estimateProportions2")
@@ -98,37 +90,6 @@ setGeneric("Data", function(object) standardGeneric("Data"))
 setMethod("Data", "BetaMixResult", function(object) object@data[, 
                                                                 c("Ns", "ns", "Nu", "nu")])
 
-# setGeneric('fisherTest',function(x,...)standardGeneric('fisherTest'))
-# setMethod('fisherTest','BetaMixResult',function(x,threshold=NULL,alternative='greater',adjust='fdr'){
-# if(!is.null(threshold)){
-# p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c('Nu','nu','Ns','ns')],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)<=threshold
-# }else{
-# p.adjust(unlist(apply(Data(x),1,function(x)list(fisher.test(matrix(x[c('Nu','nu','Ns','ns')],ncol=2,byrow=T),alternative=alternative)$p.value)),use.names=FALSE),adjust)
-# } })
-
-# getRxCode<-function(bmr,ics){ ids<-rownames(Data(bmr))
-# subset(ics@rest$rx_code,ics@antigen%in%bmr@stimulation&ics@fname%in%bmr@cytokine[3]&ics@ID%in%ids&ics@rest$visit%in%bmr@cytokine[1]&ics@parent%in%bmr@cytokine[2])
-# }
-
-# estimateProportions2<-function(x,alternative='greater'){
-# UseMethod('estimateProportions'); }
-# estimateProportions2.MDMixResult<-function(x,alternative='greater'){
-# match.arg(alternative,c('greater','not equal'))
-# params<-colMeans(x$getmcmc()) q<-params[length(params)]
-# alphau<-params[((length(params)-1)/2+1):(length(params)-1)]
-# alphas<-params[1:((length(params)-1)/2)]
-# if(alternative=='greater'){
-# posterior<-cbind(pu=prop.table(t(t(x$n.unstim)+alphau+alphas),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas+alphau),margin=1)[,2])*x$z[,1]
-# +
-# cbind(pu=prop.table(t(t(x$n.unstim)+alphau),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas),margin=1)[,2])*x$z[,2]
-# ml<-cbind(pu=prop.table(x$n.unstim,margin=1)[,2],ps=prop.table(x$n.stim,margin=1)[,2])
-# return(list(posterior,ml)) }else{
-# posterior<-cbind(pu=prop.table(t(t(x$n.unstim)+alphau+alphas),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas+alphau),margin=1)[,2])*x$z[,1]
-# +
-# cbind(pu=prop.table(t(t(x$n.unstim)+alphau),margin=1)[,2],ps=prop.table(t(t(x$n.stim)+alphas),margin=1)[,2])*x$z[,2]
-# ml<-cbind(pu=prop.table(x$n.unstim,margin=1)[,2],ps=prop.table(x$n.stim,margin=1)[,2])
-# return(list(posterior,ml)) } }
-
 huberFilter <- function(object, sd = 2) {
   if (any(class(object) == "icsdata")) {
     stim <- object[, c("Ns", "ns")]
@@ -150,82 +111,6 @@ huberFilter <- function(object, sd = 2) {
   }
 }
 
-# FDR<-function(x,test='Fisher',pdcol='visit',...){
-# match.arg(test,c('Fisher','BB','MCMC'))
-# if(class(x)=='BetaMixResult'){ pd<-pData(x)
-# if(x@alternative.model=='greater'){
-# fpfilter<-apply(proportions(x@data),1,function(x)x['pu']>=x['ps'])
-# neg<-list(...)$neg } }else if (class(x)=='MDMixResult'){
-# pd<-pData(attr(x,'pData')) fpfilter<-list(...)$fpfilter
-# neg<-list(...)$neg } category<-sapply(pd,is.factor)
-# pd[category]<-lapply(pd[category],factor) if(!is.null(pdcol)){
-# pdc<-get(pdcol,pd) }else{ pdc<-rep(TRUE,nrow(pd)) }
-# if(!is.null(list(...)$neg)){ fpfilter<-list(...)$fpfilter
-# pdc<-pdc==neg|fpfilter } S<-seq(0,1,l=10000)
-# if(test=='Fisher'&class(x)=='BetaMixResult'){
-# FT<-fisherTest(x,threshold=NULL,adjust='none',alternative=x@alternative.model)
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } }else if(test=='BB'&class(x)=='BetaMixResult'){
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x@z)<=(th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } }else if(test=='MCMC'&any(class(x)=='MDMixResult')){
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(MIMOSA:::fdr(x$z)<=(th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } } return(data.frame(rate,nominal.fdr=S)) }
-
-# roc<-function(x,test='Fisher',pdcol='visit',...){ #check the
-# alternative.. if it's 'greater' then anything where the
-# empirical pu > ps should be in the true negative group.
-# match.arg(test,c('Fisher','BB','MCMC'))
-# if(class(x)=='BetaMixResult'){ pd<-pData(x)
-# if(x@alternative.model=='greater'){
-# fpfilter<-apply(proportions(x@data),1,function(x)x['pu']>=x['ps'])
-# if(!is.null(list(...)$fpfilter)){
-# fpfilter<-fpfilter|list(...)$fpfilter } neg<-list(...)$neg }
-# }else if (class(x)=='MDMixResult'){ pd<-pData(attr(x,'pData'))
-# fpfilter<-list(...)$fpfilter neg<-list(...)$neg }
-# category<-sapply(pd,is.factor)
-# pd[category]<-lapply(pd[category],factor) if(!is.null(pdcol)){
-# pdc<-get(pdcol,pd) }else{ pdc<-rep(TRUE,nrow(pd)) }
-# if(!is.null(list(...)$neg)){ pdc<-pdc==neg|fpfilter }
-# S<-seq(0,1,l=10000)
-# if(test=='Fisher'&class(x)=='BetaMixResult'){
-# FT<-fisherTest(x,threshold=NULL,adjust='none',alternative=x@alternative.model)
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(FT<=th,levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(FT<=th,levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } }else if(test=='BB'&class(x)=='BetaMixResult'){
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x@z[,2]>(1-th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } }else if(test=='MCMC'&any(class(x)=='MDMixResult')){
-# if(!is.na(match('parallel',loadedNamespaces()))){
-# rate<-do.call(rbind,mclapply(mc.cores=detectCores(),S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# }else{
-# rate<-do.call(rbind,lapply(S,function(th)prop.table(table(factor(x$z[,2]>(1-th),levels=c('TRUE','FALSE')),pdc),margin=2)['TRUE',]))
-# } } return(rate) }
-# fisherVsBB<-function(bmrlist,threshold,column,subset,margin=NULL,adjust.fisher='fdr',adjust.bb='fdr'){
-# if(class(bmrlist)=='BetaMixResult'){ bmrlist<-list(bmrlist) }
-# mycall<-substitute(subset) if(adjust.bb=='fdr'){
-# lapply(bmrlist,function(x){ subset<-eval(mycall,pData(x))
-# data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c('TRUE','FALSE'))[subset],get(column,pData(x))[subset]),margin=margin)['TRUE',],BB=prop.table(table(factor(x@fdr<=threshold,levels=c('TRUE','FALSE'))[subset],get(column,pData(x))[subset]),margin=margin)['TRUE',])
-# }) }else{ lapply(bmrlist,function(x){
-# subset<-eval(mycall,pData(x))
-# data.frame(Fisher=prop.table(table(factor(fisherTest(x,threshold=threshold,adjust=adjust.fisher),levels=c('TRUE','FALSE'))[subset],get(column,pData(x))[subset]),margin=margin)['TRUE',],BB=prop.table(table(factor(x@z[,2]>=1-threshold,levels=c('TRUE','FALSE'))[subset],get(column,pData(x))[subset]),margin=margin)['TRUE',])
-# }) } }
-
-# mergeICSData<-function(x){
-# data.frame(cytokine=x@fname,parent=x@parent,antigen=x@antigen,ID=x@ID,x@rest)
-# }
 
 setMethod("pData", "BetaMixResult", function(object) {
   pData(object@pd)

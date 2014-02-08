@@ -181,7 +181,7 @@ test <- function(x) {
   hess <- hessConstrainedNRLL(dat[[1]], dat[[2]])
   # Closed form. Should be equal to above, but a bit faster.
   time2 <- system.time({
-    dat <- MIMOSA:::simMD(alpha.s = c(100, 10, 10, 10), alpha.u = c(100, 
+    dat <- simMD(alpha.s = c(100, 10, 10, 10), alpha.u = c(100, 
                                                                     10, 10, 10), w = 0)
     repeat {
       new <- guess - solve(hess(guess)) %*% gr(guess)

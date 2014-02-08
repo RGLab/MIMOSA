@@ -2,11 +2,10 @@
 \alias{.fitMCMC}
 \title{Fit the MIMOSA model via MCMC}
 \usage{
-  .fitMCMC(data, inits = NULL, iter = 250000, burn = 50000,
-    thin = 1, tune = 100,
-    outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")),
-    alternative = "greater", UPPER = 0.5, LOWER = 0.15,
-    FAST = TRUE, EXPRATE = 1e-04, pXi = 1, seed = 10)
+.fitMCMC(data, inits = NULL, iter = 250000, burn = 50000, thin = 1,
+  tune = 100, outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")),
+  alternative = "greater", UPPER = 0.5, LOWER = 0.15, FAST = TRUE,
+  EXPRATE = 1e-04, pXi = 1, seed = 10)
 }
 \arguments{
   \item{data}{a \code{list} with elements names 'n.stim'
@@ -52,7 +51,7 @@
   \item{seed}{\code{numeric} random seed}
 }
 \description{
-  This is an internal function that fits the MIMOSA model
-  via MCMC. It is called from \code{MIMOSA}
+This is an internal function that fits the MIMOSA model via
+MCMC. It is called from \code{MIMOSA}
 }
 

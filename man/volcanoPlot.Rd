@@ -2,8 +2,7 @@
 \alias{volcanoPlot}
 \title{Volcano plot for a MIMOSA model}
 \usage{
-  volcanoPlot(x, effect_expression = NA, facet_var = NA,
-    threshold = 0.01)
+volcanoPlot(x, effect_expression = NA, facet_var = NA, threshold = 0.01)
 }
 \arguments{
   \item{x}{A \code{MIMOSAResultList}}
@@ -21,8 +20,25 @@
   coloring significant observations (based on the q-value)}
 }
 \description{
-  Plots effect size vs posterior probablilty of response
-  from a MIMOSAResultList, faceting by the conditioning
-  variables.
+Plots effect size vs posterior probablilty of response from
+a MIMOSAResultList, faceting by the conditioning variables.
+}
+\examples{
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+  reference=ANTIGEN\%in\%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+  other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+  default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+  .variables=.(TCELLSUBSET,CYTOKINE,UID),
+  featureCols=1,ref.append.replace="_REF")
+
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+    data=E, method="EM",
+    subset=RefTreat\%in\%"Treatment"&ANTIGEN\%in\%"ENV",
+    ref=ANTIGEN\%in\%"ENV"&RefTreat\%in\%"Reference")
+volcanoPlot(result,CYTNUM-CYTNUM_REF)
+}
+\seealso{
+\code{\link{countsTable}}
 }
 

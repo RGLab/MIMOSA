@@ -2,13 +2,11 @@
 \alias{ConstructMIMOSAExpressionSet}
 \title{A wrapper for constructing an Expression Set for MIMOSA}
 \usage{
-  ConstructMIMOSAExpressionSet(thisdata,
-    reference = quote(STAGE \%in\% "CTRL" & PROTEIN \%in\% "Media+cells"),
-    measure.columns = c("Neg", "Pos"),
-    other.annotations = setdiff(colnames(thisdata), measure.columns),
-    default.cast.formula = component ~ ...,
-    .variables = quote(.(PTID, TESTDT, ASSAYID, PLATEID)),
-    featureCols = 1, ref.append.replace = "_NEG")
+ConstructMIMOSAExpressionSet(thisdata, reference = quote(STAGE \%in\% "CTRL" &
+  PROTEIN \%in\% "Media+cells"), measure.columns = c("Neg", "Pos"),
+  other.annotations = setdiff(colnames(thisdata), measure.columns),
+  default.cast.formula = component ~ ..., .variables = quote(.(PTID, TESTDT,
+  ASSAYID, PLATEID)), featureCols = 1, ref.append.replace = "_NEG")
 }
 \arguments{
   \item{thisdata}{is the input data frame}
@@ -53,10 +51,19 @@
   will be replaces with _REF for 'reference'}
 }
 \description{
-  Calls a series of other functions that will reshape and
-  refactor the data frame into the right format for use by
-  MIMOSA Standardized for use with internal SCHARP data
-  sets. We provide some default arguments as examples.
-  Currently slow, and very much prototype code.
+Calls a series of other functions that will reshape and
+refactor the data frame into the right format for use by
+MIMOSA Standardized for use with internal SCHARP data sets.
+We provide some default arguments as examples. Currently
+slow, and very much prototype code.
+}
+\examples{
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+  reference=ANTIGEN\%in\%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+  other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+  default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+  .variables=.(TCELLSUBSET,CYTOKINE,UID),
+  featureCols=1,ref.append.replace="_REF")
 }
 

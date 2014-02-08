@@ -7,30 +7,30 @@
 \alias{getZ.MIMOSAResultList}
 \title{Extract the posterior probabilities of response from a MIMOSA model}
 \usage{
-  getZ(x)
+getZ(x)
 
-  \method{getZ}{MIMOSAResultList} (x)
+\method{getZ}{MIMOSAResultList}(x)
 
-  \method{getZ}{MIMOSAResult} (x)
+\method{getZ}{MIMOSAResult}(x)
 
-  getW(x)
+getW(x)
 
-  \method{getW}{MIMOSAResultList} (x)
+\method{getW}{MIMOSAResultList}(x)
 
-  \method{getW}{MIMOSAResult} (x)
+\method{getW}{MIMOSAResult}(x)
 }
 \arguments{
   \item{x}{output from a MIMOSA model}
 }
 \value{
-  a \code{matrix} of posterior probabilities
+a \code{matrix} of posterior probabilities
 
-  a \code{vector} of component weights
+a \code{vector} of component weights
 }
 \description{
-  Extract the posterior probabilities of response from a
-  MIMOSA model
+Extract the posterior probabilities of response from a
+MIMOSA model
 
-  Extract the component weights from a MIMOSA model
+Extract the component weights from a MIMOSA model
 }
 

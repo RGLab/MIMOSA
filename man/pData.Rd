@@ -1,26 +1,34 @@
-\name{pData}
-\alias{pData}
-\alias{pData,MCMCResult-methods}
-\alias{pData,MDMixResult-methods}
+\docType{methods}
+\name{pData,MIMOSAResult-method}
+\alias{pData,MCMCResult-method}
+\alias{pData,MDMixResult-method}
 \alias{pData,MIMOSAResult-method}
-\alias{pData,MIMOSAResultList-methods}
+\alias{pData,MIMOSAResultList-method}
 \alias{pData.MIMOSAResultList}
 \title{pData extract the phenoData table from a MIMOSA result}
 \usage{
-  pData.MIMOSAResultList(object)
+\S4method{pData}{MIMOSAResult}(object)
+
+\S4method{pData}{MDMixResult}(object)
+
+\S4method{pData}{MCMCResult}(object)
+
+pData.MIMOSAResultList(object)
+
+\S4method{pData}{MIMOSAResultList}(object)
 }
 \arguments{
   \item{object}{is the MIMOSAResult returned from a call to
   MIMOSA}
 }
 \value{
-  an object of type \code{data.frame}
+an object of type \code{data.frame}
 }
 \description{
-  pData extract the phenoData table from a MIMOSA result
+pData extract the phenoData table from a MIMOSA result
 }
 \details{
-  Extracts the phenoData data.frame from a MIMOSAResult
-  object
+Extracts the phenoData data.frame from a MIMOSAResult
+object
 }
 

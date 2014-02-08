@@ -21,13 +21,13 @@ CompleteDataLLRcpp <- function(d, alpha0, beta0, alphaS, betaS, z,
 CompleteDataLL <- function(d, alpha0, beta0, alphaS, betaS, z, w, 
                            alternative = "greater", mciter = 50) {
   if (alternative == "greater") {
-    result <- MIMOSA:::MarginalGT(d[, "Ns"], d[, "ns"], d[, "Nu"], 
+    result <- MarginalGT(d[, "Ns"], d[, "ns"], d[, "Nu"], 
                                   d[, "nu"], alpha0, beta0, alphaS, betaS) * z[, 2]
   } else {
-    result <- MIMOSA:::MarginalNE(d[, "Ns"], d[, "ns"], d[, "Nu"], 
+    result <- MarginalNE(d[, "Ns"], d[, "ns"], d[, "Nu"], 
                                   d[, "nu"], alpha0, beta0, alphaS, betaS) * z[, 2]
   }
-  result <- result + MIMOSA:::MarginalNULL(d[, "Ns"], d[, "ns"], 
+  result <- result + MarginalNULL(d[, "Ns"], d[, "ns"], 
                                            d[, "Nu"], d[, "nu"], alpha0, beta0) * z[, 1]
   
   return(sum(result))

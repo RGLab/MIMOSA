@@ -18,7 +18,7 @@ install:
   - Rscript -e 'install.packages("devtools", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("ggplot2", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("plyr", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("reshape", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
+  - Rscript -e 'install.packages("reshape2", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("Formula", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("data.table", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("pracma", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'

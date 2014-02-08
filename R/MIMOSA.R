@@ -13,9 +13,10 @@
 #'@import Formula
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
-#'@import plyr
 #'@import reshape
+#'@importFrom plyr ddply
 #'@name MIMOSA-package
+#'@seealso \code{\link{MIMOSA}}, \code{\link{ConstructMIMOSAExpressionSet}}
 #'@references Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo
 #'  Mixture Models for Single Cell Assays with Applications to Vaccine Studies
 #'  Biostatistics, 2013, \url{http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.abstract}
@@ -56,8 +57,24 @@ NULL
 #'  rhs, supporting extended formula interface with conditioning.
 #'@param data an \code{ExpressionSet} object with features on rows and samples
 #'  (labelled with phenoData) on columns.
+#'@param ... additional arguments
 #'@return an object of type \code{MIMOSAResult}
 #'@aliases MIMOSA,formula,ExpressionSet-method
+#'@importFrom data.table key
+#'@examples 
+##' data(ICS)
+##' E<-ConstructMIMOSAExpressionSet(ICS,
+##'   reference=ANTIGEN%in%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+##'   other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
+##'   featureCols=1,ref.append.replace="_REF")
+##'   
+##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+##'     data=E, method="EM",
+##'     subset=RefTreat%in%"Treatment"&ANTIGEN%in%"ENV",
+##'     ref=ANTIGEN%in%"ENV"&RefTreat%in%"Reference")
+#'@seealso \code{\link{MIMOSA-package}} \code{\link{ConstructMIMOSAExpressionSet}} \code{\link{MIMOSAResult}}
 #'@export
 setGeneric("MIMOSA", def = function(formula, data, ...) {
   standardGeneric("MIMOSA")
@@ -286,12 +303,20 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
   }
   class(result) <- c("MIMOSAResultList", "list")
   if (length(result) > 0) {
-    depf <- strsplit(gsub(" ", "", strsplit(paste0(deparse(formula[[3]]),collapse=""), 
-                                            "|", fixed = TRUE)[[1]][[2]]), "+", fixed = TRUE)[[1]]
+    #browser()
+    splitted<-strsplit(paste0(deparse(formula[[3]]),collapse=""),"|",fixed=TRUE)[[1]]
+    if(length(splitted)>1){
+      depf<-strsplit(gsub(" ","",splitted[[2]]),"+",fixed=TRUE)[[1]]
+    }else{
+      depf<-NULL
+    }
     n_vars <- length(depf)
     # NOTE this is probably wrong..
-    names(result) <- levels(interaction(as.data.frame(lapply(pData(result)[, 
-                                                                           depf, with = FALSE], factor))))
+    if(n_vars>0){
+      names(result) <- levels(interaction(as.data.frame(lapply(pData(result)[,depf, with = FALSE], factor))))
+    }else{
+      names(result)<-"result"
+    }
   }
   return(result)
 })
@@ -312,23 +337,23 @@ setMethod("pData", "MIMOSAResult", function(object) {
 
 #'@rdname pData
 #'@method pData MDMixResult
-#'@aliases pData,MDMixResult-methods
+#'@aliases pData,MDMixResult-method
 setMethod("pData", "MDMixResult", function(object) {
   pData(object@pd)
 })
 
 #'@rdname pData
-#'@aliases pData,MCMCResult-methods
+#'@aliases pData,MCMCResult-method
 #'@method pData MCMCResult
 setMethod("pData", "MCMCResult", function(object) {
   pData(object@phenoData)
 })
 
 
-#'roc computes an ROC curve
-#'
-#'@param p is the probability of a positive result
-#'@param truth is a logical with the true positive and negative results
+# 'roc computes an ROC curve
+# '
+# '@param p is the probability of a positive result
+# '@param truth is a logical with the true positive and negative results
 roc <- function(p, truth) {
   s <- seq(0, 1, l = 1000)
   table <- t(sapply(s, function(th) {
@@ -339,10 +364,9 @@ roc <- function(p, truth) {
   table
 }
 
-#'fdrComparison calculates the observed vs expected false discovery rate
-#'@param fdr is the expected false discovery rate
-#'@param truth is a logical with the true positive and negative results
-#'@export
+# 'fdrComparison calculates the observed vs expected false discovery rate
+# '@param fdr is the expected false discovery rate
+# '@param truth is a logical with the true positive and negative results
 fdrComparison <- function(fdr, truth) {
   truth <- truth[order(fdr)]
   true.fdr <- cumsum(1 - truth)/1:length(truth)
@@ -366,14 +390,12 @@ fdrComparison <- function(fdr, truth) {
 #' @param featureCols the indices of the columns that identify features.
 #' @export
 MIMOSAExpressionSet <- function(df, featureCols) {
-  # feature<-df[,featureCols,drop=FALSE]
   
   featuredata <- attributes(df)$rdimnames[[1]]
   pdata <- attributes(df)$rdimnames[[2]]
   df <- df[, -featureCols, drop = FALSE]  #adata
   
   rownames(df) <- rownames(featuredata)
-  # rownames(pdata)<-colnames(df)
   
   E <- ExpressionSet(as.matrix(as.data.frame(df)), featureData = AnnotatedDataFrame(as.data.frame(featuredata)), 
                      phenoData = AnnotatedDataFrame(pdata))
@@ -381,16 +403,15 @@ MIMOSAExpressionSet <- function(df, featureCols) {
 }
 
 
-#'Replicate the reference observations across all treatment groups using ddply
-#'
-#'@details Should be passed to .fun argument of ddply.
-#'
-#'@param dat the piece we will work on
-#'@param ref an expression evaluating to a logical vector that identifies the reference class within the piece.
-#'@param cols A character vector of the names of the columns that hold our measurements
-#'@param annotations A character vector of additional annotation columns
-#'@param default.formula a default formula to be used for casting the data.
-#'@export
+# 'Replicate the reference observations across all treatment groups using ddply
+# '
+# '@details Should be passed to .fun argument of ddply.
+# '
+# '@param dat the piece we will work on
+# '@param ref an expression evaluating to a logical vector that identifies the reference class within the piece.
+# '@param cols A character vector of the names of the columns that hold our measurements
+# '@param annotations A character vector of additional annotation columns
+# '@param default.formula a default formula to be used for casting the data.
 setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, 
                          default.formula = component ~ ...) {
   REFERENCE <- try(eval(ref, dat))
@@ -438,6 +459,15 @@ setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL,
 ##'@param .variables is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
 ##'@param featureCols is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
 ##'@param ref.append.replace the terminating character string in the column names of the negative controls. It will be replaces with _REF for 'reference'
+##'@examples 
+##' data(ICS)
+##' E<-ConstructMIMOSAExpressionSet(ICS,
+##'   reference=ANTIGEN%in%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+##'   other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
+##'   featureCols=1,ref.append.replace="_REF")
+##' 
 ##'@export
 ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% 
                                                                        "CTRL" & PROTEIN %in% "Media+cells"), measure.columns = c("Neg", 
@@ -482,15 +512,15 @@ ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in%
 }
 
 
-#'Sumarize the replicates in an elispot epitope mapping data set from SCHARP
-#'
-#' Thus function will summarize the replicate observations for the negative controls and stimulations in an epitope mapping data set from SCHARP. The user provides information on grouping structure, cells per well, replicate observation columns and so forth. The function is meant to be passed to ddply
-#'@param x is the piece of data currently being worked on. It is a unique combination of the grouping variables passed to ddply
-#'@param CONTROL is an expression that evaluates to a logical vector specifying which rows of the data frame are control observations.
-#'@param WELLMULTIPLIER is a numeric argument that specifies the factor by which to multiply the denominator (in the \code{cells.per.well} argument). i.e., if there are 100K cells per well, but the cells.per.well column has 100, the WELLMULTIPLIER would be 1000
-#'@param replicates is a character vector identifying the column names that contain the replicated observations. These will be summed.
-#'@param cells.per.well is a character vector that identifies the column containing the number of cells per well.
-#'@param SAMPLE is an expression evaluating to a logical vector that identifies the rows of the data frame which are antigen or peptide stimualtions rather than control samples.
+# 'Sumarize the replicates in an elispot epitope mapping data set from SCHARP
+# '
+# ' Thus function will summarize the replicate observations for the negative controls and stimulations in an epitope mapping data set from SCHARP. The user provides information on grouping structure, cells per well, replicate observation columns and so forth. The function is meant to be passed to ddply
+# '@param x is the piece of data currently being worked on. It is a unique combination of the grouping variables passed to ddply
+# '@param CONTROL is an expression that evaluates to a logical vector specifying which rows of the data frame are control observations.
+# '@param WELLMULTIPLIER is a numeric argument that specifies the factor by which to multiply the denominator (in the \code{cells.per.well} argument). i.e., if there are 100K cells per well, but the cells.per.well column has 100, the WELLMULTIPLIER would be 1000
+# '@param replicates is a character vector identifying the column names that contain the replicated observations. These will be summed.
+# '@param cells.per.well is a character vector that identifies the column containing the number of cells per well.
+# '@param SAMPLE is an expression evaluating to a logical vector that identifies the rows of the data frame which are antigen or peptide stimualtions rather than control samples.
 match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" & 
                                                         PROTEIN %in% "Media+cells"), WELLMULTIPLIER = 1000, replicates = c("REP1", 
                                                                                                                            "REP2", "REP3", "REP4", "REP5", "REP6"), cells.per.well = "CELLWELL", 
@@ -556,7 +586,7 @@ pData.MIMOSAResultList <- function(object) {
 
 #'@rdname pData
 #'@method pData MIMOSAResultList
-#'@aliases pData,MIMOSAResultList-methods
+#'@aliases pData,MIMOSAResultList-method
 setMethod("pData", "MIMOSAResultList", pData.MIMOSAResultList)
 
 #'Extract the posterior probabilities of response from a MIMOSA model
@@ -622,6 +652,21 @@ countsTable <- function(object, proportion = FALSE) {
 #'@rdname countsTable
 #'@docType methods
 #'@return a \code{data.frame} of counts for the stimulated and unstimulated samples
+#'@examples
+##' data(ICS)
+##' E<-ConstructMIMOSAExpressionSet(ICS,
+##'   reference=ANTIGEN%in%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+##'   other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
+##'   featureCols=1,ref.append.replace="_REF")
+##'   
+##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+##'     data=E, method="EM",
+##'     subset=RefTreat%in%"Treatment"&ANTIGEN%in%"ENV",
+##'     ref=ANTIGEN%in%"ENV"&RefTreat%in%"Reference")
+##' head(countsTable(result))
+##' head(countsTable(result,proportion=TRUE))
 #'@export
 setGeneric("countsTable")
 
@@ -687,7 +732,22 @@ setMethod("countsTable", "MIMOSAResultList", countsTable.MIMOSAResultList)
 #'@param effect_expression an \code{expression} that defines the effect size. Usually a function of the stimulated and unstimulated proportions from \code{countsTable(x,proportion=TRUE)}
 #'@param facet_var an \code{expression} defining the faceting in ggplot parlance. i.e. \code{~ faceting + variables}
 #'@param threshold a \code{numeric} value between [0,1] for coloring significant observations (based on the q-value)
+#'@examples
+#'data(ICS)
+##' E<-ConstructMIMOSAExpressionSet(ICS,
+##'   reference=ANTIGEN%in%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+##'   other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID"),
+##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
+##'   featureCols=1,ref.append.replace="_REF")
+##'   
+##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+##'     data=E, method="EM",
+##'     subset=RefTreat%in%"Treatment"&ANTIGEN%in%"ENV",
+##'     ref=ANTIGEN%in%"ENV"&RefTreat%in%"Reference")
+##' volcanoPlot(result,CYTNUM-CYTNUM_REF)
 #'@importFrom ggplot2 ggplot geom_point theme_bw aes_string scale_y_continuous
+#'@seealso \code{\link{countsTable}}
 #'@export 
 volcanoPlot <- function(x, effect_expression = NA, facet_var = NA, 
                         threshold = 0.01) {

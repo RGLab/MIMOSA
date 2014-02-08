@@ -2,7 +2,7 @@
 \alias{MIMOSAExpressionSet}
 \title{Construct an ExpressionSet for MIMOSA}
 \usage{
-  MIMOSAExpressionSet(df, featureCols)
+MIMOSAExpressionSet(df, featureCols)
 }
 \arguments{
   \item{df}{a data.frame that is in the correct form}
@@ -11,17 +11,17 @@
   identify features.}
 }
 \description{
-  Starting from a reshaped data frame in the correct
-  format, construct an ExpressionSet object that can be
-  used with MIMOSA.
+Starting from a reshaped data frame in the correct format,
+construct an ExpressionSet object that can be used with
+MIMOSA.
 }
 \details{
-  The featureCols will be used to construct feature names,
-  and these columns will be dropped from the exprs matrix.
-  The column names are assumed to have names that contain
-  '_' characters separating phenotypic characteristics.
-  These would be generated automatically if the data frame
-  was constrcuted with 'reshape'. They are used to
-  construct the phenoData for the expression set
+The featureCols will be used to construct feature names,
+and these columns will be dropped from the exprs matrix.
+The column names are assumed to have names that contain '_'
+characters separating phenotypic characteristics. These
+would be generated automatically if the data frame was
+constrcuted with 'reshape'. They are used to construct the
+phenoData for the expression set
 }
 

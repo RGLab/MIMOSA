@@ -2,8 +2,8 @@
 \alias{MDMix}
 \title{EM fitting of the Multinomial Dirichlet MIMOSA model.}
 \usage{
-  MDMix(data = NULL, modelmatrix = NULL,
-    alternative = "greater", initonly = FALSE)
+MDMix(data = NULL, modelmatrix = NULL, alternative = "greater",
+  initonly = FALSE)
 }
 \arguments{
   \item{data}{The observed data}
@@ -18,15 +18,15 @@
   just the initialization parameters.}
 }
 \value{
-  An object of class \code{MDMixResult}
+An object of class \code{MDMixResult}
 }
 \description{
-  This function fits the multinomial dirichelt MIMOSA model
-  using EM. It can also be used to initialize the model
-  parameters for the MCMC model.
+This function fits the multinomial dirichelt MIMOSA model
+using EM. It can also be used to initialize the model
+parameters for the MCMC model.
 }
 \author{
-  Greg Finak TODO filtering of pu>ps needs to be corrected
-  here.
+Greg Finak TODO filtering of pu>ps needs to be corrected
+here.
 }
 

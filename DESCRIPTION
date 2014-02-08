@@ -1,7 +1,7 @@
 Package: MIMOSA
 Type: Package
 Title: Mixture Models for Single-Cell Assays
-Version: 0.9.12
+Version: 0.99.0
 Date: 2013-10-02
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
@@ -17,7 +17,6 @@ Imports:
     MCMCpack,
     coda,
     modeest
-Enhances: compiler
 Suggests:
     multicore,
     parallel,
@@ -27,26 +26,8 @@ Depends:
     Biobase,
     MASS,
     ggplot2,
-    plyr,
-    reshape
+    reshape,
+    plyr
 LinkingTo: Rcpp, RcppArmadillo
-Collate:
-    'Classes.R'
-    'BetaMix.R'
-    'CompleteDataLL.R'
-    'MarginalGT.R'
-    'MarginalNE.R'
-    'MarginalNULL.R'
-    'MultinomialDirichlet.R'
-    'betaintegral.R'
-    'constrained.R'
-    'MonteCarlo.R'
-    'contourPlot.R'
-    'gibbsPsPu.R'
-    'helperMethods.R'
-    'initBetaMix.R'
-    'likelihoodsurface.R'
-    'posteriorSample.R'
-    'MIMOSA.R'
 LazyLoad: yes
 LazyData: yes
