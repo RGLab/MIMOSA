@@ -31,3 +31,4 @@ Depends:
 LinkingTo: Rcpp, RcppArmadillo
 LazyLoad: yes
 LazyData: yes
+biocViews: FlowCytometry, CellBasedAssays
