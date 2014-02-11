@@ -33,4 +33,32 @@ MIMOSA model
 
 Extract the component weights from a MIMOSA model
 }
+\examples{
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+  reference=ANTIGEN\%in\%'negctrl',measure.columns=c('CYTNUM','NSUB'),
+  other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
+  default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+  .variables=.(TCELLSUBSET,CYTOKINE,UID),
+  featureCols=1,ref.append.replace='_REF')
+
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+    data=E, method='EM',
+    subset=RefTreat\%in\%'Treatment'&ANTIGEN\%in\%'ENV',
+    ref=ANTIGEN\%in\%'ENV'&RefTreat\%in\%'Reference')
+    getZ(result)
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+  reference=ANTIGEN\%in\%'negctrl',measure.columns=c('CYTNUM','NSUB'),
+  other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
+  default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+  .variables=.(TCELLSUBSET,CYTOKINE,UID),
+  featureCols=1,ref.append.replace='_REF')
+
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+    data=E, method='EM',
+    subset=RefTreat\%in\%'Treatment'&ANTIGEN\%in\%'ENV',
+    ref=ANTIGEN\%in\%'ENV'&RefTreat\%in\%'Reference')
+getW(result)
+}
 

@@ -1,0 +1,33 @@
+MIMOSA 0.9.12
+=============
+* MIMOSA now returns a MIMOSAResultList S3 class.
+  A lightweight wrapper for a list, with methods defined to extract the `fdr` and `pData`, `getW`, and `getZ` to extract the component weights and posterior probabilities, respectively.
+* `print` for `MIMOSAResult` and `MIMOSAResultList`
+* extractors for `countsTable`, the table of counts used to fit the model. Takes an argument to return the proportions or the counts.
+* MIMOSA checks throws a more informative warning if the data is filtered into oblivion when not properly paired (e.g. when the user doesn't aggregate over replicate negative controls, for example. )
+* `volcanoPlot` implemented for MIMOSAResultList 
+* Cleaned up package warnings and notes.
+* Cleaned up imports and depends.
+
+MIMOSA 0.9.9
+============
+* Bug Fixes
+** Filtered out empty categories on the conditioning variables.
+** Support for parallel as well as multicore
+
+* News
+** multicore support (via the multicore package) will be phased out in favor of the parallel package.
+
+MIMOSA 0.8.0
+============
+* Model fitting via the 'MIMOSA' function
+* Data represented via an ExpressionSet
+* Formula interface support
+* Removed old code, including ICS class, and dependencies upon it.
+* New documentation
+
+MIMOSA 0.7.0
+============
+* First beta release of MIMOSA
+* model fitting via MCMC through the .fitMCMC function
+

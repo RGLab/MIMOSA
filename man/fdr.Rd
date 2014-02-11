@@ -24,4 +24,18 @@ a vector of q-values or a list of vectors of q-values.
 Given the z's from a MIMOSA model, calculates the q-values
 for each observation.
 }
+\examples{
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+                              reference=ANTIGEN\%in\%'negctrl',measure.columns=c('CYTNUM','NSUB'),
+                               other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
+                               default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+                               .variables=.(TCELLSUBSET,CYTOKINE,UID),
+                               featureCols=1,ref.append.replace='_REF')
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+   data=E, method='EM',
+   subset=RefTreat\%in\%'Treatment'&ANTIGEN\%in\%'ENV',
+   ref=ANTIGEN\%in\%'ENV'&RefTreat\%in\%'Reference')
+qvalues<-fdr(result)
+}
 

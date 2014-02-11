@@ -12,6 +12,7 @@
 /*
  * 18 parameters
  */
+ // [[register]]
 RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SEXP _q, SEXP _z,SEXP _iter, SEXP _burn, SEXP _thin, SEXP _tune,SEXP _outfile, SEXP _filter, SEXP _upper, SEXP _lower, SEXP _bfilter, SEXP _fast, SEXP _exprate, SEXP _pXi){
 	BEGIN_RCPP
 	ntune=0;
