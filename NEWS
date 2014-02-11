@@ -1,3 +1,9 @@
+MIMOSA 0.99.2
+=============
+* Added unit tests
+* Passing BiocCheck
+* Remove dependency on `multicore`. Now `parallel` only.
+
 MIMOSA 0.9.12
 =============
 * MIMOSA now returns a MIMOSAResultList S3 class.
