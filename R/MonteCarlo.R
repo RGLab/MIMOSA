@@ -135,11 +135,11 @@ icsdata2mvicsdata <- function(x) {
         filter <- rep(FALSE, nrow(data$n.stim))
         FILTER <- FALSE
     }
-    result <- .Call("fitMCMC", as.matrix(data$n.stim), as.matrix(data$n.unstim), 
+    result <- .Call("C_fitMCMC", as.matrix(data$n.stim), as.matrix(data$n.unstim), 
         as.vector(inits$alpha.s), as.vector(inits$alpha.u), as.vector(inits$q), as.matrix(inits$z), 
         as.vector(iter), as.vector(burn), as.vector(thin), as.numeric(tune), as.character(outfile), 
         as.vector(filter), as.numeric(UPPER), as.numeric(LOWER), FILTER, FAST, as.numeric(EXPRATE), 
-        as.numeric(pXi), package = "MIMOSA")
+        as.numeric(pXi))
     if (inherits(result, "character")) {
         return(result)
     }

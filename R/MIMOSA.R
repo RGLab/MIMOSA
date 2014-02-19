@@ -17,6 +17,7 @@
 #'@import reshape
 #'@importFrom plyr ddply
 #'@importFrom methods new
+#'@importFrom Rcpp evalCpp
 #'@name MIMOSA-package
 #'@seealso \code{\link{MIMOSA}}, \code{\link{ConstructMIMOSAExpressionSet}}
 #'@references Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo

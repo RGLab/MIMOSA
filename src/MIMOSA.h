@@ -1,6 +1,7 @@
 #ifndef MIMOSA_H
 #define MIMOSA_H
 #include <Rcpp.h>
+#include <Rcpp/routines.h>
 
 
 #define RATE 2.4

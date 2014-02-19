@@ -1,3 +1,7 @@
+MIMOSA 0.99.4
+=============
+Compatibility with Rcpp 11.0
+
 MIMOSA 0.99.2
 =============
 * Added unit tests

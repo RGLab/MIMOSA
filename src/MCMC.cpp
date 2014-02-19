@@ -22,7 +22,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	using namespace std;
 	bool fixed = false;
 
-	Rcpp::RNGScope globalscope;
+	RNGScope globalscope;
 	//			printf("%f %f %f %f\n",exp(normconstIBeta(15,3000,30,3000)),(normconstMC(30,3000,15,3000)),(exp(normconstIBeta(3000,30,3000,15))),(normconstMC(3000,15,3000,30)));
 	//			exit(0);
 	/*
