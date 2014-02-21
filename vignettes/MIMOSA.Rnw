@@ -74,7 +74,8 @@ We have taken advantage of the the ExpressionSet object in Bioconductor to wrap 
 
 <<Eset,mesage=FALSE,warning=FALSE,error=FALSE>>=
 E<-ConstructMIMOSAExpressionSet(ICS,
-                                reference=ANTIGEN%in%"negctrl",measure.columns=c("CYTNUM","NSUB"),
+                                reference=ANTIGEN%in%"negctrl",
+                                measure.columns=c("CYTNUM","NSUB"),
                                 other.annotations=c("CYTOKINE","TCELLSUBSET","ANTIGEN","UID","Ntot"),
                                 default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET+Ntot,
                                 .variables=.(TCELLSUBSET,CYTOKINE,UID,Ntot),
