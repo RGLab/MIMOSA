@@ -5,14 +5,35 @@ Version: 0.99.5
 Date: 2013-10-02
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
-Description: Modeling count data using Dirichlet-multinomial and
-        beta-binomial mixtures with applications to single-cell assays.
+Description: Modeling count data using Dirichlet-multinomial and beta-binomial
+    mixtures with applications to single-cell assays.
 License: Artistic-2.0
 VignetteBuilder: knitr
-Imports: methods, Formula, data.table, pracma, MCMCpack, coda, modeest,
-        ggplot2, reshape, plyr, Biobase, MASS, testthat, Rcpp
-Suggests: parallel, knitr
-Depends: R (>= 3.0.2), MASS, plyr, reshape, Biobase, ggplot2
+Imports:
+    methods,
+    Formula,
+    data.table,
+    pracma,
+    MCMCpack,
+    coda,
+    modeest,
+    ggplot2,
+    reshape,
+    plyr,
+    Biobase,
+    MASS,
+    testthat,
+    Rcpp
+Suggests:
+    parallel,
+    knitr
+Depends:
+    R (>= 3.0.2),
+    MASS,
+    plyr,
+    reshape,
+    Biobase,
+    ggplot2
 LinkingTo: Rcpp, RcppArmadillo
 LazyLoad: yes
 LazyData: yes
