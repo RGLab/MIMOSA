@@ -1,5 +1,6 @@
 .DS_Store
 .project
+src/MIMOSA_init.o
 src/betaintegral.o
 src/betaintegralRcpp.o
 src/BetaMix.o
