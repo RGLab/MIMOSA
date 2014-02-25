@@ -1,0 +1,54 @@
+\docType{methods}
+\name{countsTable}
+\alias{countsTable}
+\alias{countsTable,MCMCResult-method}
+\alias{countsTable,MDMixResult-method}
+\alias{countsTable,MIMOSAResult-method}
+\alias{countsTable,MIMOSAResultList-method}
+\alias{countsTable.MIMOSAResultList}
+\title{Extract the table of counts from a MIMOSA model}
+\usage{
+countsTable(object, proportion = FALSE)
+
+\S4method{countsTable}{MIMOSAResult}(object, proportion = FALSE)
+
+\S4method{countsTable}{MCMCResult}(object, proportion = FALSE)
+
+\S4method{countsTable}{MDMixResult}(object, proportion = FALSE)
+
+\method{countsTable}{MIMOSAResultList}(object, proportion = FALSE)
+
+\S4method{countsTable}{MIMOSAResultList}(object, proportion = FALSE)
+}
+\arguments{
+  \item{object}{a \code{MIMOSAResult}}
+
+  \item{proportion}{\code{logical} return the counts or the
+  proportions}
+}
+\value{
+a \code{data.frame} of counts to which the model was fit.
+
+a \code{data.frame} of counts for the stimulated and
+unstimulated samples
+}
+\description{
+Extract the table of counts from a MIMOSA model
+}
+\examples{
+data(ICS)
+E<-ConstructMIMOSAExpressionSet(ICS,
+  reference=ANTIGEN\%in\%'negctrl',measure.columns=c('CYTNUM','NSUB'),
+  other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
+  default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+  .variables=.(TCELLSUBSET,CYTOKINE,UID),
+  featureCols=1,ref.append.replace='_REF')
+
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+    data=E, method='EM',
+    subset=RefTreat\%in\%'Treatment'&ANTIGEN\%in\%'ENV',
+    ref=ANTIGEN\%in\%'ENV'&RefTreat\%in\%'Reference')
+head(countsTable(result))
+head(countsTable(result,proportion=TRUE))
+}
+
