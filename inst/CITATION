@@ -1,0 +1,9 @@
+bibentry(author = "Greg Finak,  Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo", 
+title = "Mixture models for single-cell assays with applications to vaccine studies",
+year = "2013",
+bibtype="article",
+doi = "10.1093/biostatistics/kxt024", 
+URL = "http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.abstract",
+eprint = "http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.full.pdf+html", 
+pmid = "23887981",
+journal = "Biostatistics")
