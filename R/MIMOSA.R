@@ -65,18 +65,18 @@ NULL
 #'@aliases MIMOSA,formula,ExpressionSet-method
 #'@importFrom data.table key
 #'@examples 
-##' data(ICS)
-##' E<-ConstructMIMOSAExpressionSet(ICS,
-##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
-##'   other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
-##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
-##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
-##'   featureCols=1,ref.append.replace='_REF')
-##'   
-##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
-##'     data=E, method='EM',
-##'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
-##'     ref=ANTIGEN%in%'ENV'&RefTreat%in%'Reference')
+#' data(ICS)
+#' E<-ConstructMIMOSAExpressionSet(ICS,
+#'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
+#'   other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
+#'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
+#'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
+#'   featureCols=1,ref.append.replace='_REF')
+#'   
+#' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+#'     data=E, method='EM',
+#'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
+#'     ref=ANTIGEN%in%'ENV'&RefTreat%in%'Reference')
 #'@seealso \code{\link{MIMOSA-package}} \code{\link{ConstructMIMOSAExpressionSet}} \code{\link{MIMOSAResult}}
 #'@export
 setGeneric("MIMOSA", def = function(formula, data, ...) {
@@ -297,8 +297,8 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
         n_vars <- length(depf)
         # NOTE this is probably wrong..
         if (n_vars > 0) {
-            names(result) <- levels(interaction(as.data.frame(lapply(pData(result)[, 
-                depf, with = FALSE], factor))))
+            names(result) <- levels(factor(interaction(as.data.frame(lapply(pData(result)[, 
+                depf, with = FALSE], factor)))))
         } else {
             names(result) <- "result"
         }
@@ -371,7 +371,7 @@ fdrComparison <- function(fdr, truth) {
 #'  are used to construct the phenoData for the expression set
 #' @param df a data.frame that is in the correct form
 #' @param featureCols the indices of the columns that identify features.
-#' @examples##'
+#' @examples
 #' E<-ConstructMIMOSAExpressionSet(ICS,
 ##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
 ##'   other.annotations=c('CYTOKINE','TCELLSUBSET','ANTIGEN','UID'),
@@ -625,7 +625,7 @@ getZ.MIMOSAResult <- function(x) {
 #'
 #'@rdname MIMOSA-accessors
 #'@return a \code{vector} of component weights
-#'@examples##' 
+#'@examples 
 #'data(ICS)
 ##' E<-ConstructMIMOSAExpressionSet(ICS,
 ##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
