@@ -35,6 +35,21 @@ estimateProportions2.MDMixResult <- function(x, method = "mode") {
             ml.differences = ml.differences, ml.logodds = ml.logodds))
     }
 }
+
+
+##' Arcsinh transform for ggplot2
+##'
+##' Arcsinh transform for use with coord_trans in ggplot2
+##' @title asinh_trans
+##' @param c \code{numeric} cofactor for asinh trasnform. Default 1.
+##' @return transform
+##' @import scales
+##' @export
+##' @author Greg Finak
+asinh_trans <- function(c){
+    trans_new(name = "asinh", transform = function(x) asinh(x * c), inverse = function(x) sinh(x)/c)
+}
+
 ##' Combine two or more MIMOSAResultList objects
 ##'
 ##' Combines two or more MIMOSAResultList objects. The method is light on error checking so the results should be from the same
