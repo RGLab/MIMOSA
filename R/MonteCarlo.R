@@ -10,49 +10,49 @@ alphaProp1 <- function(alpha, sigma, i) {
 simAlpha.s <- function(alpha.s, alpha.u, z, S, llnull, llresp, i, rate) {
     a <- llnull(c(alpha.s, alpha.u))
     b <- llresp(c(alpha.s, alpha.u))
-    
+
     old <- sum(a * z[, 1] + b * z[, 2]) + dexp(alpha.s[i], 1e-04, log = TRUE)
     alpha.s.prop <- alphaProp1(alpha.s, S, i)
     if (any(alpha.s.prop < 0)) {
         return(list(alpha.s, rate))
     }
-    
+
     a <- llnull(c(alpha.s.prop, alpha.u))
     b <- llresp(c(alpha.s.prop, alpha.u))
-    
+
     new <- sum(a * z[, 1] + b * z[, 2]) + dexp(alpha.s.prop[i], 1e-04, log = TRUE)
-    
+
     if (log(runif(1)) <= (new - old) & is.finite(new - old)) {
         rate[i] <- rate[i] + 1
         return(list(alpha.s.prop, rate))
     } else {
         return(list(alpha.s, rate))
     }
-    
+
 }
 
 simAlpha.u <- function(alpha.s, alpha.u, z, S, llnull, llresp, i, rate) {
     a <- llnull(c(alpha.s, alpha.u))
     b <- llresp(c(alpha.s, alpha.u))
-    
+
     old <- sum(a * z[, 1] + b * z[, 2]) + dexp(alpha.u[i], 1e-04, log = TRUE)
     alpha.u.prop <- alphaProp1(alpha.u, S, i)
     if (any(alpha.u.prop < 0)) {
         return(list(alpha.u, rate))
     }
-    
+
     a <- llnull(c(alpha.s, alpha.u.prop))
     b <- llresp(c(alpha.s, alpha.u.prop))
-    
+
     new <- sum(a * z[, 1] + b * z[, 2]) + dexp(alpha.u.prop[i], 1e-04, log = TRUE)
-    
+
     if (log(runif(1)) <= (new - old) & is.finite(new - old)) {
         rate[i] <- rate[i] + 1
         return(list(alpha.u.prop, rate))
     } else {
         return(list(alpha.u, rate))
     }
-    
+
 }
 
 
@@ -110,8 +110,8 @@ icsdata2mvicsdata <- function(x) {
 #'@param seed \code{numeric} random seed
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
-.fitMCMC <- function(data, inits = NULL, iter = 250000, burn = 50000, thin = 1, tune = 100, 
-    outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")), alternative = "greater", 
+.fitMCMC <- function(data, inits = NULL, iter = 250000, burn = 50000, thin = 1, tune = 100,
+    outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")), alternative = "greater",
     UPPER = 0.5, LOWER = 0.15, FAST = TRUE, EXPRATE = 1e-04, pXi = 1, seed = 10) {
     set.seed(seed)
     alternative <- match.arg(alternative, c("greater", "not equal"))
@@ -120,25 +120,25 @@ icsdata2mvicsdata <- function(x) {
         r <- MDMix(data)
         inits <- list(alpha.s = r@par.stim, alpha.u = r@par.unstim, q = r@w[1], z = round(r@z))
     }
-    
+
     # If the alternative hypothesis is one-sided, then compute a filter for pu>ps and
     # pass that to the MCMC code
     if (alternative == "greater") {
-        ps <- t(do.call(cbind, apply(data$n.stim, 1, function(x) (data.frame(prop.table(x))[-1L, 
+        ps <- t(do.call(cbind, apply(data$n.stim, 1, function(x) (data.frame(prop.table(x))[-1L,
             , drop = FALSE]))))
-        pu <- t(do.call(cbind, apply(data$n.unstim, 1, function(x) (data.frame(prop.table(x))[-1L, 
+        pu <- t(do.call(cbind, apply(data$n.unstim, 1, function(x) (data.frame(prop.table(x))[-1L,
             , drop = FALSE]))))
-        
-        filter <- sapply(1:nrow(ps), function(i) all(ps[i, ] < pu[i, ]))
+
+        filter <- sapply(1:nrow(ps), function(i) all(ps[i, ] <= pu[i, ]))
         FILTER = TRUE
     } else {
         filter <- rep(FALSE, nrow(data$n.stim))
         FILTER <- FALSE
     }
-    result <- .Call("C_fitMCMC", as.matrix(data$n.stim), as.matrix(data$n.unstim), 
-        as.vector(inits$alpha.s), as.vector(inits$alpha.u), as.vector(inits$q), as.matrix(inits$z), 
-        as.vector(iter), as.vector(burn), as.vector(thin), as.numeric(tune), as.character(outfile), 
-        as.vector(filter), as.numeric(UPPER), as.numeric(LOWER), FILTER, FAST, as.numeric(EXPRATE), 
+    result <- .Call("C_fitMCMC", as.matrix(data$n.stim), as.matrix(data$n.unstim),
+        as.vector(inits$alpha.s), as.vector(inits$alpha.u), as.vector(inits$q), as.matrix(inits$z),
+        as.vector(iter), as.vector(burn), as.vector(thin), as.numeric(tune), as.character(outfile),
+        as.vector(filter), as.numeric(UPPER), as.numeric(LOWER), FILTER, FAST, as.numeric(EXPRATE),
         as.numeric(pXi))
     if (inherits(result, "character")) {
         return(result)
@@ -176,4 +176,4 @@ icsdata2mvicsdata <- function(x) {
     result$n.stim <- data$n.stim
     result$n.unstim <- data$n.unstim
     result
-} 
+}
