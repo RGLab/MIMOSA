@@ -23,7 +23,8 @@ Imports:
     Biobase,
     MASS,
     testthat,
-    Rcpp
+    Rcpp,
+    scales
 Suggests:
     parallel,
     knitr
