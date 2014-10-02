@@ -1,7 +1,7 @@
 #'MIMOSA: Mixture Models for Single Cell Assays
 #'
-#'MIMOSA implements mxitures of Dirichlet-multinomial or Beta-binomial models 
-#'for paired count data from single--cell assays that typically arise 
+#'MIMOSA implements mxitures of Dirichlet-multinomial or Beta-binomial models
+#'for paired count data from single--cell assays that typically arise
 #'in immunological studies. It can be used for ICS (Intracellular Cytokine
 #'Staining) assays to detect vaccine responders, for example, or to detect
 #'changes in proportions of cells expressing a gene, such as in Fluidigm Biomark
@@ -27,9 +27,9 @@ NULL
 
 
 #' Stimulated and unstimulated T-cell counts for an ICS assay
-#' 
+#'
 #' A data set containing T-cell counts for various stimulations and cytokines in an ICS assay.
-#' 
+#'
 #' \itemize{
 #' \item pos. The positive cell counts
 #' \item neg. The negative cell counts
@@ -55,7 +55,7 @@ NULL
 #'  negative counts for different cytokine producing cell subsets (i.e.
 #'  IFNg_pos, IFNg_neg) The formula lhs should contain features and the rhs
 #'  should contain phenotypic variable. See the vignette for an example.
-#'  
+#'
 #'@param formula describing the features on the lhs and the phenodata on the
 #'  rhs, supporting extended formula interface with conditioning.
 #'@param data an \code{ExpressionSet} object with features on rows and samples
@@ -64,7 +64,7 @@ NULL
 #'@return an object of type \code{MIMOSAResult}
 #'@aliases MIMOSA,formula,ExpressionSet-method
 #'@importFrom data.table key
-#'@examples 
+#'@examples
 #' data(ICS)
 #' E<-ConstructMIMOSAExpressionSet(ICS,
 #'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
@@ -72,7 +72,7 @@ NULL
 #'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 #'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 #'   featureCols=1,ref.append.replace='_REF')
-#'   
+#'
 #' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
 #'     data=E, method='EM',
 #'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
@@ -84,9 +84,9 @@ setGeneric("MIMOSA", def = function(formula, data, ...) {
 })
 
 
-setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula, 
-    data, ref = RefTreat %in% "Reference", RT = TRUE, method = "mcmc", subset = RefTreat %in% 
-        "Treatment", getP = FALSE, p.thin = 1, run.parallel = FALSE, cleanup = TRUE, 
+setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula,
+    data, ref = RefTreat %in% "Reference", RT = TRUE, method = "mcmc", subset = RefTreat %in%
+        "Treatment", getP = FALSE, p.thin = 1, run.parallel = FALSE, cleanup = TRUE,
     ...) {
     if (!exists("ref")) {
         stop("ref must contain expressions that define subsets to be compared")
@@ -97,10 +97,10 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
     # Does the formula contain RefTreat?
     if (!any(attr(terms(formula), "term.labels") %in% "RefTreat") & RT) {
         warning("Formula does not contain the RefTreat variable. It will be added automatically. Set RT=FALSE to disable this.")
-        formula <- Formula(formula(gsub("\\|", "+ RefTreat |", paste0(deparse(formula), 
+        formula <- Formula(formula(gsub("\\|", "+ RefTreat |", paste0(deparse(formula),
             collapse = ""))))
     }
-    
+
     method <- match.arg(method, c("mcmc", "EM"))
     if (Sys.info()["sysname"] == "Darwin") {
         run.parallel <- FALSE
@@ -108,14 +108,14 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
     }
     mf.ref <- model.frame(formula, data, na.action = NULL)
     mf.test <- model.frame(formula, data, na.action = NULL)
-    
+
     if (!missing(ref)) {
         mf.ref <- mf.ref[eval(substitute(ref), pData(data)), , drop = FALSE]
     }
     if (!missing(subset)) {
         mf.test <- mf.test[eval(substitute(subset), pData(data)), , drop = FALSE]
     }
-    
+
     if (RT) {
         if (nlevels(factor(mf.ref$RefTreat)) != 1) {
             mf.ref <- mf.ref[mf.ref$RefTreat %in% "Reference", ]
@@ -124,7 +124,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
             mf.test <- mf.test[mf.test$RefTreat %in% "Treatment", ]
         }
     }
-    
+
     if (length(formula)[2] > 1) {
         spl.ref <- model.part(formula, mf.ref, rhs = 2)
         spl.test <- model.part(formula, mf.test, rhs = 2)
@@ -165,7 +165,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
             j <- data.frame(1:length(test), 1:length(ref))[i, 2]
             fitme <- list(n.stim = test[[i]], n.unstim = ref[[j]])
             # remove NAs
-            nas <- unique(rbind(which(is.na(fitme[[1]]), TRUE), which(is.na(fitme[[2]]), 
+            nas <- unique(rbind(which(is.na(fitme[[1]]), TRUE), which(is.na(fitme[[2]]),
                 TRUE))[, 1])
             # also remove zeros
             if (length(nas) > 0) {
@@ -177,10 +177,10 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
             if (nrow(pd[[i]]) > 0) {
                 if (method %in% "mcmc") {
                   res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE), ...)
-                  res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x, 
+                  res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x,
                     c(0.025, 0.5, 0.975), na.rm = TRUE))
                   if (ncol(fitme[[1]]) == 2 & getP) {
-                    res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind, 
+                    res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind,
                       lapply(x, function(x) quantile(x, c(0.025, 0.5, 0.975), na.rm = TRUE))))
                   } else {
                     res$p <- list()
@@ -196,12 +196,12 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
                   res <- try(MDMix(fitme))
                   if (inherits(res, "try-error")) {
                     message("Failed to fit subset ", i, " with EM. Trying mcmc")
-                    res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE), 
+                    res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE),
                       ...)
-                    res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x, 
+                    res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x,
                       c(0.025, 0.5, 0.975), na.rm = TRUE))
                     if (ncol(fitme[[1]]) == 2 & getP) {
-                      res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind, 
+                      res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind,
                         lapply(x, function(x) quantile(x, c(0.025, 0.5, 0.975), na.rm = TRUE))))
                     } else {
                       res$p <- list()
@@ -229,7 +229,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
             j <- data.frame(1:length(test), 1:length(ref))[i, 2]
             fitme <- list(n.stim = test[[i]], n.unstim = ref[[j]])
             # remove NAs
-            nas <- unique(rbind(which(is.na(fitme[[1]]), TRUE), which(is.na(fitme[[2]]), 
+            nas <- unique(rbind(which(is.na(fitme[[1]]), TRUE), which(is.na(fitme[[2]]),
                 TRUE))[, 1])
             if (length(nas) > 0) {
                 fitme[[1]] <- fitme[[1]][-nas, ]
@@ -239,10 +239,10 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
             if (nrow(pd[[i]]) > 0) {
                 if (method %in% "mcmc") {
                   res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE), ...)
-                  res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x, 
+                  res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x,
                     c(0.025, 0.5, 0.975), na.rm = TRUE))
                   if (ncol(fitme[[1]]) == 2 & getP) {
-                    res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind, 
+                    res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind,
                       lapply(x, function(x) quantile(x, c(0.025, 0.5, 0.975), na.rm = TRUE))))
                   } else {
                     res$p <- list()
@@ -257,12 +257,12 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
                   res <- try(MDMix(fitme))
                   if (inherits(res, "try-error")) {
                     message("Failed to fit subset ", i, " with EM. Trying mcmc")
-                    res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE), 
+                    res <- .fitMCMC(fitme, inits = MDMix(fitme, initonly = TRUE),
                       ...)
-                    res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x, 
+                    res$params <- res$params <- apply(res$getmcmc(), 2, function(x) quantile(x,
                       c(0.025, 0.5, 0.975), na.rm = TRUE))
                     if (ncol(fitme[[1]]) == 2 & getP) {
-                      res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind, 
+                      res$p <- lapply(res$getP(thin = p.thin), function(x) do.call(rbind,
                         lapply(x, function(x) quantile(x, c(0.025, 0.5, 0.975), na.rm = TRUE))))
                     } else {
                       res$p <- list()
@@ -297,7 +297,7 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
         n_vars <- length(depf)
         # NOTE this is probably wrong..
         if (n_vars > 0) {
-            names(result) <- levels(factor(interaction(as.data.frame(lapply(pData(result)[, 
+            names(result) <- levels(factor(interaction(as.data.frame(lapply(pData(result)[,
                 depf, with = FALSE], factor)))))
         } else {
             names(result) <- "result"
@@ -340,7 +340,7 @@ setMethod("pData", "MCMCResult", function(object) {
 roc <- function(p, truth) {
     s <- seq(0, 1, l = 1000)
     table <- t(sapply(s, function(th) {
-        prop.table(table(test = factor(p <= th, levels = c("FALSE", "TRUE")), truth = truth), 
+        prop.table(table(test = factor(p <= th, levels = c("FALSE", "TRUE")), truth = truth),
             margin = 2)["TRUE", ]
     }))
     colnames(table) <- c("FPR", "TPR")
@@ -359,10 +359,10 @@ fdrComparison <- function(fdr, truth) {
 
 
 #' Construct an ExpressionSet for MIMOSA
-#' 
+#'
 #' Starting from a reshaped data frame in the correct format, construct
 #' an ExpressionSet object that can be used with MIMOSA.
-#' 
+#'
 #' @details The featureCols will be used to construct feature names, and these
 #'  columns will be dropped from the exprs matrix. The column names are assumed
 #'  to have names that contain '_' characters separating phenotypic
@@ -380,14 +380,14 @@ fdrComparison <- function(fdr, truth) {
 ##'   featureCols=1,ref.append.replace='_REF')
 #' @export
 MIMOSAExpressionSet <- function(df, featureCols) {
-    
+
     featuredata <- attributes(df)$rdimnames[[1]]
     pdata <- attributes(df)$rdimnames[[2]]
     df <- df[, -featureCols, drop = FALSE]  #adata
-    
+
     rownames(df) <- rownames(featuredata)
-    
-    E <- ExpressionSet(as.matrix(as.data.frame(df)), featureData = AnnotatedDataFrame(as.data.frame(featuredata)), 
+
+    E <- ExpressionSet(as.matrix(as.data.frame(df)), featureData = AnnotatedDataFrame(as.data.frame(featuredata)),
         phenoData = AnnotatedDataFrame(pdata))
     return(E)
 }
@@ -400,7 +400,7 @@ MIMOSAExpressionSet <- function(df, featureCols) {
 # vector of the names of the columns that hold our measurements '@param
 # annotations A character vector of additional annotation columns '@param
 # default.formula a default formula to be used for casting the data.
-setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, default.formula = component ~ 
+setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, default.formula = component ~
     ...) {
     REFERENCE <- try(eval(ref, dat))
     if (inherits(REFERENCE, "try-error")) {
@@ -421,12 +421,12 @@ setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, defau
     if (nrow(TREAT.MEAS) == 0) {
         return(NULL)
     }
-    REF.MEAS <- matrix(REF.MEAS, nrow = dim(TREAT.MEAS)[1], ncol = dim(TREAT.MEAS)[2], 
+    REF.MEAS <- matrix(REF.MEAS, nrow = dim(TREAT.MEAS)[1], ncol = dim(TREAT.MEAS)[2],
         byrow = TRUE)
     colnames(REF.MEAS) <- NEWNAMES
     retme <- cbind(TREAT.MEAS, REF.MEAS)
     if (!is.null(annotations)) {
-        ANNOTATIONS <- do.call(data.frame, with(dat, mget(annotations, envir = as.environment(-1L))))[!REFERENCE, 
+        ANNOTATIONS <- do.call(data.frame, with(dat, mget(annotations, envir = as.environment(-1L))))[!REFERENCE,
             , drop = FALSE]
         # ANNOTATIONS<-model.frame(as.formula(paste('~',paste(annotations,collapse='+'))),dat)[!REFERENCE,,drop=FALSE]
         retme <- cbind(ANNOTATIONS, retme)
@@ -447,7 +447,7 @@ setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, defau
 ##'@param .variables is a dotted list that specifies the variable names (columns of the data frame) by which to group the data when organzing stimulated and unstimulated observations. i.e. PTID x ANTIGEN x TCELLSUBSET x TESTDT, or something else for your own data.
 ##'@param featureCols is a \code{numeric} vector that specifies the indices of the columns to be used to name the features. If the casting formula is \code{component~...} then there is only one feature column (and it is the first one), so \code{featureCols = 1}, by default.
 ##'@param ref.append.replace the terminating character string in the column names of the negative controls. It will be replaces with _REF for 'reference'
-##'@examples 
+##'@examples
 ##' data(ICS)
 ##' E<-ConstructMIMOSAExpressionSet(ICS,
 ##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
@@ -455,42 +455,42 @@ setReference <- function(dat, ref = NULL, cols = NULL, annotations = NULL, defau
 ##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 ##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 ##'   featureCols=1,ref.append.replace='_REF')
-##' 
+##'
 ##'@export
-ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% "CTRL" & 
-    PROTEIN %in% "Media+cells"), measure.columns = c("Neg", "Pos"), other.annotations = setdiff(colnames(thisdata), 
-    measure.columns), default.cast.formula = component ~ ..., .variables = quote(.(PTID, 
+ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% "CTRL" &
+    PROTEIN %in% "Media+cells"), measure.columns = c("Neg", "Pos"), other.annotations = setdiff(colnames(thisdata),
+    measure.columns), default.cast.formula = component ~ ..., .variables = quote(.(PTID,
     TESTDT, ASSAYID, PLATEID)), featureCols = 1, ref.append.replace = "_NEG") {
     # if reference is null, then we already have the data in a form we need
     if (!is.null(substitute(reference))) {
         # Set the Reference Class to be the negative control Media+cells for each
         # ptid/date/assayid/plate
-        thisdata <- ddply(thisdata, .variables = .variables, setReference, ref = substitute(reference), 
+        thisdata <- ddply(thisdata, .variables = .variables, setReference, ref = substitute(reference),
             cols = measure.columns, annotations = other.annotations, default.formula = default.cast.formula)
     } else {
         colnames(thisdata) <- gsub(ref.append.replace, "_REF", colnames(thisdata))
     }
-    if (nrow(thisdata) == 0) 
+    if (nrow(thisdata) == 0)
         stop("All your data was filtered when reshaping due to non-unique pairs of samples. Perhaps you need to aggregate negative controls")
-    
+
     # transform the data so that features are on the rows and samples are on the
     # columns build a function to reshape the returned data and assign it to the
     # calling environment
     MIMOSAReshape <- function(mydata = NULL, default.formula = NULL, cols = measure.columns) {
         if (!grepl("RefTreat", paste(deparse(default.formula), collapse = ""))) {
-            default.formula <- as.formula(paste(paste(deparse(default.formula), collapse = ""), 
+            default.formula <- as.formula(paste(paste(deparse(default.formula), collapse = ""),
                 "RefTreat", sep = "+"))
         }
         NEWNAMES <- paste(cols, "REF", sep = "_")
         mydata <- melt(mydata, measure.var = c(cols, NEWNAMES))
-        mydata$RefTreat <- factor(grepl("_REF$", mydata$variable), labels = c("Treatment", 
+        mydata$RefTreat <- factor(grepl("_REF$", mydata$variable), labels = c("Treatment",
             "Reference"))
         mydata <- rename(mydata, c(variable = "component", value = "count"))
         mydata$component <- factor(gsub("_REF$", "", mydata$component))
         mydata <- cast(melt(mydata, measure = "count"), default.formula)
         mydata
     }
-    thisdata <- MIMOSAReshape(mydata = thisdata, default.formula = default.cast.formula, 
+    thisdata <- MIMOSAReshape(mydata = thisdata, default.formula = default.cast.formula,
         cols = measure.columns)
     MIMOSAExpressionSet(thisdata, featureCols = featureCols)
 }
@@ -514,19 +514,19 @@ ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% 
 # well.  '@param SAMPLE is an expression evaluating to a logical vector that
 # identifies the rows of the data frame which are antigen or peptide stimualtions
 # rather than control samples.
-match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" & PROTEIN %in% 
-    "Media+cells"), WELLMULTIPLIER = 1000, replicates = c("REP1", "REP2", "REP3", 
-    "REP4", "REP5", "REP6"), cells.per.well = "CELLWELL", SAMPLE = quote(!STAGE %in% 
+match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" & PROTEIN %in%
+    "Media+cells"), WELLMULTIPLIER = 1000, replicates = c("REP1", "REP2", "REP3",
+    "REP4", "REP5", "REP6"), cells.per.well = "CELLWELL", SAMPLE = quote(!STAGE %in%
     "CTRL")) {
     control.sub <- eval(eval(substitute(CONTROL)), x)
     ctrl <- subset(x, control.sub)
     CPOS <- sum(ctrl[, replicates], na.rm = TRUE)
     l <- length(na.omit(t(ctrl[, replicates, drop = FALSE])))
     CNEG <- WELLMULTIPLIER * l * ctrl[, cells.per.well, drop = TRUE]
-    
+
     samples <- eval(eval(substitute(SAMPLE)), x)
     samps <- subset(x, samples)
-    
+
     PNEG <- NULL
     PPOS <- NULL
     for (i in 1:nrow(samps)) {
@@ -537,8 +537,8 @@ match.elispot.antigens <- function(x, CONTROL = quote(STAGE %in% "CTRL" & PROTEI
         PNEG <- c(PNEG, pneg)
         PPOS <- c(PPOS, ppos)
     }
-    if (any(c(nrow(samps), nrow(ctrl)) %in% 0)) 
-        return(NULL) else ret <- rbind(data.frame(samps, Neg = PNEG, Pos = PPOS), data.frame(ctrl, 
+    if (any(c(nrow(samps), nrow(ctrl)) %in% 0))
+        return(NULL) else ret <- rbind(data.frame(samps, Neg = PNEG, Pos = PPOS), data.frame(ctrl,
         Neg = CNEG, Pos = CPOS))
     ret
 }
@@ -559,7 +559,13 @@ print.MIMOSAResultList <- function(x, ...) {
 }
 
 
-#'@rdname print
+#'Show a MIMOSAResultList
+#'
+#'Show a summary of a MIMOSAResultList.
+#'@rdname show
+#'@title show
+#'@param object \code{MIMOSAResultList}
+#'@name show
 #'@aliases show,MIMOSAResult-method
 setMethod("show", "MIMOSAResult", function(object) {
     cat("A MIMOSA Model with ")
@@ -594,7 +600,7 @@ setMethod("pData", "MIMOSAResultList", pData.MIMOSAResultList)
 ##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 ##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 ##'   featureCols=1,ref.append.replace='_REF')
-##'   
+##'
 ##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
 ##'     data=E, method='EM',
 ##'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
@@ -625,7 +631,7 @@ getZ.MIMOSAResult <- function(x) {
 #'
 #'@rdname MIMOSA-accessors
 #'@return a \code{vector} of component weights
-#'@examples 
+#'@examples
 #'data(ICS)
 ##' E<-ConstructMIMOSAExpressionSet(ICS,
 ##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
@@ -633,7 +639,7 @@ getZ.MIMOSAResult <- function(x) {
 ##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 ##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 ##'   featureCols=1,ref.append.replace='_REF')
-##'   
+##'
 ##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
 ##'     data=E, method='EM',
 ##'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
@@ -680,7 +686,7 @@ countsTable <- function(object, proportion = FALSE) {
 ##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 ##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 ##'   featureCols=1,ref.append.replace='_REF')
-##'   
+##'
 ##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
 ##'     data=E, method='EM',
 ##'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
@@ -702,7 +708,7 @@ setMethod("countsTable", "MIMOSAResult", definition = function(object, proportio
 #'@aliases countsTable,MCMCResult-method
 setMethod("countsTable", "MCMCResult", definition = function(object, proportion = FALSE) {
     if (proportion) {
-        m <- (cbind(prop.table(as.matrix(object@n.stim), 1), prop.table(as.matrix(object@n.unstim), 
+        m <- (cbind(prop.table(as.matrix(object@n.stim), 1), prop.table(as.matrix(object@n.unstim),
             1)))
     } else {
         m <- (as.matrix(cbind(object@n.stim, object@n.unstim)))
@@ -717,7 +723,7 @@ setMethod("countsTable", "MCMCResult", definition = function(object, proportion 
 #'@aliases countsTable,MDMixResult-method
 setMethod("countsTable", "MDMixResult", definition = function(object, proportion = FALSE) {
     if (proportion == TRUE) {
-        m <- (do.call(cbind, lapply(object@data, function(x) prop.table(as.matrix(x), 
+        m <- (do.call(cbind, lapply(object@data, function(x) prop.table(as.matrix(x),
             1))))
     } else {
         m <- (as.matrix(do.call(cbind, object@data)))
@@ -756,7 +762,7 @@ setMethod("countsTable", "MIMOSAResultList", countsTable.MIMOSAResultList)
 ##'   default.cast.formula=component~UID+ANTIGEN+CYTOKINE+TCELLSUBSET,
 ##'   .variables=.(TCELLSUBSET,CYTOKINE,UID),
 ##'   featureCols=1,ref.append.replace='_REF')
-##'   
+##'
 ##' result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
 ##'     data=E, method='EM',
 ##'     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
@@ -764,7 +770,7 @@ setMethod("countsTable", "MIMOSAResultList", countsTable.MIMOSAResultList)
 ##' volcanoPlot(result,CYTNUM-CYTNUM_REF)
 #'@importFrom ggplot2 ggplot geom_point theme_bw aes_string scale_y_continuous
 #'@seealso \code{\link{countsTable}}
-#'@export 
+#'@export
 volcanoPlot <- function(x, effect_expression = NA, facet_var = NA, threshold = 0.01) {
     UseMethod("volcanoPlot")
 }
@@ -772,23 +778,23 @@ volcanoPlot <- function(x, effect_expression = NA, facet_var = NA, threshold = 0
 #'@method volcanoPlot MIMOSAResultList
 #'@importFrom data.table data.table
 #'@S3method volcanoPlot MIMOSAResultList
-volcanoPlot.MIMOSAResultList <- function(x, effect_expression = NA, facet_var = NA, 
+volcanoPlot.MIMOSAResultList <- function(x, effect_expression = NA, facet_var = NA,
     threshold = 0.01) {
     err <- FALSE
     effect_expression <- deparse(substitute(effect_expression))
-    if (effect_expression %in% "NA") 
+    if (effect_expression %in% "NA")
         err <- TRUE
     if (err) {
         stop("Must provide an expression for the effect size (i.e. CYTNUM-CYTNUM_REF)")
     }
-    
+
     q <- -log10(unlist(fdr(x), use.names = FALSE))
     pspu <- countsTable(x, proportion = TRUE)
     p.stim <- getZ(x)
     pd <- pData(x)
     df <- data.table(q, pspu, p.stim, pd, signif = q > -log10(threshold))
     if (!is.na(effect_expression)) {
-        p <- ggplot(df) + aes_string(x = effect_expression, y = "Pr.response", col = "signif.fdr") + 
+        p <- ggplot(df) + aes_string(x = effect_expression, y = "Pr.response", col = "signif.fdr") +
             geom_point() + theme_bw() + scale_y_continuous("Probability of Response")
     }
     if (is.formula(facet_var)) {
@@ -796,4 +802,4 @@ volcanoPlot.MIMOSAResultList <- function(x, effect_expression = NA, facet_var = 
     }
     p
 }
- 
+
