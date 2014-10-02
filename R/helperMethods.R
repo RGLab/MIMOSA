@@ -81,16 +81,20 @@ combine.MIMOSA <- function(x,y,...){
 ##' Boxplots of MIMOSA
 ##'
 ##' Generate boxplots for MIMOSA positivity calls.
-##' @title boxplot.MIMOSAResultList
+##' @title boxplotMIMOSAResultList
 ##' @param data \code{MIMOSAResultList}
 ##' @param title \code{character} Title of the plot.
 ##' @param x_axis_category \code{name} the column of the phenoData frame for the x-axis of the boxplots.
 ##' @param cofactor \code{integer} cofactor of the arcsinhTransform for the y axis.
-##' @param x \code{MIMOSAResultList}
 ##' @return \code{ggplot} object.
+##' @importFrom data.table setnames
 ##' @export
 ##' @author Greg Finak
-boxplot.MIMOSAResultList <- function(data,title="A Boxplot",x_axis_category=NULL,cofactor=5000){
+boxplotMIMOSAResultList <- function(data,title="A Boxplot",x_axis_category=NULL,cofactor=5000){
+    Proportion <- Proportion_REF <- PTID <- NULL
+    if(!class(data)%in%"MIMOSAResultList"){
+        stop("Argument 'data' must be a MIMOSA result")
+    }
     x_axis_category <- deparse(substitute(x_axis_category))
     if(x_axis_category=="x_axis_category"){
         stop("must provide an 'x_axis_category' variable for boxplots");
@@ -98,9 +102,13 @@ boxplot.MIMOSAResultList <- function(data,title="A Boxplot",x_axis_category=NULL
     d <- (cbind(ldply(data,pData),fdr(data),countsTable(data,proportion = TRUE)))
     x_axis_category <- get(x_axis_category,d)
     setnames(d,colnames(d)[(ncol(d)-3):ncol(d)],c("ParentProportion","Proportion","ParentProportion_REF","Proportion_REF"))
-    ggplot(environment=environment(),d,aes(x=x_axis_category,y=Proportion-Proportion_REF))+geom_boxplot(aes(fill=fdr<0.01),outlier.colour=NA,position="identity")+coord_trans(y=asinh_trans(cofactor))+theme_bw()+facet_wrap(~.id)+ggtitle(Kmisc::wrap(title,40))+geom_jitter(aes(color=fdr<0.01),position=position_jitter(width=0.01,height=0))+geom_line(aes(group=PTID),lty=2)+scale_fill_brewer(palette="Pastel1")+scale_color_brewer(palette="Set1")
+    ggplot(environment=environment(),d,aes(x=x_axis_category,y=Proportion-Proportion_REF))+geom_boxplot(aes(fill=fdr<0.01),outlier.colour=NA,position="identity")+coord_trans(ytrans=asinh_trans(cofactor))+theme_bw()+facet_wrap(~.id)+ggtitle(.wrap(title,40))+geom_jitter(aes(color=fdr<0.01),position=position_jitter(width=0.01,height=0))+geom_line(aes(group=PTID),lty=2)+scale_fill_brewer(palette="Pastel1")+scale_color_brewer(palette="Set1")
 }
 
+.wrap <- function (x, width = 8, ...)
+{
+    return(paste(strwrap(x, width, ...), collapse = "\n"))
+}
 
 proportions.icsdata <- function(object) {
     r <- t(apply(object, 1, function(x) cbind(prop.table(x[c("Ns", "ns")])[2], prop.table(x[c("Nu",
