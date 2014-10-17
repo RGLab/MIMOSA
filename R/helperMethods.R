@@ -9,37 +9,109 @@ estimateProportions2.MDMixResult <- function(x, method = "mode") {
     match.arg(method, c("mode", "mean"))
     posterior <- x$getP()
     if (method == "mean") {
-        posterior.diff <- do.call(rbind, lapply(posterior, function(x) mean(apply(do.call(cbind, 
+        posterior.diff <- do.call(rbind, lapply(posterior, function(x) mean(apply(do.call(cbind,
             x)[, 2:1], 1, diff))))
         posterior.lods <- do.call(rbind, lapply(posterior, function(x) {
             d <- (apply(do.call(cbind, x)[, 2:1], 1, function(x) diff(log(x))))
             mean(d[is.finite(d)])
         }))
-        ml <- cbind(pu = prop.table(as.matrix(x$n.unstim), margin = 1)[, 2], ps = prop.table(as.matrix(x$n.stim), 
+        ml <- cbind(pu = prop.table(as.matrix(x$n.unstim), margin = 1)[, 2], ps = prop.table(as.matrix(x$n.stim),
             margin = 1)[, 2])
         ml.differences <- apply(ml, 1, diff)
         ml.logodds <- apply(ml, 1, function(x) diff(log(x)))
-        return(list(posterior.logodds = posterior.lods, posterior.differences = posterior.diff, 
+        return(list(posterior.logodds = posterior.lods, posterior.differences = posterior.diff,
             ml.differences = ml.differences, ml.logodds = ml.logodds))
     }
     if (method == "mode") {
-        posterior.diff <- do.call(rbind, lapply(posterior, function(x) mlv(apply(do.call(cbind, 
+        posterior.diff <- do.call(rbind, lapply(posterior, function(x) mlv(apply(do.call(cbind,
             x)[, 2:1], 1, diff), method = "mfv")[[1]]))
-        posterior.lods <- do.call(rbind, lapply(posterior, function(x) mlv(apply(do.call(cbind, 
+        posterior.lods <- do.call(rbind, lapply(posterior, function(x) mlv(apply(do.call(cbind,
             x)[, 2:1], 1, function(x) diff(log(x))), method = "mfv")[[1]]))
-        ml <- cbind(pu = prop.table(as.matrix(x$n.unstim), margin = 1)[, 2], ps = prop.table(as.matrix(x$n.stim), 
+        ml <- cbind(pu = prop.table(as.matrix(x$n.unstim), margin = 1)[, 2], ps = prop.table(as.matrix(x$n.stim),
             margin = 1)[, 2])
         ml.differences <- apply(ml, 1, diff)
         ml.logodds <- apply(ml, 1, function(x) diff(log(x)))
-        return(list(posterior.logodds = posterior.lods, posterior.differences = posterior.diff, 
+        return(list(posterior.logodds = posterior.lods, posterior.differences = posterior.diff,
             ml.differences = ml.differences, ml.logodds = ml.logodds))
     }
 }
 
 
+##' Arcsinh transform for ggplot2
+##'
+##' Arcsinh transform for use with coord_trans in ggplot2
+##' @title asinh_trans
+##' @param c \code{numeric} cofactor for asinh trasnform. Default 1.
+##' @return transform
+##' @import scales
+##' @export
+##' @author Greg Finak
+asinh_trans <- function(c){
+    trans_new(name = "asinh", transform = function(x) asinh(x * c), inverse = function(x) sinh(x)/c)
+}
+
+##' Combine two or more MIMOSAResultList objects
+##'
+##' Combines two or more MIMOSAResultList objects. The method is light on error checking so the results should be from the same
+##' MIMOSAExpressionSet object.
+##' @title Combine MIMOSAResultList objects
+##' @param x \code{MIMOSAResultList}
+##' @param y \code{MIMOSAResultList}
+##' @param ... additional \code{MIMOSAResultList} objects
+##' @return a \code{MIMOSAResultList}
+##' @export
+##' @name combine.MIMOSA
+##' @author Greg Finak
+combine.MIMOSA <- function(x,y,...){
+    if(length(list(...)) > 0L){
+        combine.MIMOSA(x,do.call(combine.MIMOSA,list(y,...)))
+    }
+    else{
+        if(class(x)[1]!=class(y)[1]){
+            stop("objects must be the same class but are '", class(x), "', '", class(y), "'")
+        }
+        # actual combine code
+        x<-c(x,y)
+        class(x) <- c("MIMOSAResultList","list")
+        return(x)
+    }
+}
+
+
+##' Boxplots of MIMOSA
+##'
+##' Generate boxplots for MIMOSA positivity calls.
+##' @title boxplotMIMOSAResultList
+##' @param data \code{MIMOSAResultList}
+##' @param title \code{character} Title of the plot.
+##' @param x_axis_category \code{name} the column of the phenoData frame for the x-axis of the boxplots.
+##' @param cofactor \code{integer} cofactor of the arcsinhTransform for the y axis.
+##' @return \code{ggplot} object.
+##' @importFrom data.table setnames
+##' @export
+##' @author Greg Finak
+boxplotMIMOSAResultList <- function(data,title="A Boxplot",x_axis_category=NULL,cofactor=5000){
+    Proportion <- Proportion_REF <- PTID <- NULL
+    if(!class(data)%in%"MIMOSAResultList"){
+        stop("Argument 'data' must be a MIMOSA result")
+    }
+    x_axis_category <- deparse(substitute(x_axis_category))
+    if(x_axis_category=="x_axis_category"){
+        stop("must provide an 'x_axis_category' variable for boxplots");
+    }
+    d <- (cbind(ldply(data,pData),fdr(data),countsTable(data,proportion = TRUE)))
+    x_axis_category <- get(x_axis_category,d)
+    setnames(d,colnames(d)[(ncol(d)-3):ncol(d)],c("ParentProportion","Proportion","ParentProportion_REF","Proportion_REF"))
+    ggplot(environment=environment(),d,aes(x=x_axis_category,y=Proportion-Proportion_REF))+geom_boxplot(aes(fill=fdr<0.01),outlier.colour=NA,position="identity")+coord_trans(ytrans=asinh_trans(cofactor))+theme_bw()+facet_wrap(~.id)+ggtitle(.wrap(title,40))+geom_jitter(aes(color=fdr<0.01),position=position_jitter(width=0.01,height=0))+geom_line(aes(group=PTID),lty=2)+scale_fill_brewer(palette="Pastel1")+scale_color_brewer(palette="Set1")
+}
+
+.wrap <- function (x, width = 8, ...)
+{
+    return(paste(strwrap(x, width, ...), collapse = "\n"))
+}
 
 proportions.icsdata <- function(object) {
-    r <- t(apply(object, 1, function(x) cbind(prop.table(x[c("Ns", "ns")])[2], prop.table(x[c("Nu", 
+    r <- t(apply(object, 1, function(x) cbind(prop.table(x[c("Ns", "ns")])[2], prop.table(x[c("Nu",
         "nu")])[2])))
     colnames(r) <- c("ps", "pu")
     return(r)
@@ -85,14 +157,14 @@ refactorPData <- function(x) {
 }
 
 setGeneric("Data", function(object) standardGeneric("Data"))
-setMethod("Data", "BetaMixResult", function(object) object@data[, c("Ns", "ns", "Nu", 
+setMethod("Data", "BetaMixResult", function(object) object@data[, c("Ns", "ns", "Nu",
     "nu")])
 
 huberFilter <- function(object, sd = 2) {
     if (any(class(object) == "icsdata")) {
         stim <- object[, c("Ns", "ns")]
         unstim <- object[, c("Nu", "nu")]
-        difference <- apply(stim, 1, function(x) prop.table(x)[2]) - apply(unstim, 
+        difference <- apply(stim, 1, function(x) prop.table(x)[2]) - apply(unstim,
             1, function(x) prop.table(x)[2])
         h <- huber(difference)
         obj <- object[difference >= h$mu - 2 * h$s, ]
@@ -119,12 +191,12 @@ setMethod("pData<-", c("BetaMixResult", "data.frame"), function(object, value) {
 })
 # The mean,sample-size parameterization of the beta-binomial
 f0 <- function(p, z, d, w, alternative = alternative, mciter = mciter) {
-    -CompleteDataLLRcpp(d = d, alpha0 = p[3] * p[4], beta0 = (1 - p[3]) * p[4], alphaS = p[1] * 
-        p[2], betaS = (1 - p[1]) * p[2], z = z, w = w, alternative = alternative, 
+    -CompleteDataLLRcpp(d = d, alpha0 = p[3] * p[4], beta0 = (1 - p[3]) * p[4], alphaS = p[1] *
+        p[2], betaS = (1 - p[1]) * p[2], z = z, w = w, alternative = alternative,
         mciter = mciter)
 }
 f0m <- function(p, z, d, w, alternative = alternative, mciter = mciter, alpha0, beta0) {
-    -CompleteDataLLRcpp(d = d, alpha0 = alpha0, beta0 = beta0, alphaS = p[1] * p[2], 
+    -CompleteDataLLRcpp(d = d, alpha0 = alpha0, beta0 = beta0, alphaS = p[1] * p[2],
         betaS = (1 - p[1]) * p[2], z = z, w = w, alternative = alternative, mciter = mciter)
 }
 
@@ -139,11 +211,11 @@ f2 <- function(x, alpha.u, beta.u, alpha.s, beta.s) {
 }
 
 f1.log <- function(x, alpha.u, beta.u, alpha.s, beta.s) {
-    exp(dbeta(x, alpha.u, beta.u, log = TRUE) + pbeta(x, alpha.s, beta.s, log.p = TRUE, 
+    exp(dbeta(x, alpha.u, beta.u, log = TRUE) + pbeta(x, alpha.s, beta.s, log.p = TRUE,
         lower.tail = FALSE))
 }
 f2.log <- function(x, alpha.u, beta.u, alpha.s, beta.s) {
-    exp(dbeta(x, alpha.s, beta.s, log = TRUE) + pbeta(x, alpha.u, beta.u, log.p = TRUE, 
+    exp(dbeta(x, alpha.s, beta.s, log = TRUE) + pbeta(x, alpha.u, beta.u, log.p = TRUE,
         lower.tail = TRUE))
 }
 
@@ -170,11 +242,11 @@ f2.log <- function(x, alpha.u, beta.u, alpha.s, beta.s) {
 # AUC.fisher<-sm.fisher/(length(which(truth=='TRUE'))*length(which(truth!='TRUE')))
 # return(list(r,sensitivity,fdr,AUC.betabin,AUC.fisher)) }
 
-simulate2 <- function(obs = 1000, As, Bs, A0, B0, NS, N0, w2, alternative = "greater", 
+simulate2 <- function(obs = 1000, As, Bs, A0, B0, NS, N0, w2, alternative = "greater",
     truncated = FALSE) {
     # ps and pu for null component
     match.arg(alternative, c("greater", "not equal"))
-    
+
     null <- round((1 - w2) * obs)
     stim <- obs - round((1 - w2) * obs)
     p <- matrix(NA, ncol = 2, nrow = null + stim)
@@ -221,9 +293,9 @@ simulate2 <- function(obs = 1000, As, Bs, A0, B0, NS, N0, w2, alternative = "gre
     }
     colnames(p) <- c("ps", "pu")
     p <- data.frame(p)
-    
+
     ### Now simulate the counts given the p's
-    d <- data.frame(ns = rbinom(obs, NS, prob = p[, "ps"]), nu = rbinom(obs, N0, 
+    d <- data.frame(ns = rbinom(obs, NS, prob = p[, "ps"]), nu = rbinom(obs, N0,
         prob = p[, "pu"]))
     d <- data.frame(d, Ns = NS - d[, "ns"], Nu = N0 - d[, "nu"])
     attr(d, "control") <- "control"
@@ -234,7 +306,7 @@ simulate2 <- function(obs = 1000, As, Bs, A0, B0, NS, N0, w2, alternative = "gre
 
 
 
-plotPriors <- function(fit, a0 = NULL, b0 = NULL, as = NULL, bs = NULL, l = 1000, 
+plotPriors <- function(fit, a0 = NULL, b0 = NULL, as = NULL, bs = NULL, l = 1000,
     ...) {
     null.fit <- qbeta(c(0.001, 0.999), fit@alpha0, fit@beta0)
     stim.fit <- qbeta(c(0.001, 0.999), fit@alphaS, fit@betaS)
@@ -249,7 +321,7 @@ plotPriors <- function(fit, a0 = NULL, b0 = NULL, as = NULL, bs = NULL, l = 1000
         upper <- max(c(null.fit, stim.fit, true.null, true.stim))
         skip = FALSE
     }
-    
+
     if (fit@alternative.model == "greater") {
         s <- seq(lower, upper, l = 1000)
         null <- dbeta(s, fit@alpha0, fit@beta0) * pbeta(1 - s, fit@betaS, fit@alphaS)
@@ -274,15 +346,15 @@ plotPriors <- function(fit, a0 = NULL, b0 = NULL, as = NULL, bs = NULL, l = 1000
         }
         lines(s, null, col = "green", lty = 2)
         lines(s, stim, col = "red", lty = 2)
-        legend("topright", c("estimated null", "estimated stimulated", "true null", 
-            "true stimulated"), lty = c(1, 1, 2, 2), col = c("green", "red", "green", 
+        legend("topright", c("estimated null", "estimated stimulated", "true null",
+            "true stimulated"), lty = c(1, 1, 2, 2), col = c("green", "red", "green",
             "red"))
     } else {
-        legend("topright", c("estimated null", "estimated stimulated"), lty = c(1, 
+        legend("topright", c("estimated null", "estimated stimulated"), lty = c(1,
             1), col = c("green", "red"))
     }
     title(main = "Prior Distributions")
-    
+
 }
 
 # Accessor and convenience methods setMethod('show','ICS',function(object){
@@ -326,12 +398,12 @@ fm <- function(a, b) {
 # fname + ID') x<-cast(x,as.formula(form),fun.aggregate=sum) return(x) }) #show
 # method for BetaMixResult
 setMethod("show", "BetaMixResult", function(object) {
-    cat("BetaMixResult for contrast: ", object@stimulation, "-", object@control, 
+    cat("BetaMixResult for contrast: ", object@stimulation, "-", object@control,
         "\n")
     cat("Number of Samples: ", nrow(object@data), "\n")
     cat("Log Likelihood: ", object@ll, "\n")
     cat("cytokine", object@cytokine, "\n")
-    cat("w: Pr(ps=pu)=", object@w[1], ifelse(object@alternative.model == "greater", 
+    cat("w: Pr(ps=pu)=", object@w[1], ifelse(object@alternative.model == "greater",
         " Pr(ps>pu)=", " Pr(ps!=pu)="), object@w[2], "\n")
 })
 
@@ -341,16 +413,16 @@ setMethod("summary", "BetaMixResult", function(object, ...) {
     if (is.null(threshold)) {
         threshold <- 0.01
     }
-    cat("Positivity: ", table(factor(object@fdr <= threshold, levels = c("FALSE", 
+    cat("Positivity: ", table(factor(object@fdr <= threshold, levels = c("FALSE",
         "TRUE")))[2], " of ", length(object@fdr), " at ", threshold * 100, "% FDR\n")
 })
 # plot method for BetaMixResult, will plot the log likelihood trajectory of the
 # model fitting process
 plot.BetaMixResult <- function(x, y, ...) {
-    plot(x@traj[-1], main = "Complete Data Log Likelihood Trajectory", xlab = "Iteration", 
+    plot(x@traj[-1], main = "Complete Data Log Likelihood Trajectory", xlab = "Iteration",
         ylab = "Complete Data Log Likelihood", type = "o")
 }
 
 
 
- 
+
