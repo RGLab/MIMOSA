@@ -4,7 +4,7 @@
 \title{boxplotMIMOSAResultList}
 \usage{
 boxplotMIMOSAResultList(data, title = "A Boxplot", x_axis_category = NULL,
-  cofactor = 5000)
+  cofactor = 5000, line = TRUE, threshold = 0.005)
 }
 \arguments{
 \item{data}{\code{MIMOSAResultList}}
@@ -14,6 +14,10 @@ boxplotMIMOSAResultList(data, title = "A Boxplot", x_axis_category = NULL,
 \item{x_axis_category}{\code{name} the column of the phenoData frame for the x-axis of the boxplots.}
 
 \item{cofactor}{\code{integer} cofactor of the arcsinhTransform for the y axis.}
+
+\item{line}{\code{logical} whether or not to connect points from the same subject}
+
+\item{threshold}{\code{numeric} the FDR threshold (q-value) at which to classify responders as a separate category.}
 }
 \value{
 \code{ggplot} object.
