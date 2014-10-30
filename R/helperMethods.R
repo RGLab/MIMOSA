@@ -86,23 +86,36 @@ combine.MIMOSA <- function(x,y,...){
 ##' @param title \code{character} Title of the plot.
 ##' @param x_axis_category \code{name} the column of the phenoData frame for the x-axis of the boxplots.
 ##' @param cofactor \code{integer} cofactor of the arcsinhTransform for the y axis.
+##' @param line \code{logical} whether or not to connect points from the same subject
+##' @param threshold \code{numeric} the FDR threshold (q-value) at which to classify responders as a separate category.
 ##' @return \code{ggplot} object.
 ##' @importFrom data.table setnames
 ##' @export
 ##' @author Greg Finak
-boxplotMIMOSAResultList <- function(data,title="A Boxplot",x_axis_category=NULL,cofactor=5000){
-    Proportion <- Proportion_REF <- PTID <- NULL
-    if(!class(data)%in%"MIMOSAResultList"){
-        stop("Argument 'data' must be a MIMOSA result")
-    }
+boxplot.MIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category = NULL,
+    cofactor = 5000,line=TRUE,threshold=0.005)
+{
     x_axis_category <- deparse(substitute(x_axis_category))
-    if(x_axis_category=="x_axis_category"){
-        stop("must provide an 'x_axis_category' variable for boxplots");
+    if (x_axis_category == "x_axis_category") {
+        stop("must provide an 'x_axis_category' variable for boxplots")
     }
-    d <- (cbind(ldply(data,pData),fdr(data),countsTable(data,proportion = TRUE)))
-    x_axis_category <- get(x_axis_category,d)
-    setnames(d,colnames(d)[(ncol(d)-3):ncol(d)],c("ParentProportion","Proportion","ParentProportion_REF","Proportion_REF"))
-    ggplot(environment=environment(),d,aes(x=x_axis_category,y=Proportion-Proportion_REF))+geom_boxplot(aes(fill=fdr<0.01),outlier.colour=NA,position="identity")+coord_trans(ytrans=asinh_trans(cofactor))+theme_bw()+facet_wrap(~.id)+ggtitle(.wrap(title,40))+geom_jitter(aes(color=fdr<0.01),position=position_jitter(width=0.01,height=0))+geom_line(aes(group=PTID),lty=2)+scale_fill_brewer(palette="Pastel1")+scale_color_brewer(palette="Set1")
+    d <- (cbind(ldply(data, pData), fdr(data), countsTable(data,
+        proportion = TRUE)))
+    x_axis_category <- get(x_axis_category, d)
+    setnames(d, colnames(d)[(ncol(d) - 3):ncol(d)], c("ParentProportion",
+        "Proportion", "ParentProportion_REF", "Proportion_REF"))
+    plt <- ggplot(environment = environment(), d, aes(x = x_axis_category,
+        y = Proportion - Proportion_REF)) + geom_boxplot(aes(fill = fdr <
+        threshold), outlier.colour = NA, position = "identity") +
+        coord_trans(y = asinh_trans(cofactor)) + theme_bw() +
+        facet_wrap(~.id) + ggtitle(Kmisc::wrap(title, 40)) +
+        geom_jitter(aes(color = fdr < threshold), position = position_jitter(width = 0.01,
+            height = 0))  +
+        scale_fill_brewer(palette = "Pastel1") + scale_color_brewer(palette = "Set1")
+    if(line){
+        plt <- plt + geom_line(aes(group = PTID), lty = 2)
+    }
+    plt
 }
 
 .wrap <- function (x, width = 8, ...)
