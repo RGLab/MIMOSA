@@ -92,7 +92,7 @@ combine.MIMOSA <- function(x,y,...){
 ##' @importFrom data.table setnames
 ##' @export
 ##' @author Greg Finak
-boxplot.MIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category = NULL,
+boxplotMIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category = NULL,
     cofactor = 5000,line=TRUE,threshold=0.005)
 {
     x_axis_category <- deparse(substitute(x_axis_category))
