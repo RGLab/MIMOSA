@@ -239,6 +239,13 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
     alpha.s[alpha.s == 0] <- 1
     alpha.u[alpha.u == 0] <- 1
     
+    #If all non-response by Fisher, set a random starting point
+    if(sum(!mm)==0){
+      alpha.s<-alpha.u #equal alpha.s and alpha.u
+      s<-sample(1:length(mm),round(length(mm)*0.1))
+      z[s,2]<-1
+      z[s,1]<-0
+    }
     guess <- c(ps, pu)
     
     w <- colSums(z)/sum(z)

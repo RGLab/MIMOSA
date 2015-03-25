@@ -102,10 +102,10 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
     }
 
     method <- match.arg(method, c("mcmc", "EM"))
-    if (Sys.info()["sysname"] == "Darwin") {
-        run.parallel <- FALSE
-        warning("Parallel is disabled on the Mac due to a bug that is yet to be tracked down.\n Your analysis will run in serial.\n Grab a coffee and wait..\n")
-    }
+   # if (Sys.info()["sysname"] == "Darwin") {
+    #    run.parallel <- FALSE
+    #    warning("Parallel is disabled on the Mac due to a bug that is yet to be tracked down.\n Your analysis will run in serial.\n Grab a coffee and wait..\n")
+    #}
     mf.ref <- model.frame(formula, data, na.action = NULL)
     mf.test <- model.frame(formula, data, na.action = NULL)
 
@@ -287,7 +287,6 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
     }
     class(result) <- c("MIMOSAResultList", "list")
     if (length(result) > 0) {
-        # browser()
         splitted <- strsplit(paste0(deparse(formula[[3]]), collapse = ""), "|", fixed = TRUE)[[1]]
         if (length(splitted) > 1) {
             depf <- strsplit(gsub(" ", "", splitted[[2]]), "+", fixed = TRUE)[[1]]
@@ -297,8 +296,10 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
         n_vars <- length(depf)
         # NOTE this is probably wrong..
         if (n_vars > 0) {
-            names(result) <- levels(factor(interaction(as.data.frame(lapply(pData(result)[,
-                depf, with = FALSE], factor)))))
+          #browser()
+            #names(result) <- levels(factor(interaction(as.data.frame(lapply(pData(result)[,
+            #    depf, with = FALSE], factor)))))
+            names(result) <- names(test)
         } else {
             names(result) <- "result"
         }
