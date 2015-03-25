@@ -106,13 +106,13 @@ icsdata2mvicsdata <- function(x) {
 #'  for each step.
 #'  @importFrom coda mcmc
 #'@param EXPRATE the mean of the prior distribution for the model hyperparameters.
-#'@param pXi is the prior on the w. 1 by default (as in beta(1,1) i.e. uniform).
+#'@param pXi is the prior on the w,  beta(1,1) by default).
 #'@param seed \code{numeric} random seed
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
 .fitMCMC <- function(data, inits = NULL, iter = 250000, burn = 50000, thin = 1, tune = 100,
     outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")), alternative = "greater",
-    UPPER = 0.5, LOWER = 0.15, FAST = TRUE, EXPRATE = 1e-04, pXi = 1, seed = 10) {
+    UPPER = 0.5, LOWER = 0.15, FAST = TRUE, EXPRATE = 1e-04, pXi = c(1,1), seed = 10) {
     set.seed(seed)
     alternative <- match.arg(alternative, c("greater", "not equal"))
     data <- icsdata2mvicsdata(data)

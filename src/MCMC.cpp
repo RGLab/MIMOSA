@@ -48,8 +48,8 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	std::vector< double > z = Rcpp::as<vector <double> >(_z);
 	std::vector< double > stdstim = Rcpp::as < vector < double > > (_stim);
 	std::vector< double > stdunstim = Rcpp::as < vector < double > > (_unstim);
-  double pXi = Rcpp::as<double>(_pXi);
-
+  //double pXi = Rcpp::as<double>(_pXi);
+  NumericVector pXi(_pXi);
 	/*
 	 * Wrap R variables in Rcpp objects
 	 */
@@ -691,7 +691,8 @@ void simZ(double &q,std::vector<double> &lnull, std::vector<double> &lresp,std::
 		}
 	}
 }
-inline double simQ(std::vector<double> &z, int P,int k,double pXi){
+//inline double simQ(std::vector<double> &z, int P,int k,double pXi){
+inline double simQ(std::vector<double> &z, int P,int k, NumericVector pXi){
 	std::vector<double> ab(2,0);
 	double q;
 	for(int j=0;j<2;j++){
@@ -699,7 +700,7 @@ inline double simQ(std::vector<double> &z, int P,int k,double pXi){
 			ab[j]=ab[j]+z[j*P+i];
 		}
 	}
-	q = 1.0-::Rf_rbeta(ab[1]+pXi,ab[0]+pXi);
+	q = 1.0-::Rf_rbeta(ab[1]+pXi[2],ab[0]+pXi[1]);
 	return q;
 }
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){

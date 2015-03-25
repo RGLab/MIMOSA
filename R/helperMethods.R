@@ -90,6 +90,7 @@ combine.MIMOSA <- function(x,y,...){
 ##' @param threshold \code{numeric} the FDR threshold (q-value) at which to classify responders as a separate category.
 ##' @return \code{ggplot} object.
 ##' @importFrom data.table setnames
+##' @importFrom Kmisc wrap
 ##' @export
 ##' @author Greg Finak
 boxplotMIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category = NULL,
@@ -108,7 +109,7 @@ boxplotMIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category 
         y = Proportion - Proportion_REF)) + geom_boxplot(aes(fill = fdr <
         threshold), outlier.colour = NA, position = "identity") +
         coord_trans(y = asinh_trans(cofactor)) + theme_bw() +
-        facet_wrap(~.id) + ggtitle(Kmisc::wrap(title, 40)) +
+        facet_wrap(~.id) + ggtitle(wrap(title, 40)) +
         geom_jitter(aes(color = fdr < threshold), position = position_jitter(width = 0.01,
             height = 0))  +
         scale_fill_brewer(palette = "Pastel1") + scale_color_brewer(palette = "Set1")
