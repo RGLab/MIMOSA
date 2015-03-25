@@ -26,7 +26,7 @@ install:
   - Rscript -e 'install.packages("coda", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("modeest", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
   - Rscript -e 'install.packages("RcppArmadillo", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87);source("http://www.bioconductor.org/biocLite.R");biocLite("Biobase",ask=FALSE); install.packages("data.table");install.packages("testthat") ;install_github("RGLab/MIMOSA");'
+  - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87);source("http://www.bioconductor.org/biocLite.R");biocLite("Biobase",ask=FALSE,lib="/home/travis/R/"); install.packages("data.table");install.packages("testthat") ;install_github("RGLab/MIMOSA");'
 
 script:
   - Rscript -e 'require(MIMOSA)'
