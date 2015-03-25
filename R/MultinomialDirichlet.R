@@ -223,12 +223,31 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
     z[mm, 1] <- 1
     z[!mm, 2] <- 1
     
-    # estimate hyperparamters.
-    pu <- prop.table(colMeans(unstim))
-    ps <- prop.table(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
-    alpha.u <- round(colMeans(unstim))
-    alpha.s <- round(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
+    #If all non-response by Fisher, set a random starting point
+    if(sum(!mm)==0){
+      alpha.s<-alpha.u #equal alpha.s and alpha.u
+      s<-sample(1:length(mm),round(length(mm)*0.1))
+      z[s,2]<-1
+      z[s,1]<-0
+    }
     
+    #Hyperparameter estimation for 2-d
+    if(ncol(unstim)==2){
+      pudata<-prop.table(data.matrix(unstim[z[,1]==1,])+1,1)[,2]
+      psdata<-prop.table(data.matrix(stim[z[,2]==1,])+1,1)[,2]
+      f<-function(par,dat)-sum(dbeta(dat,par[1],par[2],log=TRUE))
+      options(warn=-1)
+      alpha.u<-rev(optim(par=c(1,1),dat=pudata,fn=f,control=list(maxit=1000))$par)
+      alpha.s<-rev(optim(par=c(1,1),dat=psdata,fn=f,control=list(maxit=1000))$par)
+      pu<-prop.table(alpha.u)
+      ps<-prop.table(alpha.s)
+    }else{
+      # estimate hyperparamters.
+      pu <- prop.table(colMeans(unstim))
+      ps <- prop.table(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
+      alpha.u <- round(colMeans(unstim))
+      alpha.s <- round(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
+    }
     
     if (any(is.nan(alpha.s))) 
         alpha.s[is.nan(alpha.s)] <- 1
@@ -238,14 +257,6 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
     
     alpha.s[alpha.s == 0] <- 1
     alpha.u[alpha.u == 0] <- 1
-    
-    #If all non-response by Fisher, set a random starting point
-    if(sum(!mm)==0){
-      alpha.s<-alpha.u #equal alpha.s and alpha.u
-      s<-sample(1:length(mm),round(length(mm)*0.1))
-      z[s,2]<-1
-      z[s,1]<-0
-    }
     guess <- c(ps, pu)
     
     w <- colSums(z)/sum(z)
@@ -273,6 +284,7 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
         # make negative
         ll[1] <- .Machine$double.xmax
         lastguess <- guess
+        step <- 0.5
         repeat {
             t <- try(solve(hessresp(guess) + hessnull(guess), gnull(guess) + gresp(guess)), 
                 silent = TRUE)
@@ -288,18 +300,18 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
             if (inherits(t, "try-error")) {
                 stop("Hessian not positive definite. Trying MCMC")
             }
-            new <- guess - t
+            
+            new <- guess - step*t
             ll[iter] <- -sum(llnull(new) * z[, 1] + llresp(new) * z[, 2])
-            step <- 0.5
             # put a limit on the number of iterations here
             piter <- 1
-            while (((ll[iter - 1] - ll[iter]) < -1e-04) & piter < 10) {
+            while (((ll[iter - 1] - ll[iter]) < 1e-01) & piter < 4) {
                 step <- step/2
-                new <- 0.5 * (guess - t)
+                new <-  guess - step*t
                 ll[iter] <- -sum(llnull(new) * z[, 1] + llresp(new) * z[, 2])
                 piter <- piter + 1
             }
-            if ((all(abs(new - guess)/abs(guess) < 1e-04)) | (iter > 999)) {
+            if ((sum(abs(new - guess)/abs(guess)) < 1e-01) | (iter > 999)) {
                 guess <- new
                 if (any(guess < 0)) {
                   warning("Parameter estimates became negative!")

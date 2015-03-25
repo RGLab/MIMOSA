@@ -1,3 +1,8 @@
+MIMOSA  1.4.1
+=============
+Fixed a bug in the EM fitting procedure that caused it to fail in some circumstances.
+MCMC supports priors on weights other than beta(1,1). 
+
 MIMOSA 0.99.4
 =============
 Compatibility with Rcpp 11.0
