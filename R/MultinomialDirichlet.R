@@ -225,7 +225,7 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
     
     #If all non-response by Fisher, set a random starting point
     if(sum(!mm)==0){
-      alpha.s<-alpha.u #equal alpha.s and alpha.u
+     # alpha.s<-alpha.u #equal alpha.s and alpha.u
       s<-sample(1:length(mm),round(length(mm)*0.1))
       z[s,2]<-1
       z[s,1]<-0
