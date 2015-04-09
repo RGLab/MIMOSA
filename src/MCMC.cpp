@@ -210,11 +210,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			 * prior for the current alphas_j
 			 */
 
-//			if(FILTER&&k==2&&!FAST){
-//				prior=dgeom(alphas[j],EXPRATE);
-//			}else{
-				prior=::Rf_dexp(alphas[j],1.0/EXPRATE,true);
-//			}
+			prior=::Rf_dexp(alphas[j],1.0/EXPRATE,true);
 			std::copy(alphas.begin(),alphas.end(),newalphas.begin());
 
 			//current null marginal log likelihood
@@ -230,6 +226,11 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 
 			//compute z1*lnull+z2*lresp+prior
 			completeLL(z,llnull,llresp,cll,filter,P,k);
+			
+// 			for(int h=0; h < cll.size();h++){
+// 			  Rprintf()
+// 			}
+// 			
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 			if(isfinite(oldll)!=1){
          ::Rf_error( "oldll != 1");
@@ -703,6 +704,7 @@ inline double simQ(std::vector<double> &z, int P,int k, NumericVector pXi){
 	q = 1.0-::Rf_rbeta(ab[1]+pXi[2],ab[0]+pXi[1]);
 	return q;
 }
+
 void normalizingConstant(std::vector<double> &stim,std::vector<double> &unstim,std::vector<double> &alphas,std::vector<double> &alphau,std::vector<double> &llresp, int P,int k){
 	if(k!=2){
      ::Rf_error( "k!=2");
