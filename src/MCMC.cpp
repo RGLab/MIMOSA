@@ -227,10 +227,6 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//compute z1*lnull+z2*lresp+prior
 			completeLL(z,llnull,llresp,cll,filter,P,k);
 			
-//  			for(int h=0; h < cll.size();h++){
-//  			  Rprintf("%f\n",cll[h]);
-//  			}
-//  			
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 			if(isfinite(oldll)!=1){
          ::Rf_error( "oldll != 1");
