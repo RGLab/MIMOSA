@@ -227,10 +227,6 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			//compute z1*lnull+z2*lresp+prior
 			completeLL(z,llnull,llresp,cll,filter,P,k);
 			
-// 			for(int h=0; h < cll.size();h++){
-// 			  Rprintf()
-// 			}
-// 			
 			oldll=std::accumulate(cll.begin(),cll.end(),0.0)+prior;
 			if(isfinite(oldll)!=1){
          ::Rf_error( "oldll != 1");
@@ -701,7 +697,7 @@ inline double simQ(std::vector<double> &z, int P,int k, NumericVector pXi){
 			ab[j]=ab[j]+z[j*P+i];
 		}
 	}
-	q = 1.0-::Rf_rbeta(ab[1]+pXi[2],ab[0]+pXi[1]);
+	q = 1.0-::Rf_rbeta(ab[1]+pXi[0],ab[0]+pXi[1]);
 	return q;
 }
 
