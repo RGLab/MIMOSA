@@ -1,4 +1,4 @@
-<!--[![Build Status](https://travis-ci.org/RGLab/MIMOSA.png?branch=master)](https://travis-ci.org/RGLab/MIMOSA)-->
+[![Travis-CI Build Status](https://travis-ci.org/RGLab/MIMOSA.svg?branch=master)](https://travis-ci.org/RGLab/MIMOSA)
 
 # MIMOSA: Mixture Models for Single Cell Assays
 

@@ -1,33 +1,16 @@
-# it is not really python, but there is no R support on Travis CI yet
-language: python
+# Sample .travis.yml for R projects
 
-# environment variables
+language: r
+warnings_are_errors: true
+sudo: required
+
+bioc_required: true
+
 env:
-  - R_LIBS_USER=~/R
+ global:
+   - CRAN: http://cran.rstudio.com
 
-# install dependencies
-install:
-  - sudo apt-add-repository -y 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/'
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-  - sudo apt-add-repository -y ppa:marutter/c2d4u
-  - sudo apt-get update
-  - sudo apt-get install r-base-dev r-cran-xml r-cran-rcurl qpdf texinfo texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
-  - "[ ! -d ~/R ] && mkdir ~/R"
-  - R --version
-  - R -e '.libPaths(); sessionInfo()'
-  - Rscript -e 'install.packages("devtools", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("ggplot2", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("plyr", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("reshape2", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("Formula", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("data.table", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("pracma", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("MCMCpack", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("coda", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("modeest", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'install.packages("RcppArmadillo", dep = TRUE, type="source", repos = c("http://rforge.net", "http://cran.rstudio.org"))'
-  - Rscript -e 'library(methods);library(devtools);library(utils);chooseCRANmirror(ind=87);source("http://www.bioconductor.org/biocLite.R");biocLite("Biobase",ask=FALSE,lib="/home/travis/R/"); install.packages("data.table");install.packages("testthat") ;install_github("RGLab/MIMOSA");'
-
-script:
-  - Rscript -e 'require(MIMOSA)'
-
+notifications:
+  email:
+    on_success: change
+    on_failure: change
