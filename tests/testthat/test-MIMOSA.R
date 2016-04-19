@@ -21,7 +21,7 @@ expect_that(ncol(getZ(result)),equals(2))
 context("getW")
 
 W<-getW(result)
-expect_that(W,is_a("matrix"))
+expect_that(W,is_a("data.frame"))
 expect_that(dim(W),equals(c(2,1)))
 expect_that(colnames(W),equals("ENV"))
 expect_that(rownames(W),equals(c("w.nonresp","w.resp")))
