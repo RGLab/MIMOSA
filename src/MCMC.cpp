@@ -261,7 +261,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				newll=std::accumulate(cll.begin(),cll.end(),0.0)+newprior;
 			}else{
 				REJECT=true;
-				newll=nan(0);
+				newll=nan("0");
 			}
 
 
@@ -345,7 +345,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				newll=std::accumulate(cll.begin(),cll.end(),0.0)+newprior;
 			}else{
 				REJECT=true;
-				newll=nan(0);
+				newll=nan("0");
 			}
 
 			//	printf("newll - oldll = %f isfinite()=%d\n",newll-oldll,isfinite(newll-oldll));
