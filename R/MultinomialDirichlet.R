@@ -245,6 +245,11 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
       # estimate hyperparamters.
       pu <- prop.table(colMeans(unstim))
       ps <- prop.table(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
+	## Fix.. stim and unstim may have all 0s in response.. need to fudge here if that happens.
+	if(pu[2]==0)
+		pu[2]=1e-4;
+	if(ps[2]==0)
+		ps[2]=1e-4;
       alpha.u <- round(colMeans(unstim))
       alpha.s <- round(colMeans(stim[which(z[, 2] == 1), , drop = FALSE]))
     }

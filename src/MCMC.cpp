@@ -648,7 +648,7 @@ double alphaProposal(const std::vector<double> &alpha, double sigma, int i){
 }
 double alphaDiscreteProposal(const std::vector<double> &alpha, double d, int i){
 	double na;
-	d=round(abs(d));
+	d=round(std::abs(d));
 	if(d<1){
     ::Rf_error( "d is < 1");
 	}
