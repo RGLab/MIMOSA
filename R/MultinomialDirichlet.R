@@ -232,7 +232,7 @@ MDMix <- function(data = NULL, modelmatrix = NULL, alternative = "greater", init
     }
     
     #Hyperparameter estimation for 2-d
-    if(ncol(unstim)==2&(sum(z[,1])!=1&sum(z[,2])!=1)){
+    if(ncol(unstim)==2&(sum(z[,1])!=1|sum(z[,2])!=1)){
       pudata<-prop.table(data.matrix(unstim[z[,1]==1,,drop=FALSE])+1,1)[,2]
       psdata<-prop.table(data.matrix(stim[z[,2]==1,,drop=FALSE])+1,1)[,2]
       f<-function(par,dat)-sum(dbeta(dat,par[1],par[2],log=TRUE))
