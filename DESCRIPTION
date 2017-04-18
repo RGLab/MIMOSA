@@ -28,10 +28,11 @@ Depends:
     R (>= 3.0.2),
     MASS,
     plyr,
+    rstan (>= 2.14.1),
     reshape,
     Biobase,
     ggplot2
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo,StanHeaders (>= 2.14.0), rstan (>= 2.14.1)
 LazyLoad: yes
 LazyData: yes
 biocViews: FlowCytometry, CellBasedAssays
