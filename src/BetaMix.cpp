@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <cmath>
+#include <algorithm>
 #define NSAMPS 100
 using namespace Rcpp;
 
@@ -44,7 +45,7 @@ RcppExport SEXP MarginalNULL(SEXP ns,SEXP Ns, SEXP nu, SEXP Nu, SEXP alpha0,SEXP
 
 	result=MarginalNULLRcpp(M,_w,_Ns,_ns,retval,_Nu,_nu,_alpha0,_beta0, _alphaS,_betaS);
 	if(!Log(0)){
-		std::transform(result.begin(),result.end(),result.begin(),::exp);
+		std::transform(result.begin(),result.end(),result.begin(),static_cast<double (*)(double)>(&::exp));
 	}
 	return(wrap(result));
 }
@@ -68,7 +69,7 @@ RcppExport SEXP MarginalGT(SEXP ns,SEXP Ns, SEXP nu, SEXP Nu, SEXP alpha0,SEXP b
 	NumericVector result(_Ns.length());
 	result=MarginalGTRcpp(M,_w,_Ns,_ns,retval,_Nu,_nu,_alpha0,_beta0, _alphaS,_betaS,MCINTS);
 	if(!Log(0)){
-	std::transform(result.begin(),result.end(),result.begin(),::exp);
+	std::transform(result.begin(),result.end(),result.begin(),static_cast<double (*)(double)>(&::exp));
 	}
 	return(wrap(result));
 }
@@ -89,7 +90,7 @@ RcppExport SEXP MarginalNE(SEXP ns,SEXP Ns, SEXP nu, SEXP Nu, SEXP alpha0,SEXP b
 	Rcpp::LogicalVector Log(log);
 	result=MarginalNERcpp(M,_w,_Ns,_ns,retval,_Nu,_nu,_alpha0,_beta0, _alphaS,_betaS);
 	if(!Log(0)){
-	std::transform(result.begin(),result.end(),result.begin(),::exp);
+	std::transform(result.begin(),result.end(),result.begin(),static_cast<double (*)(double)>(&::exp));
 	}
 	return(wrap(result));
 }
