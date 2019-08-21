@@ -23,7 +23,7 @@ MIMOSA shares information across subjects by means of priors on the proportions 
 ```r
 install.packages("devtools") #install devtools package
 library(devtools) #load it
-install_github("MIMOSA","RGLab",branch="master") #Need R 3.0.0, and a bunch of dependencies. The install will fail with various error messages until you install those dependencies.
+install_github("RGLab/MIMOSA",ref="trunk") #Need R 3.0.0, and a bunch of dependencies. The install will fail with various error messages until you install those dependencies.
 library(MIMOSA) #load MIMOSA
 ```
 
