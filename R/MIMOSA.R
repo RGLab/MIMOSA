@@ -14,8 +14,13 @@
 #'@importFrom testthat test_dir expect_that context 
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
-#'@importFrom reshape rename
-#'@importFrom plyr ddply
+#'@importFrom grDevices gray.colors
+#'@importFrom graphics contour image legend lines par plot points title
+#'@importFrom methods callNextMethod show
+#'@importFrom stats as.formula dbeta dexp ecdf fisher.test model.frame na.omit optim p.adjust pbeta qbeta quantile rbeta rbinom rmultinom rnorm runif terms var
+#'@importFrom utils read.table globalVariables
+#'@importFrom reshape rename melt cast
+#'@importFrom plyr ddply is.formula
 #'@importFrom methods new
 #'@importFrom Rcpp evalCpp
 #'@name MIMOSA-package
@@ -25,6 +30,7 @@
 #'  Biostatistics, 2013, \url{http://biostatistics.oxfordjournals.org/content/early/2013/07/24/biostatistics.kxt024.abstract}
 NULL
 
+utils::globalVariables(c( "PTID", "Proportion", "Proportion_REF", "RefTreat", "rr", ".", "mclapply"))
 
 #' Stimulated and unstimulated T-cell counts for an ICS assay
 #'
@@ -319,8 +325,6 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
 #'@title pData
 #'@docType methods
 #'@rdname pData-methods
-#'@aliases `pData<-`,MCMCResult, ANY
-#'@aliases `pData<-`,MIMOSAResult, ANY
 #'@param value the phenoData table to be assigned to the object.
 #'@export
 setMethod("pData<-","MCMCResult",function(object,value){
@@ -332,6 +336,13 @@ setMethod("pData<-","MCMCResult",function(object,value){
 #'@rdname pData-methods
 setMethod("pData<-","MIMOSAResult",function(object,value){
     pData(object@result@phenoData)<-value
+    object
+})
+
+#'@export
+#'@rdname pData-methods
+setMethod("pData<-", c("BetaMixResult", "data.frame"), function(object, value) {
+    pData(object@pd) <- value
     object
 })
 
@@ -351,6 +362,7 @@ setMethod("pData", "MIMOSAResult", function(object) {
 
 
 #'@method pData MDMixResult
+#'@aliases pData,BetaMixResult
 #'@aliases pData,MDMixResult-method
 #'@rdname pData-methods
 #'@export
@@ -366,6 +378,12 @@ setMethod("pData", "MCMCResult", function(object) {
     pData(object@phenoData)
 })
 
+#'@method pData MCMCResult
+#'@rdname pData-methods
+#'@export
+setMethod("pData", "BetaMixResult", function(object) {
+    pData(object@pd)
+})
 
 # 'roc computes an ROC curve ' '@param p is the probability of a positive result
 # '@param truth is a logical with the true positive and negative results
@@ -403,6 +421,10 @@ fdrComparison <- function(fdr, truth) {
 #'  are used to construct the phenoData for the expression set
 #' @param df a data.frame that is in the correct form
 #' @param featureCols the indices of the columns that identify features.
+#' @importFrom Biobase ExpressionSet AnnotatedDataFrame
+#' @importFrom ggplot2 aes geom_boxplot coord_trans facet_wrap ggtitle geom_jitter position_jitter scale_fill_brewer scale_color_brewer geom_line facet_grid 
+#' @importFrom MASS huber
+#' @importFrom rlang enquo `!!` .data
 #' @examples
 #' E<-ConstructMIMOSAExpressionSet(ICS,
 ##'   reference=ANTIGEN%in%'negctrl',measure.columns=c('CYTNUM','NSUB'),
@@ -514,12 +536,12 @@ ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% 
                 "RefTreat", sep = "+"))
         }
         NEWNAMES <- paste(cols, "REF", sep = "_")
-        mydata <- melt(mydata, measure.var = c(cols, NEWNAMES))
+        mydata <- reshape::melt(mydata, measure.var = c(cols, NEWNAMES))
         mydata$RefTreat <- factor(grepl("_REF$", mydata$variable), labels = c("Treatment",
             "Reference"))
         mydata <- reshape::rename(mydata, c(variable = "component", value = "count"))
         mydata$component <- factor(gsub("_REF$", "", mydata$component))
-        mydata <- cast(melt(mydata, measure = "count"), default.formula)
+        mydata <- reshape::cast(reshape::melt(mydata, measure = "count"), default.formula)
         mydata
     }
     thisdata <- MIMOSAReshape(mydata = thisdata, default.formula = default.cast.formula,

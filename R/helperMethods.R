@@ -93,6 +93,7 @@ combine.MIMOSA <- function(x,y,...){
 ##' @param threshold \code{numeric} the FDR threshold (q-value) at which to classify responders as a separate category.
 ##' @return \code{ggplot} object.
 ##' @importFrom data.table setnames
+##' @importFrom plyr ldply
 ##' @export
 ##' @author Greg Finak
 boxplotMIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category = NULL,
@@ -102,7 +103,7 @@ boxplotMIMOSAResultList <- function (data, title = "A Boxplot", x_axis_category 
     if (x_axis_category == "x_axis_category") {
         stop("must provide an 'x_axis_category' variable for boxplots")
     }
-    d <- (cbind(ldply(data, pData), fdr(data), countsTable(data,
+    d <- (cbind(plyr::ldply(data, pData), fdr(data), countsTable(data,
         proportion = TRUE)))
     x_axis_category <- get(x_axis_category, d)
     setnames(d, colnames(d)[(ncol(d) - 3):ncol(d)], c("ParentProportion",
@@ -197,14 +198,7 @@ huberFilter <- function(object, sd = 2) {
 }
 
 
-setMethod("pData", "BetaMixResult", function(object) {
-    pData(object@pd)
-})
 
-setMethod("pData<-", c("BetaMixResult", "data.frame"), function(object, value) {
-    pData(object@pd) <- value
-    object
-})
 # The mean,sample-size parameterization of the beta-binomial
 f0 <- function(p, z, d, w, alternative = alternative, mciter = mciter) {
     -CompleteDataLLRcpp(d = d, alpha0 = p[3] * p[4], beta0 = (1 - p[3]) * p[4], alphaS = p[1] *

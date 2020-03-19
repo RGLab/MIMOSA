@@ -3,13 +3,13 @@
 \docType{methods}
 \name{pData<-,MCMCResult,ANY-method}
 \alias{pData<-,MCMCResult,ANY-method}
-\alias{`pData<-`,MCMCResult,}
-\alias{ANY}
-\alias{`pData<-`,MIMOSAResult,}
 \alias{pData<-,MIMOSAResult,ANY-method}
+\alias{pData<-,BetaMixResult,data.frame-method}
 \alias{pData,MIMOSAResult-method}
 \alias{pData,MDMixResult-method}
+\alias{pData,BetaMixResult}
 \alias{pData,MCMCResult-method}
+\alias{pData,BetaMixResult-method}
 \alias{pData.MIMOSAResultList}
 \alias{pData,MIMOSAResultList-method}
 \title{pData}
@@ -18,11 +18,15 @@
 
 \S4method{pData}{MIMOSAResult,ANY}(object) <- value
 
+\S4method{pData}{BetaMixResult,data.frame}(object) <- value
+
 \S4method{pData}{MIMOSAResult}(object)
 
 \S4method{pData}{MDMixResult}(object)
 
 \S4method{pData}{MCMCResult}(object)
+
+\S4method{pData}{BetaMixResult}(object)
 
 \method{pData}{MIMOSAResultList}(object)
 
