@@ -110,6 +110,7 @@ icsdata2mvicsdata <- function(x) {
 #'@param seed \code{numeric} random seed
 #'  @rdname fitMCMC
 #'  @name .fitMCMC
+#'  @importFrom data.table fread
 .fitMCMC <- function(data, inits = NULL, iter = 250000, burn = 50000, thin = 1, tune = 100,
     outfile = basename(tempfile(tmpdir = ".", fileext = ".dat")), alternative = "greater",
     UPPER = 0.5, LOWER = 0.15, FAST = TRUE, EXPRATE = 1e-04, pXi = c(1,1), seed = 10) {
@@ -172,7 +173,11 @@ icsdata2mvicsdata <- function(x) {
         d
     }
     result$getRespInd<-function(x = paste(outfile, "P", sep = ""), thin = 1){
-        tbl<-read.table(x, sep = "\t", header = TRUE)
+        tbl<-as.data.frame(data.table::fread(x, sep = "\t", header = TRUE))
+        if(nrow(tbl)>20000){
+            set.seed(12345)
+            tbl<-tbl[sample(1:nrow(tbl),size = 10000,replace = FALSE),]
+        }
         tbl<-tbl[,grepl("z",colnames(tbl))]
         tbl<-1.0-tbl #transform to response indicator rather than non-response indicator
     }

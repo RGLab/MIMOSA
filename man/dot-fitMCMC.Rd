@@ -58,7 +58,8 @@ for each step.
 
 \item{seed}{\code{numeric} random seed
 @rdname fitMCMC
-@name .fitMCMC}
+@name .fitMCMC
+@importFrom data.table fread}
 }
 \description{
 This is an internal function that fits the MIMOSA model via MCMC. It is called

@@ -161,6 +161,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 	std::vector<double> cll(P,0.0);
 	std::vector<double> p(P,0.0);
 	std::vector<double> cz(P,0.0);
+	std::vector<double> prr(NITERS-BURNIN,0.0);
 
 
 	double prior=0,newprior=0;
@@ -533,6 +534,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				sampleP(sum_stim_unstim,stdstim,stdunstim,alphas,alphau,z,ps,pu,P,k);
 				for(int obs=0;obs<P;obs++){
 					fprintf(fileP,"%f\t", z[obs]);
+				  // prr[iteration-BURNIN]+=(1-z[obs]);
 				}
 				for(int obs=0;obs<P-1;obs++){
 					fprintf(fileP,"%f\t%f\t",ps[obs],pu[obs]);
@@ -546,6 +548,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 				fprintf(file,"%f\t", alphau[obs]);
 			}
 			fprintf(file,"%f\n",q);
+			// std::cout<<"PRR: "<<prr[iteration-BURNIN]/P<<std::endl;
 		}
 #ifdef NDEBUG
 		Rprintf("alphas: %f %f alphau: %f %f\n",alphas[0],alphas[1],alphau[0],alphau[1]);
@@ -565,6 +568,7 @@ RcppExport SEXP fitMCMC(SEXP _stim, SEXP _unstim, SEXP _alphas, SEXP _alphau, SE
 			Rcpp::Named("z") = cz,
 			Rcpp::Named("stepsizeS") = sigmas,
 			Rcpp::Named("stepsizeU") = sigmau);
+	    // Rcpp::Named("prr") = prr);
 	END_RCPP
 }
 
