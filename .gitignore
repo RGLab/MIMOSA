@@ -18,3 +18,4 @@ vignettes/MIMOSA.pdf
 vignettes/MIMOSA.tex
 inst/.DS_Store
 .Rproj.user
+test.R
