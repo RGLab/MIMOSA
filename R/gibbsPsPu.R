@@ -169,7 +169,7 @@ fdr <- function(z) {
 
 #'@rdname fdr
 #'@method fdr matrix
-#'@S3method fdr matrix
+#'@export
 fdr.matrix <- function(z) {
     fdr <- rep(0, nrow(z))
     o <- order(z[, 2], decreasing = TRUE)
@@ -179,14 +179,14 @@ fdr.matrix <- function(z) {
 
 #'@rdname fdr
 #'@method fdr MIMOSAResult
-#'@S3method fdr MIMOSAResult
+#'@export
 fdr.MIMOSAResult <- function(z) {
     fdr(z@z)
 }
 
 #'@rdname fdr
 #'@method fdr MIMOSAResultList
-#'@S3method fdr MIMOSAResultList
+#'@export
 fdr.MIMOSAResultList <- function(z) {
     r <- lapply(z, function(y) fdr(y))
     names(r) <- names(z)

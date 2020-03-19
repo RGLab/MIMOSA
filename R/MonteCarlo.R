@@ -145,7 +145,7 @@ icsdata2mvicsdata <- function(x) {
     }
     result$z <- cbind(result$z, 1 - result$z)
     result$getmcmc <- function(x = outfile) {
-        mcmc(read.table(x, sep = "\t", header = TRUE))
+        coda::mcmc(read.table(x, sep = "\t", header = TRUE))
     }
     # TODO rewrite this to be more robust with large files
     # result$getP<-function(x=paste(outfile,'P',sep='')){
@@ -170,6 +170,11 @@ icsdata2mvicsdata <- function(x) {
             d <- split(as.list(data.frame(d[, (nc/3 + 1):nc])), gl(nc/3, 2))
         }
         d
+    }
+    result$getRespInd<-function(x = paste(outfile, "P", sep = ""), thin = 1){
+        tbl<-read.table(x, sep = "\t", header = TRUE)
+        tbl<-tbl[,grepl("z",colnames(tbl))]
+        tbl<-1.0-tbl #transform to response indicator rather than non-response indicator
     }
     attr(result, "class") <- c(attr(result, "class"), "MDMixResult")
     attr(result, "pData") <- attr(data, "pData")

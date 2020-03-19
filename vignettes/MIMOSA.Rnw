@@ -105,7 +105,7 @@ While the above is a little more complex than usual, in one call we get our Expr
 <<fit,tidy=FALSE,message=FALSE,results='hide',warning=FALSE>>=
 set.seed(100)
 result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE+Ntot|ANTIGEN,
-               data=E, method="EM")
+               data=E, method="EM",burn=500,iter=2000)
 @
 
 There's two things to note about the above function call. The formula NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN will fit a separate model for each  ANTIGEN to the cell counts of all subjects. CYTOKINE and TCELLSUBSET are not included in the conditioning because there is only one level of each of these factors. The left hand side contains NSUB+CYTNUM, which are our negative and positive cell counts. The model expects, specifically, that the first component represents the negative cell counts, so NSUB (or whatever you call your negative cell counts) should always come first. The ref and subset arguments are expressions that evaluate to a logical vector and specify which subset of observations represent the referece for the contrast, and which represent the treatment. These have been automatically recoded as ``Reference'' and ``Treatment'' by the previous call that created the ExpressionSet, such that the reference are the ``negctrl1'' samples, and the treatment is any other antigen stimulation. Together, the ref and subset arguments allow you to fit the model to whichever subset of data you may be interested in analyzing. 
@@ -126,6 +126,17 @@ The w's can be inerpreted as the fraction of subjects that respond, or not, to t
 lapply(result,function(x)table(fdr(x)<0.01))
 getW(result)
 @
+
+We can also summarize results from "mcmc" fitted models using the posterior samples to get posterior response rates and credible intervals.
+
+<<posteriorrr>>=
+set.seed(100)
+result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE+Ntot|ANTIGEN,
+               data=E, method="mcmc",burn=1000,iter=5000)
+
+getPosteriorResponseRate(result,ANTIGEN)
+@
+
 
 \subsection{Plotting the Results}
 Volcano plots tend to be useful to visualize the results.

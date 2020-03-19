@@ -11,10 +11,10 @@
 #'@useDynLib MIMOSA, .registration=TRUE
 #'@rdname MIMOSA-package
 #'@import Formula
-#'@import testthat
+#'@importFrom testthat test_dir expect_that context 
 #'@importFrom MASS ginv
 #'@importClassesFrom methods array character data.frame factor integer matrix numeric
-#'@import reshape
+#'@importFrom reshape rename
 #'@importFrom plyr ddply
 #'@importFrom methods new
 #'@importFrom Rcpp evalCpp
@@ -63,7 +63,8 @@ NULL
 #'@param ... additional arguments
 #'@return an object of type \code{MIMOSAResult}
 #'@aliases MIMOSA,formula,ExpressionSet-method
-#'@importFrom data.table key
+#'@importFrom data.table key 
+#'@importFrom coda mcmc
 #'@examples
 #' data(ICS)
 #' E<-ConstructMIMOSAExpressionSet(ICS,
@@ -185,7 +186,11 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
                   } else {
                     res$p <- list()
                   }
+                  if(ncol(fitme[[1]]) == 2){
+                      res$IndMat<-res$getRespInd()
+                  }
                   attr(res, "pData") <- new("AnnotatedDataFrame", pd[[i]])
+                  colnames(res$IndMat)<-rownames(pd[[i]])
                   outfile <- get("outfile", environment(res$getmcmc))
                   if (cleanup) {
                     unlink(outfile)
@@ -213,6 +218,9 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
                       unlink(paste(outfile, "P", sep = ""))
                     }
                     res <- MCMCResult(object = res)
+                    if(!all.equal(res@IndMat,data.frame())){
+                        colnames(res@IndMat)<-rownames(pData(res))
+                    }
                   } else {
                     res@pd <- new("AnnotatedDataFrame", pd[[i]])
                   }
@@ -307,6 +315,25 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
     return(result)
 })
 
+#'@importFrom Biobase `pData<-`
+#'@title pData
+#'@docType methods
+#'@rdname pData-methods
+#'@aliases `pData<-`,MCMCResult, ANY
+#'@aliases `pData<-`,MIMOSAResult, ANY
+#'@param value the phenoData table to be assigned to the object.
+#'@export
+setMethod("pData<-","MCMCResult",function(object,value){
+    pData(object@result@phenoData)<-value
+    object
+})
+
+#'@export
+#'@rdname pData-methods
+setMethod("pData<-","MIMOSAResult",function(object,value){
+    pData(object@result@phenoData)<-value
+    object
+})
 
 #'pData extract the phenoData table from a MIMOSA result
 #'@details Extracts the phenoData data.frame from a MIMOSAResult object
@@ -316,21 +343,25 @@ setMethod("MIMOSA", c("formula", "ExpressionSet"), definition = function(formula
 #'@importMethodsFrom Biobase pData
 #'@aliases pData,MIMOSAResult-method
 #'@method pData MIMOSAResult
-#'@rdname pData
+#'@rdname pData-methods
+#'@export
 setMethod("pData", "MIMOSAResult", function(object) {
     pData(object@result)
 })
 
-#'@rdname pData
+
 #'@method pData MDMixResult
 #'@aliases pData,MDMixResult-method
+#'@rdname pData-methods
+#'@export
 setMethod("pData", "MDMixResult", function(object) {
     pData(object@pd)
 })
 
-#'@rdname pData
 #'@aliases pData,MCMCResult-method
 #'@method pData MCMCResult
+#'@rdname pData-methods
+#'@export
 setMethod("pData", "MCMCResult", function(object) {
     pData(object@phenoData)
 })
@@ -486,7 +517,7 @@ ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% 
         mydata <- melt(mydata, measure.var = c(cols, NEWNAMES))
         mydata$RefTreat <- factor(grepl("_REF$", mydata$variable), labels = c("Treatment",
             "Reference"))
-        mydata <- rename(mydata, c(variable = "component", value = "count"))
+        mydata <- reshape::rename(mydata, c(variable = "component", value = "count"))
         mydata$component <- factor(gsub("_REF$", "", mydata$component))
         mydata <- cast(melt(mydata, measure = "count"), default.formula)
         mydata
@@ -553,7 +584,6 @@ setOldClass("MIMOSAResultList")
 #'@method print MIMOSAResultList
 #'@param x a \code{MIMOSAResultList}
 #'@param ... additional arguments passed down
-#'@S3method print MIMOSAResultList
 print.MIMOSAResultList <- function(x, ...) {
     cat(sprintf("A MIMOSAResultList with %s models for\n", length(x)))
     cat(sprintf("%s ", names(x)))
@@ -575,15 +605,15 @@ setMethod("show", "MIMOSAResult", function(object) {
 })
 
 
-#'@rdname pData
+#'@rdname pData-methods
 #'@importFrom data.table rbindlist
-#'@S3method pData MIMOSAResultList
+#'@method pData MIMOSAResultList
 pData.MIMOSAResultList <- function(object) {
-    rbindlist(lapply(object, pData))
+    do.call(rbind,lapply(object, pData))
 }
 
 
-#'@rdname pData
+#'@rdname pData-methods
 #'@method pData MIMOSAResultList
 #'@aliases pData,MIMOSAResultList-method
 setMethod("pData", "MIMOSAResultList", pData.MIMOSAResultList)
@@ -614,14 +644,14 @@ getZ <- function(x) {
 
 #'@rdname MIMOSA-accessors
 #'@method getZ MIMOSAResultList
-#'@S3method getZ MIMOSAResultList
+#'@export
 getZ.MIMOSAResultList <- function(x) {
     as.matrix(do.call(rbind, lapply(x, getZ)))
 }
 
 #'@rdname MIMOSA-accessors
 #'@method getZ MIMOSAResult
-#'@S3method getZ MIMOSAResult
+#'@export
 getZ.MIMOSAResult <- function(x) {
     z <- x@z
     colnames(z) <- c("Pr.Nonresponse", "Pr.response")
@@ -653,7 +683,7 @@ getW <- function(x) {
 
 #'@rdname MIMOSA-accessors
 #'@method getW MIMOSAResultList
-#'@S3method getW MIMOSAResultList
+#'@export
 getW.MIMOSAResultList <- function(x) {
     w <- data.frame(lapply(x, getW))
     colnames(w) <- names(x)
@@ -662,7 +692,7 @@ getW.MIMOSAResultList <- function(x) {
 
 #'@rdname MIMOSA-accessors
 #'@method getW MIMOSAResult
-#'@S3method getW MIMOSAResult
+#'@export
 getW.MIMOSAResult <- function(x) {
     w <- x@w
     names(w) <- c("w.nonresp", "w.resp")
@@ -700,6 +730,7 @@ setGeneric("countsTable")
 #'@rdname countsTable
 #'@method countsTable MIMOSAResult
 #'@aliases countsTable,MIMOSAResult-method
+#'@export
 setMethod("countsTable", "MIMOSAResult", definition = function(object, proportion = FALSE) {
     countsTable(object@result, proportion = proportion)
 })
@@ -707,6 +738,7 @@ setMethod("countsTable", "MIMOSAResult", definition = function(object, proportio
 #'@rdname countsTable
 #'@method countsTable MCMCResult
 #'@aliases countsTable,MCMCResult-method
+#'@export
 setMethod("countsTable", "MCMCResult", definition = function(object, proportion = FALSE) {
     if (proportion) {
         m <- (cbind(prop.table(as.matrix(object@n.stim), 1), prop.table(as.matrix(object@n.unstim),
@@ -722,6 +754,7 @@ setMethod("countsTable", "MCMCResult", definition = function(object, proportion 
 #'@rdname countsTable
 #'@method countsTable MDMixResult
 #'@aliases countsTable,MDMixResult-method
+#'@export
 setMethod("countsTable", "MDMixResult", definition = function(object, proportion = FALSE) {
     if (proportion == TRUE) {
         m <- (do.call(cbind, lapply(object@data, function(x) prop.table(as.matrix(x),
@@ -736,7 +769,7 @@ setMethod("countsTable", "MDMixResult", definition = function(object, proportion
 
 #'@rdname countsTable
 #'@method countsTable MIMOSAResultList
-#'@S3method countsTable MIMOSAResultList
+#'@export
 countsTable.MIMOSAResultList <- function(object, proportion = FALSE) {
     as.matrix(do.call(rbind, lapply(object, function(x) countsTable(x, proportion = proportion))))
 }
@@ -744,6 +777,7 @@ countsTable.MIMOSAResultList <- function(object, proportion = FALSE) {
 #'@rdname countsTable
 #'@method countsTable MIMOSAResultList
 #'@aliases countsTable,MIMOSAResultList-method
+#'@export
 setMethod("countsTable", "MIMOSAResultList", countsTable.MIMOSAResultList)
 
 #'Volcano plot for a MIMOSA model
@@ -778,7 +812,7 @@ volcanoPlot <- function(x, effect_expression = NA, facet_var = NA, threshold = 0
 
 #'@method volcanoPlot MIMOSAResultList
 #'@importFrom data.table data.table
-#'@S3method volcanoPlot MIMOSAResultList
+#'@export
 volcanoPlot.MIMOSAResultList <- function(x, effect_expression = NA, facet_var = NA,
     threshold = 0.01) {
     err <- FALSE

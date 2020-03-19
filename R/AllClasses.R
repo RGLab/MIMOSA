@@ -40,7 +40,7 @@ BetaMixResult <- function(alternative.model = NA_character_, cytokine = NA_chara
 # Fitting the model using the \code{MIMOSA} function returns an object of this
 # class.  ' ' @docType class ' @rdname MCMCResult
 setClass("MCMCResult", representation = list(z = "matrix", n.stim = "data.frame", 
-    n.unstim = "data.frame", params = "matrix", p = "list", phenoData = "AnnotatedDataFrame"))
+    n.unstim = "data.frame", params = "matrix", p = "list", phenoData = "AnnotatedDataFrame",IndMat="data.frame"))
 
 # ' Constructor for a \code{MCMCResult} object ' ' This constructor is used by
 # the \code{MIMOSA} model fitting method.  ' ' @rdname MCMCResult ' @param
@@ -51,7 +51,7 @@ MCMCResult <- function(object = NULL) {
             stop("Wrong input class")
         } else {
             return(new("MCMCResult", z = object$z, n.stim = object$n.stim, n.unstim = object$n.unstim, 
-                params = object$params, p = object$p, phenoData = attr(object, "pData")))
+                params = object$params, p = object$p, phenoData = attr(object, "pData"),IndMat=if(!is.null(object$IndMat)){object$IndMat}else{data.frame()}))
         }
     }
 }
@@ -68,12 +68,17 @@ setClassUnion("MixResult", c("BetaMixResult", "MDMixResult", "MCMCResult"))
 #' 
 #' @docType class
 setClass("MIMOSAResult", representation = list(result = "MixResult", z = "matrix", 
-    w = "numeric"))
+    w = "numeric", IndMat = "data.frame"))
 
 setMethod("initialize", "MIMOSAResult", function(.Object, ...) {
     .Object <- callNextMethod(.Object, ...)
     .Object@z = .Object@result@z
     .Object@w = colMeans(.Object@z)
+    if(class(.Object@result)=="MCMCResult"){
+        .Object@IndMat = .Object@result@IndMat
+    }else{
+        .Object@IndMat=data.frame()
+    }
     return(.Object)
 })
 
