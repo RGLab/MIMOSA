@@ -176,9 +176,9 @@ icsdata2mvicsdata <- function(x) {
         tbl<-as.data.frame(data.table::fread(x, sep = "\t", header = TRUE))
         if(nrow(tbl)>20000){
             set.seed(12345)
-            tbl<-tbl[sample(1:nrow(tbl),size = 10000,replace = FALSE),]
+            tbl<-tbl[sample(1:nrow(tbl),size = 10000,replace = FALSE),,drop=FALSE]
         }
-        tbl<-tbl[,grepl("z",colnames(tbl))]
+        tbl<-tbl[,grepl("z",colnames(tbl)),drop=FALSE]
         tbl<-1.0-tbl #transform to response indicator rather than non-response indicator
     }
     attr(result, "class") <- c(attr(result, "class"), "MDMixResult")
