@@ -14,13 +14,15 @@
 #'@return a tibble with the grouping variable, and the 2.5th, median, and 97.5th percentiles of the posterior response rate.
 #'@import tidyr
 #'@importFrom dplyr bind_rows bind_cols group_by summarize ungroup `%>%`
+# @importFrom plyr ldply
 #'@export
 getPosteriorResponseRate <- function(x, variable) {
   quo_variable <- enquo(variable)
   if ("MIMOSAResultList" %in% class(x)) {
       retme<-lapply(x,function(x)getPosteriorResponseRate(x,!!quo_variable))
-      retme2<-dplyr::bind_rows(retme)
-      retme<-dplyr::bind_cols(retme2,model=names(retme))
+      retme<-plyr::ldply(retme,.id="model")
+#      retme2<-dplyr::bind_rows(retme)
+#      retme<-dplyr::bind_cols(retme2,model=names(retme))
       retme
   } else if ("MIMOSAResult" %in% class(x)& "MCMCResult"%in%class(x@result)) {
     mat <- x@result@IndMat
