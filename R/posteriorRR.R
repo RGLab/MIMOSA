@@ -11,7 +11,7 @@
 #'Future versions will allow passing of quantiles for summarization, and maybe the full distribution, depending on needs.
 #'@param x A MIMOSAResultList or MIMOSAResult. All models should be of type MCMCResult, or fitted using method="mcmc" in MIMOSA.
 #'@param variable an unquoted variable name in the pData() table of all the models that specifies the grouping variable for which to compute response rates.
-#'@return a tibble with the grouping variable, and the 2.5th, median, and 97.5th percentiles of the posterior response rate.
+#'@return a tibble with the grouping variable, and the 2.5th, 25th,  median, 75th, and 97.5th percentiles of the posterior response rate.
 #'@import tidyr
 #'@importFrom dplyr bind_rows bind_cols group_by summarize ungroup `%>%`
 # @importFrom plyr ldply
@@ -34,7 +34,9 @@ getPosteriorResponseRate <- function(x, variable) {
       dplyr::do(., {
         data.frame(rr = rowMeans(mat[, .$rn])) %>% dplyr::summarize(
           Q2.5 = quantile(rr, 0.025),
+	  Q25 = quantile(rr,0.25),
           Q50 = quantile(rr, 0.5),
+	  Q75 = quantile(rr,0.75),
           Q97.5 = quantile(rr, 0.975)
         )
       })
