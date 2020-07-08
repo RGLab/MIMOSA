@@ -10,14 +10,27 @@
 #'
 #'Future versions will allow passing of quantiles for summarization, and maybe the full distribution, depending on needs.
 #'@param x A MIMOSAResultList or MIMOSAResult. All models should be of type MCMCResult, or fitted using method="mcmc" in MIMOSA.
-#'@param variable an unquoted variable name in the pData() table of all the models that specifies the grouping variable for which to compute response rates.
+#'@param ... unquoted variable names in the pData() table of all the models that specifies the grouping variable for which to compute response rates.
 #'@return a tibble with the grouping variable, and the 2.5th, 25th,  median, 75th, and 97.5th percentiles of the posterior response rate.
 #'@import tidyr
 #'@importFrom dplyr bind_rows bind_cols group_by summarize ungroup `%>%`
 # @importFrom plyr ldply
 #'@export
-getPosteriorResponseRate <- function(x, variable) {
-  quo_variable <- enquo(variable)
+getPosteriorResponseRate <- function(x, ...) {
+	
+  vars <- as.list(substitute(substitute(...)))[-1]
+  
+  if(length(vars) == 0){
+    stop("Pass at least one unquoted variable name.")
+  }
+  if(!is.null(names(vars))){
+    stop("Variables should not be named.")
+  }
+  
+  if(any(sapply(vars, is.character))){
+    stop("Varables should be unquoted.")
+  }
+
   if ("MIMOSAResultList" %in% class(x)) {
       retme<-lapply(x,function(x)getPosteriorResponseRate(x,!!quo_variable))
       retme<-plyr::ldply(retme,.id="model")
@@ -29,8 +42,8 @@ getPosteriorResponseRate <- function(x, variable) {
     cn <- data.frame(rn = colnames(mat))
     pd <- pData(x)
     groups <-
-      pd %>% dplyr::select(!!quo_variable) %>% dplyr::bind_cols(rn = rownames(pd))
-    posterior_rr<-dplyr::right_join(groups, cn) %>% dplyr::group_by(!!quo_variable) %>%
+      pd %>% dplyr::select(...) %>% dplyr::bind_cols(rn = rownames(pd))
+    posterior_rr<-dplyr::right_join(groups, cn) %>% dplyr::group_by(...) %>%
       dplyr::do(., {
         data.frame(rr = rowMeans(mat[, .$rn])) %>% dplyr::summarize(
           Q2.5 = quantile(rr, 0.025),
