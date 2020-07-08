@@ -15,9 +15,10 @@
 #'@import tidyr
 #'@importFrom dplyr bind_rows bind_cols group_by summarize ungroup `%>%`
 # @importFrom plyr ldply
+# @omportFrom rlang enquos
 #'@export
 getPosteriorResponseRate <- function(x, ...) {
-  quo_variable <- enquos(...)
+  quo_variable <- rlang::enquos(...)
   if(length(quo_variable)>0){
 	if(Reduce(any,lapply(quo_variable,function(x)grepl("\"",rlang::quo_text(x))))) 	{
 		stop("Variables should not be quoted")
