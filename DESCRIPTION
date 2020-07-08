@@ -1,7 +1,7 @@
 Package: MIMOSA
 Type: Package
 Title: Mixture Models for Single-Cell Assays
-Version: 1.27.0
+Version: 1.27.1
 Date: 2014-10-01
 Author: Greg Finak <gfinak@fhcrc.org>
 Maintainer: Greg Finak <gfinak@fhcrc.org>
@@ -36,6 +36,6 @@ Depends:
 LinkingTo: Rcpp, RcppArmadillo
 LazyLoad: yes
 LazyData: yes
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Encoding: UTF-8
 biocViews: ImmunoOncology, FlowCytometry, CellBasedAssays

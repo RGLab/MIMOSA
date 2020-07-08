@@ -4,15 +4,15 @@
 \alias{getPosteriorResponseRate}
 \title{Compute the posterior response rate from MCMC samples}
 \usage{
-getPosteriorResponseRate(x, variable)
+getPosteriorResponseRate(x, ...)
 }
 \arguments{
 \item{x}{A MIMOSAResultList or MIMOSAResult. All models should be of type MCMCResult, or fitted using method="mcmc" in MIMOSA.}
 
-\item{variable}{an unquoted variable name in the pData() table of all the models that specifies the grouping variable for which to compute response rates.}
+\item{...}{unquoted grouping variable name in the pData() table of all the models that specifies the one or more grouping variable by which to compute response rates.}
 }
 \value{
-a tibble with the grouping variable, and the 2.5th, median, and 97.5th percentiles of the posterior response rate.
+a tibble with the grouping variable, and the 2.5th, 25th,  median, 75th, and 97.5th percentiles of the posterior response rate.
 }
 \description{
 Uses the sampled response indicator when the model class is MCMCResult (or MIMOSAResult encapsulating an MCMCResult) to
