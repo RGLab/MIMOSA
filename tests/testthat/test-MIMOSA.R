@@ -49,7 +49,7 @@ expect_that(volcanoPlot(result,CYTNUM-CYTNUM_REF),is_a("ggplot"))
 
 context("pData")
 expect_that(pData(result),is_a("data.frame"))
-expect_that(pData(result),is_a("data.table"))
+# expect_that(pData(result),is_a("data.table"))
 expect_that(colnames(pData(result)),equals(c("UID","TCELLSUBSET","CYTOKINE","RefTreat","ANTIGEN")))
 expect_that(nrow(pData(result)),equals(150))
 
