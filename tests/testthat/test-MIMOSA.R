@@ -3,10 +3,14 @@ context("MIMOSA fitting")
 source("helper-init.R")
 
 
-result<-MIMOSA(NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
-     data=E, method='EM',
-     subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
-     ref=ANTIGEN%in%'ENV'&RefTreat%in%'Reference')
+result<- suppressWarnings(
+  MIMOSA(
+    NSUB+CYTNUM~UID+TCELLSUBSET+CYTOKINE|ANTIGEN,
+    data=E, method='EM',
+    subset=RefTreat%in%'Treatment'&ANTIGEN%in%'ENV',
+    ref=ANTIGEN%in%'ENV'&RefTreat%in%'Reference'
+    )
+  )
 
 expect_that(result,is_a("MIMOSAResultList"))
 expect_that(names(result),equals("ENV"))

@@ -23,6 +23,8 @@
 #'@importFrom plyr ddply is.formula
 #'@importFrom methods new
 #'@importFrom Rcpp evalCpp
+#' @importFrom plyr .
+#'
 #'@name MIMOSA-package
 #'@seealso \code{\link{MIMOSA}}, \code{\link{ConstructMIMOSAExpressionSet}}
 #'@references Greg Finak, Andrew McDavid, Pratip Chattopadhyay, Maria Dominguez, Stephen C De Rosa, Mario Roederer, Raphael Gottardo
@@ -31,6 +33,7 @@
 NULL
 
 utils::globalVariables(c( "PTID", "Proportion", "Proportion_REF", "RefTreat", "rr", ".", "mclapply"))
+
 
 #' Stimulated and unstimulated T-cell counts for an ICS assay
 #'
@@ -515,6 +518,18 @@ ConstructMIMOSAExpressionSet <- function(thisdata, reference = quote(STAGE %in% 
     PROTEIN %in% "Media+cells"), measure.columns = c("Neg", "Pos"), other.annotations = setdiff(colnames(thisdata),
     measure.columns), default.cast.formula = component ~ ..., .variables = quote(.(PTID,
     TESTDT, ASSAYID, PLATEID)), featureCols = 1, ref.append.replace = "_NEG") {
+    
+    # if argument to .variables was a call to the . function and the library is
+    # not specified, then replace call to `.` with explicit call to `plyr::.`
+    # required to ensure back-compatibility with previous called to `ConstructExpressionSet`
+    # that were intended to be run with the plyr library attached (and not just 
+    # imported into the MIMOSA NAMESPACE)
+    .var_quote <- substitute(.variables)
+    if(as.character(.var_quote[[1]])  == "." && identical(class(.var_quote[[1]]), "name")){
+        .var_quote[[1]] <- plyr::.
+    } 
+    .variables <- eval(.var_quote) 
+    
     # if reference is null, then we already have the data in a form we need
     if (!is.null(substitute(reference))) {
         # Set the Reference Class to be the negative control Media+cells for each

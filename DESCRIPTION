@@ -22,17 +22,17 @@ Imports:
     scales,
     dplyr,
     tidyr,
-    rlang
-Suggests:
-    parallel,
-    knitr
-Depends:
-    R (>= 3.0.2),
-    MASS,
+    rlang,
+	MASS,
     plyr,
     reshape,
     Biobase,
     ggplot2
+Suggests:
+    parallel,
+    knitr
+Depends:
+    R (>= 3.0.2)
 LinkingTo: Rcpp, RcppArmadillo
 LazyLoad: yes
 LazyData: yes
